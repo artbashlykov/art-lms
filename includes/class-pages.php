@@ -197,7 +197,7 @@ class Art_LMS_Pages {
 	 * @return int
 	 */
 	private static function discover_legacy_template_page_id( $type ) {
-		// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Runs once per site during admin backfill; result is cached in options.
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Runs once per site during admin backfill; result is cached in options.
 		$pages = get_posts(
 			array(
 				'post_type'      => 'page',
@@ -210,6 +210,7 @@ class Art_LMS_Pages {
 				'fields'         => 'ids',
 			)
 		);
+		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 
 		return ! empty( $pages ) ? (int) $pages[0] : 0;
 	}

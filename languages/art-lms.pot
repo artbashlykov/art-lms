@@ -1,0 +1,1458 @@
+﻿# Copyright (C) 2026 Art Bashlykov
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: ART LMS 2.14.4\n"
+"Report-Msgid-Bugs-To: https://forge.artbashlykov.ru\n"
+"POT-Creation-Date: 2026-06-11 15:53+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Domain: art-lms\n"
+
+msgid "— Выберите кнопку —"
+msgstr ""
+
+msgid "— Выберите страницу —"
+msgstr ""
+
+msgid " и затем обновите эту страницу — результат доставляемости уведомления появится в этом блоке."
+msgstr ""
+
+msgid "— Не выбрано —"
+msgstr ""
+
+msgid "%1$s — %2$s"
+msgstr ""
+
+msgid "(НЕ ЗАБУДЬТЕ ВЫКЛЮЧИТЬ ЕГО ПОСЛЕ ТЕСТА)"
+msgstr ""
+
+msgid "{поле} — подпись поля"
+msgstr ""
+
+msgid "{согласие} — название согласия"
+msgstr ""
+
+msgid "1 990 ₽"
+msgstr ""
+
+msgid "1 год"
+msgstr ""
+
+msgid "180 дней"
+msgstr ""
+
+msgid "30 дней"
+msgstr ""
+
+msgid "7 дней"
+msgstr ""
+
+msgid "90 дней"
+msgstr ""
+
+msgid "ART LMS"
+msgstr ""
+
+msgid "ART LMS → Настройки → Общие"
+msgstr ""
+
+msgid "Checkout не настроен."
+msgstr ""
+
+msgid "Email покупателя"
+msgstr ""
+
+msgid "Email покупателя для входа"
+msgstr ""
+
+msgid "Email: {email}"
+msgstr ""
+
+msgid "ID платежа в уведомлении не совпал с данными API."
+msgstr ""
+
+msgid "Plisio (криптовалюта)"
+msgstr ""
+
+msgid "Plisio: не получен URL для оплаты."
+msgstr ""
+
+msgid "Plisio: не указан ID транзакции."
+msgstr ""
+
+msgid "Plisio: некорректный URL платёжной страницы."
+msgstr ""
+
+msgid "Plisio: некорректный ответ API."
+msgstr ""
+
+msgid "Plisio: ошибка соединения (%s)."
+msgstr ""
+
+msgid "Plisio: укажите секретный API-ключ в настройках шлюза."
+msgstr ""
+
+msgid "Plisio: шлюз не настроен."
+msgstr ""
+
+msgid "Prodamus"
+msgstr ""
+
+msgid "Prodamus: некорректный URL платёжной формы."
+msgstr ""
+
+msgid "Prodamus: укажите URL платёжной формы в настройках шлюза."
+msgstr ""
+
+msgid "Prodamus: укажите секретный ключ в настройках шлюза."
+msgstr ""
+
+msgid "URL личного кабинета (текстом)"
+msgstr ""
+
+msgid "Аванс"
+msgstr ""
+
+msgid "Авг"
+msgstr ""
+
+msgid "Август"
+msgstr ""
+
+msgid "Аккаунт не найден. Будет создан новый пользователь с этим email."
+msgstr ""
+
+msgid "Аккаунт не найден. Обратитесь в поддержку."
+msgstr ""
+
+msgid "Активна"
+msgstr ""
+
+msgid "Апр"
+msgstr ""
+
+msgid "Апрель"
+msgstr ""
+
+msgid "АРТ ЛМС"
+msgstr ""
+
+msgid "АРТ ЛМС: Личный кабинет"
+msgstr ""
+
+msgid "АРТ ЛМС: Платежная кнопка"
+msgstr ""
+
+msgid "АРТ ЛМС: Статус оплаты"
+msgstr ""
+
+msgid "Архивировать"
+msgstr ""
+
+msgid "Архивировать «%s»"
+msgstr ""
+
+msgid "Без НДС"
+msgstr ""
+
+msgid "Без ограничения"
+msgstr ""
+
+msgid "Без шапки и подвала"
+msgstr ""
+
+msgid "Блок проверки оплаты для страницы «Спасибо за покупку»."
+msgstr ""
+
+msgid "Большая"
+msgstr ""
+
+msgid "Больше материалов автора"
+msgstr ""
+
+msgid "В архиве"
+msgstr ""
+
+msgid "В корзине кнопок нет"
+msgstr ""
+
+msgid "В корзине материалов нет"
+msgstr ""
+
+msgid "В письме есть ссылка для установки пароля. Если вы уже входили раньше — используйте свой пароль."
+msgstr ""
+
+msgid "Ваш заказ №{номер_заказа} на сумму {сумма} успешно оплачен."
+msgstr ""
+
+msgid "Ваши материалы"
+msgstr ""
+
+msgid "Вернуть из архива"
+msgstr ""
+
+msgid "Вернуть из архива «%s»"
+msgstr ""
+
+msgid "Вкладки"
+msgstr ""
+
+msgid "Включен"
+msgstr ""
+
+msgid "Включены"
+msgstr ""
+
+msgid "Возврат"
+msgstr ""
+
+msgid "Войти"
+msgstr ""
+
+msgid "Вперёд"
+msgstr ""
+
+msgid "Вручную"
+msgstr ""
+
+msgid "Вс"
+msgstr ""
+
+msgid "Всё время"
+msgstr ""
+
+msgid "Все поля формы и согласия заказа (списком)"
+msgstr ""
+
+msgid "Всего заказов"
+msgstr ""
+
+msgid "Вставка"
+msgstr ""
+
+msgid "Вт"
+msgstr ""
+
+msgid "Выберите платёжную кнопку."
+msgstr ""
+
+msgid "Выберите способ оплаты."
+msgstr ""
+
+msgid "Выбранная кнопка"
+msgstr ""
+
+msgid "Выйти"
+msgstr ""
+
+msgid "Выключен"
+msgstr ""
+
+msgid "Выключена"
+msgstr ""
+
+msgid "Выключены"
+msgstr ""
+
+msgid "Выручка"
+msgstr ""
+
+msgid "Главные настройки"
+msgstr ""
+
+msgid "Да"
+msgstr ""
+
+msgid "ДАННЫЕ ДЛЯ ВХОДА В АККАУНТ:"
+msgstr ""
+
+msgid "Данные формы:"
+msgstr ""
+
+msgid "Дек"
+msgstr ""
+
+msgid "Декабрь"
+msgstr ""
+
+msgid "Дизайн"
+msgstr ""
+
+msgid "Дизайн кнопки"
+msgstr ""
+
+msgid "Дизайн формы"
+msgstr ""
+
+msgid "Для отправки чека 54-ФЗ нужен корректный email покупателя."
+msgstr ""
+
+msgid "Добавить"
+msgstr ""
+
+msgid "Добавить заказ"
+msgstr ""
+
+msgid "Добавить материал"
+msgstr ""
+
+msgid "Добавить платежную кнопку"
+msgstr ""
+
+msgid "Долгое ожидание подтверждения"
+msgstr ""
+
+msgid "Доступ запрещён"
+msgstr ""
+
+msgid "Доступ к материалам — {товар}"
+msgstr ""
+
+msgid "Доступ к материалам ограничен."
+msgstr ""
+
+msgid "Доступ к материалам уже открыт. Вы можете перейти в личный кабинет по кнопке ниже."
+msgstr ""
+
+msgid "Доступ к материалам:"
+msgstr ""
+
+msgid "Доступ к материалу ограничен."
+msgstr ""
+
+msgid "Доступ: бессрочный"
+msgstr ""
+
+msgid "Доступ: до %s"
+msgstr ""
+
+msgid "ЕНВД"
+msgstr ""
+
+msgid "Если вы не оформляли заказ на нашем сайте, просто проигнорируйте это письмо."
+msgstr ""
+
+msgid "Если вы уверены, что оплата прошла, но видите это сообщение — напишите нам: {support}"
+msgstr ""
+
+msgid "Если вы уже задавали пароль раньше, войдите как обычно или воспользуйтесь «Забыли пароль?» на странице входа."
+msgstr ""
+
+msgid "Если оплата прошла, доступ уже может быть открыт в личном кабинете."
+msgstr ""
+
+msgid "Если письма нет — проверьте папки «Спам» и «Промоакции». Обычно оно приходит в течение 1–2 минут."
+msgstr ""
+
+msgid "Есть несохранённые изменения. Выйти без сохранения?"
+msgstr ""
+
+msgid "ЕСХН"
+msgstr ""
+
+msgid "Заголовок списка материалов"
+msgstr ""
+
+msgid "Загружаем список платежных кнопок…"
+msgstr ""
+
+msgid "Заказ #%d"
+msgstr ""
+
+msgid "Заказ #%d создан."
+msgstr ""
+
+msgid "Заказ №{order} · {product} · {amount}"
+msgstr ""
+
+msgid "Заказ для платежа %s не найден."
+msgstr ""
+
+msgid "Заказ не найден"
+msgstr ""
+
+msgid "Заказ не найден или уже оплачен."
+msgstr ""
+
+msgid "Заказ не найден."
+msgstr ""
+
+msgid "Заказ отмечен как оплаченный, доступ выдан."
+msgstr ""
+
+msgid "Заказ с меткой %s не найден."
+msgstr ""
+
+msgid "Заказ создан."
+msgstr ""
+
+msgid "Заказ сохранён."
+msgstr ""
+
+msgid "Заказ уже оплачен."
+msgstr ""
+
+msgid "Заказ: №{номер_заказа}"
+msgstr ""
+
+msgid "Заказов на странице"
+msgstr ""
+
+msgid "Заказы"
+msgstr ""
+
+msgid "Закрыть"
+msgstr ""
+
+msgid "Заполните поле «{поле}»."
+msgstr ""
+
+msgid "Здравствуйте, {имя}!"
+msgstr ""
+
+msgid "Иван Иванов"
+msgstr ""
+
+msgid "Изменения могут быть потеряны."
+msgstr ""
+
+msgid "Имя покупателя (или email, если имени нет)"
+msgstr ""
+
+msgid "Иной предмет расчёта"
+msgstr ""
+
+msgid "Искать кнопки"
+msgstr ""
+
+msgid "Искать материалы"
+msgstr ""
+
+msgid "Истёк"
+msgstr ""
+
+msgid "Ищем пользователя…"
+msgstr ""
+
+msgid "Июл"
+msgstr ""
+
+msgid "Июль"
+msgstr ""
+
+msgid "Июн"
+msgstr ""
+
+msgid "Июнь"
+msgstr ""
+
+msgid "Ключ сохранён — измените чтобы заменить"
+msgstr ""
+
+msgid "Кнопка #%d"
+msgstr ""
+
+msgid "Кнопка оплаты с переходом на checkout."
+msgstr ""
+
+msgid "Кнопки не найдены"
+msgstr ""
+
+msgid "Конверсия в оплату: %s%%"
+msgstr ""
+
+msgid "Личный кабинет"
+msgstr ""
+
+msgid "Личный кабинет покупателя."
+msgstr ""
+
+msgid "Личный кабинет: {войти}"
+msgstr ""
+
+msgid "Логин: {логин}"
+msgstr ""
+
+msgid "Май"
+msgstr ""
+
+msgid "Маленькая"
+msgstr ""
+
+msgid "Мар"
+msgstr ""
+
+msgid "Март"
+msgstr ""
+
+msgid "Материал"
+msgstr ""
+
+msgid "Материалы"
+msgstr ""
+
+msgid "Материалы не добавлены."
+msgstr ""
+
+msgid "Материалы не найдены"
+msgstr ""
+
+msgid "Материалы:"
+msgstr ""
+
+msgid "Мы отправили письмо с подробностями на {email}. В нём — ссылка в личный кабинет и инструкция по входу."
+msgstr ""
+
+msgid "Мы отправили письмо с подтверждением на ваш email. Перейдите по ссылке из письма, чтобы продолжить оплату."
+msgstr ""
+
+msgid "Мы пока не получили подтверждение от платёжной системы. Иногда это занимает до 30 минут."
+msgstr ""
+
+msgid "На всю ширину"
+msgstr ""
+
+msgid "Нажмите «Протестировать» в "
+msgstr ""
+
+msgid "Нажмите «Протестировать» в настройках платёжной системы — результат появится здесь."
+msgstr ""
+
+msgid "Нажмите здесь, чтобы установить пароль"
+msgstr ""
+
+msgid "Назад"
+msgstr ""
+
+msgid "Название платёжной кнопки"
+msgstr ""
+
+msgid "Название сайта"
+msgstr ""
+
+msgid "Название согласия"
+msgstr ""
+
+msgid "Напишите нам на {support} с указанием email покупки — мы проверим заказ вручную."
+msgstr ""
+
+msgid "Например: Telegram"
+msgstr ""
+
+msgid "настройках HTTP-уведомлений ЮMoney"
+msgstr ""
+
+msgid "Настройки"
+msgstr ""
+
+msgid "Настройки платежной кнопки"
+msgstr ""
+
+msgid "Настройки полей"
+msgstr ""
+
+msgid "Настройки формы"
+msgstr ""
+
+msgid "НДС 0%"
+msgstr ""
+
+msgid "НДС 10%"
+msgstr ""
+
+msgid "НДС 10/110"
+msgstr ""
+
+msgid "НДС 20%"
+msgstr ""
+
+msgid "НДС 20/120"
+msgstr ""
+
+msgid "НДС 5%"
+msgstr ""
+
+msgid "НДС 5/105"
+msgstr ""
+
+msgid "НДС 7%"
+msgstr ""
+
+msgid "НДС 7/107"
+msgstr ""
+
+msgid "Не выбран способ оплаты"
+msgstr ""
+
+msgid "Не закрывайте эту страницу — статус обновится автоматически, как только оплата подтвердится."
+msgstr ""
+
+msgid "Не заполнено обязательное поле"
+msgstr ""
+
+msgid "Не оплачивайте повторно, пока не убедитесь, что первый платёж не прошёл (проверьте SMS или выписку банка)."
+msgstr ""
+
+msgid "Не отмечено обязательное согласие"
+msgstr ""
+
+msgid "Не удалось найти заказ по ссылке. Если вы только что оплатили заказ, подождите минуту и обновите страницу."
+msgstr ""
+
+msgid "Не удалось найти пользователя. Попробуйте ещё раз."
+msgstr ""
+
+msgid "Не удалось отметить заказ оплаченным."
+msgstr ""
+
+msgid "Не удалось отправить письмо подтверждения. Попробуйте позже."
+msgstr ""
+
+msgid "Не удалось отправить письмо. Проверьте настройки почты WordPress."
+msgstr ""
+
+msgid "Не удалось отправить тестовое письмо."
+msgstr ""
+
+msgid "Не удалось перейти к оплате. Попробуйте ещё раз."
+msgstr ""
+
+msgid "Не удалось подготовить установку пароля. Попробуйте восстановление пароля на сайте."
+msgstr ""
+
+msgid "Не удалось подтвердить оплату."
+msgstr ""
+
+msgid "Не удалось построить предпросмотр."
+msgstr ""
+
+msgid "Не удалось проверить платёж в Plisio."
+msgstr ""
+
+msgid "Не удалось проверить платёж в ЮKassa."
+msgstr ""
+
+msgid "Не удалось проверить статус оплаты"
+msgstr ""
+
+msgid "Не удалось скопировать."
+msgstr ""
+
+msgid "Не удалось создать заказ"
+msgstr ""
+
+msgid "Не удалось создать заказ."
+msgstr ""
+
+msgid "Не удалось создать заказ. Попробуйте позже."
+msgstr ""
+
+msgid "Не удалось создать страницу."
+msgstr ""
+
+msgid "Не удалось сохранить заказ."
+msgstr ""
+
+msgid "Не указан"
+msgstr ""
+
+msgid "Неверная валюта платежа."
+msgstr ""
+
+msgid "Неверная подпись. Проверьте секрет HTTP-уведомлений."
+msgstr ""
+
+msgid "Недействительный запрос."
+msgstr ""
+
+msgid "Недостаточно прав."
+msgstr ""
+
+msgid "Неизвестная ошибка"
+msgstr ""
+
+msgid "Неизвестная ошибка API Plisio."
+msgstr ""
+
+msgid "Неизвестная ошибка API."
+msgstr ""
+
+msgid "Неизвестный тип страницы."
+msgstr ""
+
+msgid "Некорректный email"
+msgstr ""
+
+msgid "Некорректный email в заявке."
+msgstr ""
+
+msgid "Некорректный email."
+msgstr ""
+
+msgid "Некорректный статус заказа."
+msgstr ""
+
+msgid "Нет"
+msgstr ""
+
+msgid "Нет полей для отображения. Включите хотя бы одно поле."
+msgstr ""
+
+msgid "Нет полей для отображения. Настройте форму на вкладке «Настройки полей»."
+msgstr ""
+
+msgid "Нет ссылки на заказ"
+msgstr ""
+
+msgid "Неудачная оплата и ошибки"
+msgstr ""
+
+msgid "Новая кнопка"
+msgstr ""
+
+msgid "Новая оплата — заказ №{номер_заказа}"
+msgstr ""
+
+msgid "Новый материал"
+msgstr ""
+
+msgid "Новых покупателей"
+msgstr ""
+
+msgid "Номер заказа"
+msgstr ""
+
+msgid "Ноя"
+msgstr ""
+
+msgid "Ноябрь"
+msgstr ""
+
+msgid "Ожидает оплаты"
+msgstr ""
+
+msgid "Ожидание оплаты"
+msgstr ""
+
+msgid "Окт"
+msgstr ""
+
+msgid "Октябрь"
+msgstr ""
+
+msgid "Оплата не завершена"
+msgstr ""
+
+msgid "Оплата не прошла"
+msgstr ""
+
+msgid "Оплата подтверждена по HTTP-уведомлению."
+msgstr ""
+
+msgid "Оплата подтверждена по уведомлению ЮKassa."
+msgstr ""
+
+msgid "Оплата получена. Доступ к материалам уже открыт."
+msgstr ""
+
+msgid "Оплата успешна"
+msgstr ""
+
+msgid "Оплатить"
+msgstr ""
+
+msgid "Оплачен"
+msgstr ""
+
+msgid "Оплаченных заказов"
+msgstr ""
+
+msgid "Оплачено"
+msgstr ""
+
+msgid "ОСН"
+msgstr ""
+
+msgid "Основные"
+msgstr ""
+
+msgid "Откройте эту страницу по ссылке после оплаты. Если оплата уже прошла, проверьте личный кабинет или почту."
+msgstr ""
+
+msgid "Открыть"
+msgstr ""
+
+msgid "Открыть заказ: {заказ}"
+msgstr ""
+
+msgid "Отменён"
+msgstr ""
+
+msgid "Отметьте согласие «{согласие}»."
+msgstr ""
+
+msgid "Отправить тест на %s"
+msgstr ""
+
+msgid "Отправка письма подтверждения отключена в настройках."
+msgstr ""
+
+msgid "Отправляем…"
+msgstr ""
+
+msgid "Оформить"
+msgstr ""
+
+msgid "Оформление заказа"
+msgstr ""
+
+msgid "Ошибка"
+msgstr ""
+
+msgid "Ошибка перехода к оплате"
+msgstr ""
+
+msgid "Пароль: {установить_пароль}"
+msgstr ""
+
+msgid "Патент"
+msgstr ""
+
+msgid "Перейти"
+msgstr ""
+
+msgid "Перейти в личный кабинет"
+msgstr ""
+
+msgid "Переход к оплате через %s…"
+msgstr ""
+
+msgid "Период: %s"
+msgstr ""
+
+msgid "Письмо подтверждения отправлено"
+msgstr ""
+
+msgid "Платёж"
+msgstr ""
+
+msgid "Платёж был отменён или не прошёл. Средства с карты не списаны (или будут автоматически разблокированы банком)."
+msgstr ""
+
+msgid "Платёж в ЮKassa ещё не завершён."
+msgstr ""
+
+msgid "Платёж принят платёжной системой. Сейчас мы ждём финальное подтверждение — это нормально и обычно занимает от нескольких секунд до 2 минут."
+msgstr ""
+
+msgid "Платежная кнопка"
+msgstr ""
+
+msgid "Платежная кнопка возвращена из архива."
+msgstr ""
+
+msgid "Платёжная кнопка находится в архиве."
+msgstr ""
+
+msgid "Платежная кнопка не найдена."
+msgstr ""
+
+msgid "Платёжная кнопка не найдена."
+msgstr ""
+
+msgid "Платёжная кнопка не опубликована."
+msgstr ""
+
+msgid "Платежная кнопка недоступна."
+msgstr ""
+
+msgid "Платёжная кнопка отключена"
+msgstr ""
+
+msgid "Платежная кнопка перенесена в архив."
+msgstr ""
+
+msgid "Платежные кнопки"
+msgstr ""
+
+msgid "Платёжный шлюз не найден."
+msgstr ""
+
+msgid "Платёжный шлюз, через который прошла оплата"
+msgstr ""
+
+msgid "Плейсхолдеры: {email} — почта покупателя, {support} — email поддержки, {order} — номер заказа, {product} — товар, {amount} — сумма. Разделяйте абзацы пустой строкой."
+msgstr ""
+
+msgid "Пн"
+msgstr ""
+
+msgid "По %s"
+msgstr ""
+
+msgid "По умолчанию (ширина темы)"
+msgstr ""
+
+msgid "По центру"
+msgstr ""
+
+msgid "Подвал сайта"
+msgstr ""
+
+msgid "Подождите %d сек. перед повторной отправкой формы."
+msgstr ""
+
+msgid "Подтвердите email для продолжения оплаты — {сайт}"
+msgstr ""
+
+msgid "Подтверждаем оплату…"
+msgstr ""
+
+msgid "Подтверждение email"
+msgstr ""
+
+msgid "Подтверждение задерживается"
+msgstr ""
+
+msgid "Подтверждение занимает чуть дольше обычного. Пожалуйста, подождите ещё немного."
+msgstr ""
+
+msgid "Пока нет доступных материалов. После оплаты они появятся здесь автоматически."
+msgstr ""
+
+msgid "Показывается, если подтверждение не пришло в течение 15 минут."
+msgstr ""
+
+msgid "Показывать"
+msgstr ""
+
+msgid "Покупатель ART LMS"
+msgstr ""
+
+msgid "Покупатель: {имя}"
+msgstr ""
+
+msgid "Политика конфиденциальности"
+msgstr ""
+
+msgid "политикой конфиденциальности"
+msgstr ""
+
+msgid "Полная предоплата"
+msgstr ""
+
+msgid "Полный расчёт"
+msgstr ""
+
+msgid "Получена новая оплата."
+msgstr ""
+
+msgid "Получено уведомление об оплате с неверной подписью. Проверьте секрет HTTP-уведомлений."
+msgstr ""
+
+msgid "Пользователь найден: %1$s (%2$s)"
+msgstr ""
+
+msgid "Пользователь не найден."
+msgstr ""
+
+msgid "Пользователь с таким логином или email не найден."
+msgstr ""
+
+msgid "Попробовать оплатить снова"
+msgstr ""
+
+msgid "После подтверждения на почту {email} придёт письмо с доступом в личный кабинет."
+msgstr ""
+
+msgid "Последняя попытка: %s"
+msgstr ""
+
+msgid "Последняя проверка: %s"
+msgstr ""
+
+msgid "Почта"
+msgstr ""
+
+msgid "Предпросмотр обновляется сразу при изменении настроек."
+msgstr ""
+
+msgid "Приём криптоплатежей через Plisio: Bitcoin, Ethereum, USDT и другие монеты."
+msgstr ""
+
+msgid "Прием платежей"
+msgstr ""
+
+msgid "Приём платежей на личный кошелёк ЮMoney для физлиц."
+msgstr ""
+
+msgid "Приём платежей через платёжную форму Prodamus: карты, СБП, рассрочки и другие методы."
+msgstr ""
+
+msgid "Приём платежей через ЮKassa: банковские карты, СБП, ЮMoney и другие способы. Для ИП, самозанятых и юрлиц."
+msgstr ""
+
+msgid "Пример платежной кнопки"
+msgstr ""
+
+msgid "Проверка checkout и заказов без подключения платёжных систем. Заказы создаются со статусом «Ожидает оплаты»."
+msgstr ""
+
+msgid "Продукт"
+msgstr ""
+
+msgid "Произвольная"
+msgstr ""
+
+msgid "Просмотр заказа"
+msgstr ""
+
+msgid "Просмотреть материал"
+msgstr ""
+
+msgid "Прочие статусы"
+msgstr ""
+
+msgid "Пт"
+msgstr ""
+
+msgid "Размер текста заголовка материалов"
+msgstr ""
+
+msgid "Размер текста кнопки"
+msgstr ""
+
+msgid "Размер текста кнопок"
+msgstr ""
+
+msgid "Расположение кнопки"
+msgstr ""
+
+msgid "Редактирование заказа"
+msgstr ""
+
+msgid "Редактирование заказа #%d"
+msgstr ""
+
+msgid "Редактировать кнопку"
+msgstr ""
+
+msgid "Редактировать материал"
+msgstr ""
+
+msgid "Редактировать страницу"
+msgstr ""
+
+msgid "Результаты интеллектуальной деятельности"
+msgstr ""
+
+msgid "С %s"
+msgstr ""
+
+msgid "С уважением,"
+msgstr ""
+
+msgid "С шапкой и подвалом сайта"
+msgstr ""
+
+msgid "Сб"
+msgstr ""
+
+msgid "Сбросить"
+msgstr ""
+
+msgid "Свой срок…"
+msgstr ""
+
+msgid "Сегодня"
+msgstr ""
+
+msgid "Секрет сохранён — измените чтобы заменить"
+msgstr ""
+
+msgid "Сен"
+msgstr ""
+
+msgid "Сентябрь"
+msgstr ""
+
+msgid "Сервер не ответил"
+msgstr ""
+
+msgid "Сервер не ответил. Проверьте соединение и попробуйте ещё раз."
+msgstr ""
+
+msgid "Скопировано"
+msgstr ""
+
+msgid "Скопировано!"
+msgstr ""
+
+msgid "Скопировать"
+msgstr ""
+
+msgid "Скругление рамки"
+msgstr ""
+
+msgid "Скругление углов кнопки"
+msgstr ""
+
+msgid "Скругление углов кнопок"
+msgstr ""
+
+msgid "Скрывать"
+msgstr ""
+
+msgid "Скрыть заголовок списка материалов"
+msgstr ""
+
+msgid "Скрыть кнопку «Открыть»"
+msgstr ""
+
+msgid "Скрыть название товара"
+msgstr ""
+
+msgid "Скрыть рамку"
+msgstr ""
+
+msgid "Скрыть срок доступа"
+msgstr ""
+
+msgid "Скрыть ссылку «Выйти»"
+msgstr ""
+
+msgid "Скрыть ссылку смены пароля"
+msgstr ""
+
+msgid "Скрыть старую цену"
+msgstr ""
+
+msgid "Скрыть цену"
+msgstr ""
+
+msgid "Слева"
+msgstr ""
+
+msgid "Слишком много попыток оформления заказа. Подождите 15 минут и попробуйте снова."
+msgstr ""
+
+msgid "Сменить пароль"
+msgstr ""
+
+msgid "Сначала создайте платежную кнопку в разделе АРТ ЛМС."
+msgstr ""
+
+msgid "Содержимое материала — доступно покупателям после оплаты…"
+msgstr ""
+
+msgid "Создаём заказ…"
+msgstr ""
+
+msgid "Создаём страницу…"
+msgstr ""
+
+msgid "Создайте страницу вручную и разместите блок «АРТ ЛМС: Личный кабинет» или shortcode [art_lms_account]."
+msgstr ""
+
+msgid "Создайте страницу вручную и разместите блок «АРТ ЛМС: Статус оплаты» или shortcode [art_lms_payment_status]."
+msgstr ""
+
+msgid "Сообщение после подтверждения платежа."
+msgstr ""
+
+msgid "Сообщение при пустом списке"
+msgstr ""
+
+msgid "Сообщение, пока платёжная система подтверждает оплату."
+msgstr ""
+
+msgid "Сообщения на почту"
+msgstr ""
+
+msgid "Сообщения при отмене, долгом ожидании или проблемах со ссылкой."
+msgstr ""
+
+msgid "Спасибо за покупку!"
+msgstr ""
+
+msgid "Список купленных материалов (названия со ссылками)"
+msgstr ""
+
+msgid "Способ оплаты: {платежный_шлюз}"
+msgstr ""
+
+msgid "Справа"
+msgstr ""
+
+msgid "Ср"
+msgstr ""
+
+msgid "Средний чек"
+msgstr ""
+
+msgid "Средняя"
+msgstr ""
+
+msgid "Срок доступа"
+msgstr ""
+
+msgid "Срок доступа: %s"
+msgstr ""
+
+msgid "Ссылка «Войти» на личный кабинет"
+msgstr ""
+
+msgid "Ссылка «Нажмите здесь, чтобы установить пароль»"
+msgstr ""
+
+msgid "Ссылка для установки пароля устарела. Запросите новую на странице восстановления пароля."
+msgstr ""
+
+msgid "Ссылка на заказ в админке"
+msgstr ""
+
+msgid "Ссылка подтверждения email"
+msgstr ""
+
+msgid "Ссылка подтверждения недействительна."
+msgstr ""
+
+msgid "Ссылка подтверждения устарела. Оформите заказ заново."
+msgstr ""
+
+msgid "Ссылки и вставка"
+msgstr ""
+
+msgid "Статистика"
+msgstr ""
+
+msgid "Статус"
+msgstr ""
+
+msgid "Статус заказа обновлён."
+msgstr ""
+
+msgid "Статус кнопки"
+msgstr ""
+
+msgid "Страница личного кабинета"
+msgstr ""
+
+msgid "Страница не найдена."
+msgstr ""
+
+msgid "Страница подтверждения"
+msgstr ""
+
+msgid "Страница создана и выбрана."
+msgstr ""
+
+msgid "Страница уже была создана ранее и выбрана."
+msgstr ""
+
+msgid "Страница успешной оплаты"
+msgstr ""
+
+msgid "Страница успешной оплаты не выбрана. Укажите её в %s."
+msgstr ""
+
+msgid "Сумма в уведомлении (%1$s) не совпала с заказом (%2$s)."
+msgstr ""
+
+msgid "Сумма заказа"
+msgstr ""
+
+msgid "Сумма заказа должна быть больше нуля для формирования чека."
+msgstr ""
+
+msgid "Сумма: {сумма}"
+msgstr ""
+
+msgid "Текст кнопки"
+msgstr ""
+
+msgid "Текст кнопки «Открыть»"
+msgstr ""
+
+msgid "Текст ссылки «Выйти»"
+msgstr ""
+
+msgid "Текст ссылки смены пароля"
+msgstr ""
+
+msgid "Текущая страница успешной оплаты: %s"
+msgstr ""
+
+msgid "Телефон"
+msgstr ""
+
+msgid "Тест не прошёл: %s"
+msgstr ""
+
+msgid "Тестовое письмо отправлено на %s."
+msgstr ""
+
+msgid "Тестовое уведомление от ЮMoney получено. URL доступен, секрет настроен корректно."
+msgstr ""
+
+msgid "Тестовое уведомление получено."
+msgstr ""
+
+msgid "Тестовое уведомление получено. URL доступен, настройки webhook корректны."
+msgstr ""
+
+msgid "Тестовое уведомление ЮKassa получено."
+msgstr ""
+
+msgid "Тестовый шлюз"
+msgstr ""
+
+msgid "Товар"
+msgstr ""
+
+msgid "Товар: {товар}"
+msgstr ""
+
+msgid "У выбранной кнопки нет материалов. Добавьте материалы в настройках кнопки."
+msgstr ""
+
+msgid "У заказа не указана платёжная кнопка. Выберите продукт перед подтверждением оплаты."
+msgstr ""
+
+msgid "У платежной кнопки не указана цена."
+msgstr ""
+
+msgid "У этой кнопки пока нет материалов."
+msgstr ""
+
+msgid "Удалить"
+msgstr ""
+
+msgid "Укажите email или логин покупателя."
+msgstr ""
+
+msgid "Укажите email или логин."
+msgstr ""
+
+msgid "Укажите корректный email."
+msgstr ""
+
+msgid "Укажите логин или email."
+msgstr ""
+
+msgid "Укажите сумму заказа."
+msgstr ""
+
+msgid "Услуга"
+msgstr ""
+
+msgid "УСН (доход минус расход)"
+msgstr ""
+
+msgid "УСН (доход)"
+msgstr ""
+
+msgid "Успешная оплата"
+msgstr ""
+
+msgid "Установка пароля"
+msgstr ""
+
+msgid "Фев"
+msgstr ""
+
+msgid "Февраль"
+msgstr ""
+
+msgid "ФИО"
+msgstr ""
+
+msgid "Цвет рамки"
+msgstr ""
+
+msgid "Цвет текста кнопки"
+msgstr ""
+
+msgid "Цвет текста кнопок"
+msgstr ""
+
+msgid "Цвет фона кнопки"
+msgstr ""
+
+msgid "Цвет фона кнопок"
+msgstr ""
+
+msgid "Цена"
+msgstr ""
+
+msgid "Цифровой продукт"
+msgstr ""
+
+msgid "Частичная предоплата"
+msgstr ""
+
+msgid "Чт"
+msgstr ""
+
+msgid "Чтобы продолжить оплату «{товар}», подтвердите ваш email по ссылке ниже:"
+msgstr ""
+
+msgid "Что-то пошло не так. Попробуйте ещё раз."
+msgstr ""
+
+msgid "Шапка сайта"
+msgstr ""
+
+msgid "Ширина блока"
+msgstr ""
+
+msgid "Ширина в пикселях"
+msgstr ""
+
+msgid "Эта платёжная кнопка сейчас недоступна."
+msgstr ""
+
+msgid "Этот блок откроется на фронтенде. Здесь — только настройки."
+msgstr ""
+
+msgid "ЮKassa"
+msgstr ""
+
+msgid "ЮKassa: не получен URL для оплаты."
+msgstr ""
+
+msgid "ЮKassa: не указан ID платежа."
+msgstr ""
+
+msgid "ЮKassa: некорректный URL платёжной страницы."
+msgstr ""
+
+msgid "ЮKassa: некорректный ответ API."
+msgstr ""
+
+msgid "ЮKassa: ошибка соединения (%s)."
+msgstr ""
+
+msgid "ЮKassa: поддерживается только валюта RUB."
+msgstr ""
+
+msgid "ЮKassa: укажите shopId и секретный ключ в настройках шлюза."
+msgstr ""
+
+msgid "ЮMoney (кошелёк)"
+msgstr ""
+
+msgid "Я согласен с"
+msgstr ""
+
+msgid "Янв"
+msgstr ""
+
+msgid "Январь"
+msgstr ""
+

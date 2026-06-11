@@ -19,6 +19,7 @@ defined( 'ABSPATH' ) || exit;
 define( 'ART_LMS_VERSION', '2.14.4' );
 define( 'ART_LMS_ADMIN_MENU_SLUG', 'art-lms' );
 define( 'ART_LMS_AUTHOR_URL', 'https://forge.artbashlykov.ru' );
+define( 'ART_LMS_PLUGIN_FILE', __FILE__ );
 define( 'ART_LMS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ART_LMS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'ART_LMS_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -27,8 +28,8 @@ require_once ART_LMS_PLUGIN_DIR . 'includes/class-activator.php';
 require_once ART_LMS_PLUGIN_DIR . 'includes/class-deactivator.php';
 require_once ART_LMS_PLUGIN_DIR . 'includes/class-plugin.php';
 
-register_activation_hook( __FILE__, array( 'Art_LMS_Activator', 'activate' ) );
-register_deactivation_hook( __FILE__, array( 'Art_LMS_Deactivator', 'deactivate' ) );
+register_activation_hook( ART_LMS_PLUGIN_FILE, array( 'Art_LMS_Activator', 'activate' ) );
+register_deactivation_hook( ART_LMS_PLUGIN_FILE, array( 'Art_LMS_Deactivator', 'deactivate' ) );
 
 /**
  * Returns the main plugin instance.

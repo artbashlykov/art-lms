@@ -57,6 +57,11 @@ class Art_LMS_Blocks {
 	public static function enqueue_editor_assets() {
 		wp_enqueue_style( 'art-lms-blocks-editor' );
 		wp_enqueue_script( 'art-lms-blocks-editor' );
+		wp_set_script_translations(
+			'art-lms-blocks-editor',
+			'art-lms',
+			ART_LMS_PLUGIN_DIR . 'languages'
+		);
 	}
 
 	/**
@@ -195,6 +200,7 @@ class Art_LMS_Blocks {
 		register_block_type(
 			'art-lms/payment-status',
 			array(
+				'editor_style'    => 'art-lms-blocks-editor',
 				'render_callback' => array( __CLASS__, 'render_payment_status' ),
 			)
 		);

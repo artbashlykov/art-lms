@@ -229,14 +229,14 @@
 
 		var buttonText = getButtonText(attributes);
 		var emptyValue = '—';
-		var editorHint = editorBlockHint;
 		var displayButtonName = attributes.buttonId && selectedButtonName ? selectedButtonName : emptyValue;
 		var displayButtonText = attributes.buttonId ? buttonText : emptyValue;
+		var statusMessage = '';
 
 		if (isLoading) {
-			editorHint = __('Загружаем список платежных кнопок…', 'art-lms');
+			statusMessage = __('Загружаем список платежных кнопок…', 'art-lms');
 		} else if (!buttons || !buttons.length) {
-			editorHint = __('Сначала создайте платежную кнопку в разделе ART LMS.', 'art-lms');
+			statusMessage = __('Сначала создайте платежную кнопку в разделе АРТ ЛМС.', 'art-lms');
 		}
 
 		function renderDetailRow(label, value) {
@@ -252,12 +252,15 @@
 			Fragment,
 			null,
 			el('div', { className: 'art-lms-editor-title' }, __('АРТ ЛМС: Платежная кнопка', 'art-lms')),
-			el('div', { className: 'art-lms-editor-hint' }, editorHint),
+			el('div', { className: 'art-lms-editor-hint' }, editorBlockHint),
 			isLoading
 				? el(Spinner, null)
 				: el(
 						'div',
 						{ className: 'art-lms-editor-details' },
+						statusMessage
+							? renderDetailRow(__('Статус', 'art-lms'), statusMessage)
+							: null,
 						renderDetailRow(__('Выбранная кнопка', 'art-lms'), displayButtonName),
 						renderDetailRow(__('Текст кнопки', 'art-lms'), displayButtonText)
 				  )

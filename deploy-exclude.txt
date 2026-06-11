@@ -2,4 +2,5 @@
 .cursor/
 .git/
 .gitignore
+.distignore
 deploy-exclude.txt

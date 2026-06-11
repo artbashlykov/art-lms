@@ -4,3 +4,5 @@
  *
  * @package Art_LMS
  */
+
+defined( 'ABSPATH' ) || exit;

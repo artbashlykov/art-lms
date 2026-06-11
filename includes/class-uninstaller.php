@@ -5,7 +5,7 @@
  * @package Art_LMS
  */
 
-defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Class Art_LMS_Uninstaller
@@ -79,7 +79,7 @@ class Art_LMS_Uninstaller {
 		);
 
 		foreach ( $tables as $table ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Plugin-owned tables during uninstall.
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Plugin-owned tables during uninstall.
 			$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" );
 		}
 	}
@@ -91,7 +91,7 @@ class Art_LMS_Uninstaller {
 		global $wpdb;
 
 		foreach ( self::USER_META_KEYS as $meta_key ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk cleanup during uninstall.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Bulk cleanup during uninstall.
 			$wpdb->delete(
 				$wpdb->usermeta,
 				array( 'meta_key' => $meta_key ),

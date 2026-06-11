@@ -84,6 +84,7 @@ class Art_LMS_Cache_Control {
 	 */
 	public static function prevent_page_cache() {
 		if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- WordPress core page-cache constant.
 			define( 'DONOTCACHEPAGE', true );
 		}
 
