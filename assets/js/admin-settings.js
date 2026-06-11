@@ -149,6 +149,21 @@
 		);
 	}
 
+	function getCheckoutDesignTextCssVars(settings) {
+		settings = settings || {};
+
+		return [
+			'--art-lms-checkout-title-font-size:' + (settings.titleFontSize || 24) + 'px',
+			'--art-lms-checkout-product-name-font-size:' + (settings.productNameFontSize || 16) + 'px',
+			'--art-lms-checkout-compare-price-font-size:' + (settings.comparePriceFontSize || 16) + 'px',
+			'--art-lms-checkout-price-font-size:' + (settings.priceFontSize || 16) + 'px',
+			'--art-lms-checkout-field-label-font-size:' + (settings.fieldLabelFontSize || 16) + 'px',
+			'--art-lms-checkout-field-input-font-size:' + (settings.fieldInputFontSize || 16) + 'px',
+			'--art-lms-checkout-consent-checkbox-size:' + (settings.consentCheckboxSize || 16) + 'px',
+			'--art-lms-checkout-consent-font-size:' + (settings.consentFontSize || 16) + 'px',
+		].join(';');
+	}
+
 	function buildCheckoutPreviewHtml(options) {
 		var fields = options.fields || [];
 		var consents = options.consents || { title: '', items: [] };
@@ -157,7 +172,7 @@
 		var idPrefix = options.idPrefix || 'art-lms-preview';
 		var showHint = !!options.showHint;
 		var showChrome = settings.template === 'with_theme';
-		var cssVars = '--art-lms-checkout-page-bg:' + settings.pageBackgroundColor + ';--art-lms-checkout-form-bg:' + settings.formBackgroundColor + ';--art-lms-button-bg:' + settings.buttonColor + ';--art-lms-button-color:' + settings.buttonTextColor + ';--art-lms-checkout-form-width:' + settings.formMaxWidth + 'px;--art-lms-checkout-form-padding:' + settings.formPadding + 'px;--art-lms-checkout-form-radius:' + settings.formBorderRadius + 'px;';
+		var cssVars = '--art-lms-checkout-page-bg:' + settings.pageBackgroundColor + ';--art-lms-checkout-form-bg:' + settings.formBackgroundColor + ';--art-lms-button-bg:' + settings.buttonColor + ';--art-lms-button-color:' + settings.buttonTextColor + ';--art-lms-checkout-form-width:' + settings.formMaxWidth + 'px;--art-lms-checkout-form-padding:' + settings.formPadding + 'px;--art-lms-checkout-form-radius:' + settings.formBorderRadius + 'px;' + getCheckoutDesignTextCssVars(settings);
 		var formStyle = 'max-width:' + settings.formMaxWidth + 'px;padding:' + settings.formPadding + 'px;border-radius:' + settings.formBorderRadius + 'px;';
 		var html = '<div class="art-lms-checkout-design-preview-frame" data-template="' + escapeHtml(settings.template) + '" style="' + cssVars + '">';
 
@@ -170,7 +185,12 @@
 		html += '<h1>' + escapeHtml(strings.title || '') + '</h1>';
 		html += '<p class="art-lms-checkout__summary">';
 		html += '<strong>' + escapeHtml(strings.productTitle || '') + '</strong>';
-		html += '<span>' + escapeHtml(strings.productPrice || '') + '</span>';
+		html += '<span class="art-lms-checkout__prices">';
+		if (strings.productComparePrice) {
+			html += '<span class="art-lms-checkout__compare">' + escapeHtml(strings.productComparePrice) + '</span>';
+		}
+		html += '<span class="art-lms-checkout__price">' + escapeHtml(strings.productPrice || '') + '</span>';
+		html += '</span>';
 		html += '</p>';
 
 		if (!fields.length && !consents.items.length) {
@@ -205,6 +225,17 @@
 		return html;
 	}
 
+	function collectCheckoutPreviewStrings($form, config) {
+		var strings = $.extend({}, config.strings || previewStrings);
+		var $titleInput = $form.find('input[name*="[form_title]"]');
+
+		if ($titleInput.length) {
+			strings.title = $.trim($titleInput.val()) || strings.title || '';
+		}
+
+		return strings;
+	}
+
 	function updateCheckoutPreview() {
 		var $preview = $('#art-lms-checkout-preview');
 		var $form = $('.art-lms-checkout-settings-form');
@@ -219,7 +250,7 @@
 				fields: collectCheckoutPreviewFields($form),
 				consents: collectCheckoutPreviewConsents($form),
 				design: config.design || {},
-				strings: config.strings || previewStrings,
+				strings: collectCheckoutPreviewStrings($form, config),
 				idPrefix: 'art-lms-preview',
 				showHint: true,
 			})
@@ -391,6 +422,12 @@
 		updateCheckoutPreview();
 	}
 
+	function parseCheckoutDesignNumber($form, fieldName, fallback) {
+		var value = parseInt($form.find('input[name*="[design][' + fieldName + ']"]').val(), 10);
+
+		return isNaN(value) ? fallback : value;
+	}
+
 	function collectCheckoutDesignPreviewSettings($form) {
 		var config = window.artLmsCheckoutDesignPreview || {};
 		var defaults = config.defaults || {};
@@ -404,9 +441,17 @@
 			buttonSize: $form.find('select[name*="[design][button_size]"]').val() || 'medium',
 			buttonAlign: $form.find('select[name*="[design][button_align]"]').val() || 'center',
 			buttonText: $.trim($form.find('input[name*="[design][button_text]"]').val()) || defaults.button_text || 'Оплатить',
-			formMaxWidth: parseInt($form.find('input[name*="[design][form_max_width]"]').val(), 10) || 640,
-			formPadding: parseInt($form.find('input[name*="[design][form_padding]"]').val(), 10) || 20,
-			formBorderRadius: parseInt($form.find('input[name*="[design][form_border_radius]"]').val(), 10) || 8,
+			formMaxWidth: parseCheckoutDesignNumber($form, 'form_max_width', defaults.form_max_width || 640),
+			formPadding: parseCheckoutDesignNumber($form, 'form_padding', defaults.form_padding || 20),
+			formBorderRadius: parseCheckoutDesignNumber($form, 'form_border_radius', defaults.form_border_radius || 8),
+			titleFontSize: parseCheckoutDesignNumber($form, 'title_font_size', defaults.title_font_size || 24),
+			productNameFontSize: parseCheckoutDesignNumber($form, 'product_name_font_size', defaults.product_name_font_size || 16),
+			comparePriceFontSize: parseCheckoutDesignNumber($form, 'compare_price_font_size', defaults.compare_price_font_size || 16),
+			priceFontSize: parseCheckoutDesignNumber($form, 'price_font_size', defaults.price_font_size || 16),
+			fieldLabelFontSize: parseCheckoutDesignNumber($form, 'field_label_font_size', defaults.field_label_font_size || 16),
+			fieldInputFontSize: parseCheckoutDesignNumber($form, 'field_input_font_size', defaults.field_input_font_size || 16),
+			consentCheckboxSize: parseCheckoutDesignNumber($form, 'consent_checkbox_size', defaults.consent_checkbox_size || 16),
+			consentFontSize: parseCheckoutDesignNumber($form, 'consent_font_size', defaults.consent_font_size || 16),
 		};
 	}
 

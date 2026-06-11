@@ -1533,5 +1533,42 @@ class Art_LMS_Orders {
 		return true;
 	}
 
+	/**
+	 * Permanently delete an order and revoke related access.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return true|WP_Error
+	 */
+	public static function delete( $order_id ) {
+		global $wpdb;
+
+		$order_id = absint( $order_id );
+
+		if ( ! $order_id ) {
+			return new WP_Error( 'invalid_order', __( 'Заказ не найден.', 'art-lms' ) );
+		}
+
+		$order = self::get( $order_id );
+
+		if ( ! $order ) {
+			return new WP_Error( 'invalid_order', __( 'Заказ не найден.', 'art-lms' ) );
+		}
+
+		Art_LMS_Access::revoke_by_order_id( $order_id );
+		Art_LMS_Access::delete_by_order_id( $order_id );
+
+		$deleted = $wpdb->delete(
+			self::table_name(),
+			array( 'id' => $order_id ),
+			array( '%d' )
+		);
+
+		if ( ! $deleted ) {
+			return new WP_Error( 'delete_failed', __( 'Не удалось удалить заказ.', 'art-lms' ) );
+		}
+
+		return true;
+	}
+
 	// phpcs:enable
 }

@@ -227,6 +227,30 @@ class Art_LMS_Access {
 	}
 
 	/**
+	 * Delete all access rows linked to an order.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	public static function delete_by_order_id( $order_id ) {
+		global $wpdb;
+
+		$order_id = absint( $order_id );
+
+		if ( ! $order_id ) {
+			return false;
+		}
+
+		$result = $wpdb->delete(
+			self::table_name(),
+			array( 'order_id' => $order_id ),
+			array( '%d' )
+		);
+
+		return false !== $result;
+	}
+
+	/**
 	 * Check whether an order already granted active access to a material.
 	 *
 	 * @param int $order_id   Order ID.

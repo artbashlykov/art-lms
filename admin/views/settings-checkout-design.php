@@ -15,6 +15,8 @@ $option           = Art_LMS_Settings::OPTION_CHECKOUT;
 $design           = Art_LMS_Settings::get_checkout_design();
 $color_defaults      = Art_LMS_Settings::get_checkout_design_color_defaults();
 $dimension_defaults  = Art_LMS_Settings::get_checkout_design_dimension_defaults();
+$text_defaults       = Art_LMS_Settings::get_checkout_design_text_defaults();
+$text_fields         = Art_LMS_Settings::get_checkout_design_text_fields();
 $template_options    = Art_LMS_Settings::get_checkout_design_template_options();
 $size_options     = Art_LMS_Settings::get_checkout_design_button_size_options();
 $align_options    = Art_LMS_Settings::get_checkout_design_button_align_options();
@@ -195,6 +197,46 @@ $site_preview_url = Art_LMS_Checkout::get_design_preview_url();
 					</tr>
 				</table>
 			</div>
+
+			<details class="art-lms-panel art-lms-collapsible-panel">
+				<summary class="art-lms-collapsible-panel__summary"><?php esc_html_e( 'Дизайн текста', 'art-lms' ); ?></summary>
+				<div class="art-lms-collapsible-panel__content">
+					<table class="form-table" role="presentation">
+						<?php foreach ( $text_fields as $text_key => $text_field ) : ?>
+							<tr>
+								<th scope="row">
+									<label for="<?php echo esc_attr( 'checkout_design_' . $text_key ); ?>">
+										<?php echo esc_html( $text_field['label'] ); ?>
+									</label>
+								</th>
+								<td>
+									<div class="art-lms-checkout-design-dimension-control">
+										<input
+											type="number"
+											class="small-text"
+											id="<?php echo esc_attr( 'checkout_design_' . $text_key ); ?>"
+											name="<?php echo esc_attr( $option ); ?>[design][<?php echo esc_attr( $text_key ); ?>]"
+											value="<?php echo esc_attr( (string) ( $design[ $text_key ] ?? $text_defaults[ $text_key ] ) ); ?>"
+											min="<?php echo esc_attr( (string) $text_field['min'] ); ?>"
+											max="<?php echo esc_attr( (string) $text_field['max'] ); ?>"
+											step="1"
+										>
+										<span class="art-lms-checkout-design-dimension-suffix"><?php esc_html_e( 'px', 'art-lms' ); ?></span>
+										<button
+											type="button"
+											class="button art-lms-checkout-design-reset-dimension"
+											data-dimension-key="<?php echo esc_attr( $text_key ); ?>"
+											data-default-value="<?php echo esc_attr( (string) $text_defaults[ $text_key ] ); ?>"
+										>
+											<?php esc_html_e( 'Сбросить', 'art-lms' ); ?>
+										</button>
+									</div>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</table>
+				</div>
+			</details>
 
 			<div class="art-lms-panel">
 				<h2><?php esc_html_e( 'Кнопка', 'art-lms' ); ?></h2>

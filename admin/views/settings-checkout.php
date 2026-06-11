@@ -49,6 +49,28 @@ $home_url       = home_url( '/' );
 		<div class="art-lms-checkout-settings-main">
 
 	<div class="art-lms-panel">
+		<h2><?php esc_html_e( 'Заголовок формы', 'art-lms' ); ?></h2>
+		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row">
+					<label for="art_lms_checkout_form_title"><?php esc_html_e( 'Текст заголовка', 'art-lms' ); ?></label>
+				</th>
+				<td>
+					<input
+						type="text"
+						class="regular-text"
+						id="art_lms_checkout_form_title"
+						name="<?php echo esc_attr( $option ); ?>[form_title]"
+						value="<?php echo esc_attr( Art_LMS_Settings::get_checkout_form_title() ); ?>"
+						maxlength="100"
+					>
+					<p class="description"><?php esc_html_e( 'Отображается вверху формы оформления заказа.', 'art-lms' ); ?></p>
+				</td>
+			</tr>
+		</table>
+	</div>
+
+	<div class="art-lms-panel">
 		<h2><?php esc_html_e( 'Стандартные поля', 'art-lms' ); ?></h2>
 		<p class="description"><?php esc_html_e( 'Базовые поля формы оформления.', 'art-lms' ); ?></p>
 		<table class="widefat striped art-lms-settings-table">

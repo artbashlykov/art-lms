@@ -156,4 +156,75 @@ class Art_LMS_Payment_Gateway_Registry {
 			$gateway->register_webhook_routes();
 		}
 	}
+
+	/**
+	 * Partner signup URLs for supported payment gateways.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_partner_signup_urls() {
+		$urls = array(
+			'prodamus' => 'https://connect.prodamus.ru/?ref=ARTOUT&c=Rv1',
+			'yookassa' => 'https://yookassa.ru/joinups/?source=artbashlykov',
+			'plisio'   => 'https://plisio.net/account/signup?ref=313636',
+		);
+
+		/**
+		 * Filter partner signup URLs shown in gateway admin settings.
+		 *
+		 * @param array<string, string> $urls Gateway ID to signup URL map.
+		 */
+		return apply_filters( 'art_lms_payment_gateway_partner_signup_urls', $urls );
+	}
+
+	/**
+	 * Partner signup URL for a gateway, if available.
+	 *
+	 * @param string $gateway_id Gateway ID.
+	 * @return string
+	 */
+	public static function get_partner_signup_url( $gateway_id ) {
+		$gateway_id = sanitize_key( (string) $gateway_id );
+		$urls       = self::get_partner_signup_urls();
+
+		$url = $urls[ $gateway_id ] ?? '';
+
+		return is_string( $url ) ? esc_url_raw( $url ) : '';
+	}
+
+	/**
+	 * Documentation URLs for payment gateway setup guides.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_documentation_urls() {
+		$urls = array(
+			'prodamus' => 'https://docs.artbashlykov.ru/art_doc/art-lms/priem-platezhey-platezhnye-shlyuzy/prodamus/',
+			'yookassa' => 'https://docs.artbashlykov.ru/art_doc/art-lms/priem-platezhey-platezhnye-shlyuzy/yukassa/',
+			'yoomoney' => 'https://docs.artbashlykov.ru/art_doc/art-lms/priem-platezhey-platezhnye-shlyuzy/yumani-dlya-fizlits-i-samozanyatyh/',
+			'plisio'   => 'https://docs.artbashlykov.ru/art_doc/art-lms/priem-platezhey-platezhnye-shlyuzy/plisio-kripto-shlyuz/',
+		);
+
+		/**
+		 * Filter documentation URLs shown in gateway admin settings.
+		 *
+		 * @param array<string, string> $urls Gateway ID to documentation URL map.
+		 */
+		return apply_filters( 'art_lms_payment_gateway_documentation_urls', $urls );
+	}
+
+	/**
+	 * Documentation URL for a gateway setup guide, if available.
+	 *
+	 * @param string $gateway_id Gateway ID.
+	 * @return string
+	 */
+	public static function get_documentation_url( $gateway_id ) {
+		$gateway_id = sanitize_key( (string) $gateway_id );
+		$urls       = self::get_documentation_urls();
+
+		$url = $urls[ $gateway_id ] ?? '';
+
+		return is_string( $url ) ? esc_url_raw( $url ) : '';
+	}
 }

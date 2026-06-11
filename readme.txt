@@ -4,7 +4,7 @@ Tags: lms, elearning, payments, digital products, checkout
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.14.4
+Stable tag: 2.15.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,6 +73,13 @@ When a customer completes checkout with a live payment gateway enabled, the plug
 By default, no. If you enable **Delete all plugin data when uninstalling ART LMS** in the general plugin settings and then delete the plugin from the Plugins screen, the plugin removes its custom database tables, settings, materials, payment buttons, order/access records, plugin-specific user meta, and the `art_lms_customer` role. WordPress pages you selected in the settings are not deleted.
 
 == Changelog ==
+
+= 2.15.0 =
+* Delete orders from the admin orders list and order view.
+* Checkout form title setting and typography controls in form design settings.
+* Documentation panel and partner signup links for payment gateways (Prodamus, YooKassa, YooMoney, Plisio).
+* Checkout page style isolation from theme CSS; layout and control fixes on the public checkout form.
+* Removed legacy Capitalist gateway cleanup code.
 
 = 2.14.4 =
 * Plugin Check fixes: readme, statistics SQL, performance tweaks, and security hardening.

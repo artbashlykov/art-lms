@@ -173,6 +173,153 @@ abstract class Art_LMS_Payment_Gateway {
 	}
 
 	/**
+	 * Partner signup URL for this gateway, if configured.
+	 *
+	 * @return string
+	 */
+	public function get_partner_signup_url() {
+		$url = Art_LMS_Payment_Gateway_Registry::get_partner_signup_url( $this->get_id() );
+
+		/**
+		 * Filter partner signup URL for a gateway instance.
+		 *
+		 * @param string                   $url     Signup URL.
+		 * @param Art_LMS_Payment_Gateway $gateway Gateway instance.
+		 */
+		return (string) apply_filters( 'art_lms_gateway_partner_signup_url', $url, $this );
+	}
+
+	/**
+	 * Whether partner signup prompt should be shown for gateway settings.
+	 *
+	 * @param array $settings Stored gateway settings.
+	 * @return bool
+	 */
+	public function should_show_partner_signup_prompt( array $settings ) {
+		$settings = wp_parse_args( $settings, $this->get_default_settings() );
+
+		if ( ( $settings['enabled'] ?? 'no' ) === 'yes' ) {
+			return false;
+		}
+
+		$url = $this->get_partner_signup_url();
+
+		return '' !== $url && wp_http_validate_url( $url );
+	}
+
+	/**
+	 * Render partner signup prompt under gateway description in admin.
+	 *
+	 * @param array  $settings Stored gateway settings.
+	 * @param string $context  UI context: settings|list.
+	 */
+	public function render_partner_signup_prompt( array $settings, $context = 'settings' ) {
+		if ( ! $this->should_show_partner_signup_prompt( $settings ) ) {
+			return;
+		}
+
+		$url  = $this->get_partner_signup_url();
+		$meta = $this->get_meta();
+		$title = (string) ( $meta['title'] ?? $this->get_id() );
+
+		if ( 'list' === $context ) {
+			?>
+			<p class="description art-lms-gateway-partner-signup art-lms-gateway-partner-signup--list">
+				<?php
+				printf(
+					/* translators: %s: payment gateway name */
+					esc_html__( 'Ещё нет %s?', 'art-lms' ),
+					esc_html( $title )
+				);
+				?>
+				<a href="<?php echo esc_url( $url ); ?>" target="_blank" rel="noopener noreferrer">
+					<?php esc_html_e( 'Зарегистрироваться', 'art-lms' ); ?>
+				</a>
+			</p>
+			<?php
+			return;
+		}
+
+		?>
+		<p class="description art-lms-gateway-partner-signup art-lms-gateway-partner-signup--settings">
+			<?php esc_html_e( 'Нет аккаунта?', 'art-lms' ); ?>
+			<a href="<?php echo esc_url( $url ); ?>" target="_blank" rel="noopener noreferrer">
+				<?php
+				printf(
+					/* translators: %s: payment gateway name */
+					esc_html__( 'Подключить %s', 'art-lms' ),
+					esc_html( $title )
+				);
+				?>
+			</a>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Documentation URL for this gateway setup guide, if configured.
+	 *
+	 * @return string
+	 */
+	public function get_documentation_url() {
+		$url = Art_LMS_Payment_Gateway_Registry::get_documentation_url( $this->get_id() );
+
+		/**
+		 * Filter documentation URL for a gateway instance.
+		 *
+		 * @param string                   $url     Documentation URL.
+		 * @param Art_LMS_Payment_Gateway $gateway Gateway instance.
+		 */
+		return (string) apply_filters( 'art_lms_gateway_documentation_url', $url, $this );
+	}
+
+	/**
+	 * Render documentation panel on gateway settings page.
+	 */
+	public function render_documentation_panel() {
+		$url = $this->get_documentation_url();
+
+		if ( '' === $url || ! wp_http_validate_url( $url ) ) {
+			return;
+		}
+
+		$meta  = $this->get_meta();
+		$title = (string) ( $meta['title'] ?? $this->get_id() );
+		?>
+		<div class="art-lms-panel art-lms-gateway-documentation-panel">
+			<div class="art-lms-gateway-documentation-panel__head">
+				<div>
+					<h2><?php esc_html_e( 'Документация', 'art-lms' ); ?></h2>
+					<p class="description">
+						<?php
+						printf(
+							/* translators: %s: payment gateway name */
+							esc_html__( 'Пошаговая инструкция по подключению %s в ART LMS.', 'art-lms' ),
+							esc_html( $title )
+						);
+						?>
+					</p>
+				</div>
+				<a
+					class="button button-secondary"
+					href="<?php echo esc_url( $url ); ?>"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					<?php
+					printf(
+						/* translators: %s: payment gateway name */
+						esc_html__( 'Документация %s', 'art-lms' ),
+						esc_html( $title )
+					);
+					?>
+				</a>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Render gateway settings panel in admin.
 	 *
 	 * @param string $option_name Option key prefix.

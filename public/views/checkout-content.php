@@ -23,7 +23,7 @@ $button_class  = 'art-lms-button ' . Art_LMS_Settings::get_checkout_button_size_
 $actions_class = Art_LMS_Settings::get_checkout_button_actions_class();
 ?>
 <div class="art-lms-checkout">
-	<h1><?php esc_html_e( 'Оформление заказа', 'art-lms' ); ?></h1>
+	<h1><?php echo esc_html( Art_LMS_Settings::get_checkout_form_title() ); ?></h1>
 
 	<?php if ( ! $button_valid ) : ?>
 		<p class="art-lms-notice art-lms-notice--warning">

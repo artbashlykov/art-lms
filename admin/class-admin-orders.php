@@ -30,6 +30,7 @@ class Art_LMS_Admin_Orders {
 		add_filter( 'set_screen_option_' . self::SCREEN_OPTION_PER_PAGE, array( __CLASS__, 'set_screen_option_per_page' ), 10, 3 );
 		add_action( 'admin_post_art_lms_save_order', array( __CLASS__, 'handle_save_order' ) );
 		add_action( 'admin_post_art_lms_mark_order_paid', array( __CLASS__, 'handle_mark_order_paid' ) );
+		add_action( 'admin_post_art_lms_delete_order', array( __CLASS__, 'handle_delete_order' ) );
 		add_action( 'admin_post_art_lms_update_order_status', array( __CLASS__, 'handle_update_order_status' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'render_notices' ) );
 		add_action( 'rest_api_init', array( __CLASS__, 'register_rest_routes' ) );
@@ -547,6 +548,47 @@ class Art_LMS_Admin_Orders {
 	}
 
 	/**
+	 * Permanently delete an order.
+	 */
+	public static function handle_delete_order() {
+		if ( ! Art_LMS_Security::can_manage() ) {
+			wp_die( esc_html__( 'Недостаточно прав.', 'art-lms' ) );
+		}
+
+		$order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0;
+
+		check_admin_referer( 'art_lms_delete_order_' . $order_id );
+
+		$result = Art_LMS_Orders::delete( $order_id );
+
+		$redirect_to = isset( $_GET['redirect_to'] ) ? esc_url_raw( wp_unslash( $_GET['redirect_to'] ) ) : '';
+		$redirect_to = wp_validate_redirect( $redirect_to, self::get_list_url() );
+
+		if ( is_wp_error( $result ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'            => self::PAGE_LIST,
+						'art_lms_notice'  => 'order_error',
+						'art_lms_error'   => rawurlencode( $result->get_error_message() ),
+					),
+					admin_url( 'admin.php' )
+				)
+			);
+			exit;
+		}
+
+		wp_safe_redirect(
+			add_query_arg(
+				'art_lms_notice',
+				'order_deleted',
+				$redirect_to
+			)
+		);
+		exit;
+	}
+
+	/**
 	 * Show admin notices on order pages.
 	 */
 	public static function render_notices() {
@@ -587,6 +629,10 @@ class Art_LMS_Admin_Orders {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Статус заказа обновлён.', 'art-lms' ) . '</p></div>';
 		}
 
+		if ( 'order_deleted' === $notice ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Заказ удалён.', 'art-lms' ) . '</p></div>';
+		}
+
 		if ( 'order_error' === $notice && $error ) {
 			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $error ) . '</p></div>';
 		}
@@ -621,6 +667,33 @@ class Art_LMS_Admin_Orders {
 				'order_id' => absint( $order_id ),
 			),
 			admin_url( 'admin.php' )
+		);
+	}
+
+	/**
+	 * Get delete action URL for an order.
+	 *
+	 * @param int   $order_id     Order ID.
+	 * @param array $redirect_args Optional list filters to preserve after delete.
+	 * @return string
+	 */
+	public static function get_delete_url( $order_id, $redirect_args = array() ) {
+		$order_id = absint( $order_id );
+
+		$args = array(
+			'action'   => 'art_lms_delete_order',
+			'order_id' => $order_id,
+		);
+
+		$redirect_to = self::get_list_url( $redirect_args );
+
+		if ( $redirect_to ) {
+			$args['redirect_to'] = $redirect_to;
+		}
+
+		return wp_nonce_url(
+			add_query_arg( $args, admin_url( 'admin-post.php' ) ),
+			'art_lms_delete_order_' . $order_id
 		);
 	}
 }

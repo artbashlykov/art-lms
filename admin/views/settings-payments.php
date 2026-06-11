@@ -90,6 +90,8 @@ $ordered_ids     = Art_LMS_Settings::get_ordered_gateway_ids();
 
 						</p>
 
+						<?php $gateway_instance->render_partner_signup_prompt( $gateway_settings, 'list' ); ?>
+
 					</div>
 
 					<div class="art-lms-payment-gateway-list__status">

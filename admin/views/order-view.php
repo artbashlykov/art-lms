@@ -29,9 +29,15 @@ $can_send_email = Art_LMS_Orders::STATUS_PAID !== $order->status;
 		?>
 	</h1>
 
+	<?php $delete_url = Art_LMS_Admin_Orders::get_delete_url( (int) $order->id ); ?>
 	<p class="art-lms-order-view-actions">
 		<a href="<?php echo esc_url( $list_url ); ?>" class="button"><?php esc_html_e( '← К списку заказов', 'art-lms' ); ?></a>
 		<a href="<?php echo esc_url( $edit_url ); ?>" class="button button-primary"><?php esc_html_e( 'Изменить', 'art-lms' ); ?></a>
+		<a
+			href="<?php echo esc_url( $delete_url ); ?>"
+			class="button button-link-delete"
+			onclick="return confirm('<?php echo esc_js( __( 'Удалить этот заказ безвозвратно?', 'art-lms' ) ); ?>');"
+		><?php esc_html_e( 'Удалить', 'art-lms' ); ?></a>
 	</p>
 
 	<div class="art-lms-panel">

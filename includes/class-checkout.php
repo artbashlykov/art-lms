@@ -28,6 +28,8 @@ class Art_LMS_Checkout {
 		add_action( 'init', array( __CLASS__, 'maybe_flush_rewrites' ), 99 );
 		add_filter( 'query_vars', array( __CLASS__, 'register_query_var' ) );
 		add_action( 'parse_request', array( __CLASS__, 'parse_checkout_request' ), 0 );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ), 20 );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'strip_foreign_styles' ), 9999 );
 		add_action( 'template_redirect', array( __CLASS__, 'maybe_redirect_to_payment' ), 0 );
 		add_action( 'template_redirect', array( __CLASS__, 'maybe_serve_checkout' ), 0 );
 		add_filter( 'template_include', array( __CLASS__, 'filter_template' ) );
@@ -406,31 +408,75 @@ class Art_LMS_Checkout {
 	}
 
 	/**
-	 * Render checkout page content.
+	 * Enqueue checkout-only frontend assets.
 	 */
-	public static function render_content() {
+	public static function enqueue_assets() {
+		if ( ! self::is_checkout_request() ) {
+			return;
+		}
+
 		wp_enqueue_style( 'art-lms-public' );
 		wp_add_inline_style( 'art-lms-public', Art_LMS_Settings::get_checkout_design_css() );
 
-		if ( ! Art_LMS_Checkout::is_design_preview_request() ) {
-			wp_enqueue_script( 'art-lms-checkout' );
-			wp_localize_script(
-				'art-lms-checkout',
-				'artLmsCheckout',
-				array(
-					'config'    => Art_LMS_Settings::get_checkout_frontend_form_config(),
-					'buttonId'  => absint( $_GET[ Art_LMS_Payment_Buttons::CHECKOUT_QUERY_ARG ] ?? 0 ),
-					'restUrl'   => esc_url_raw( rest_url( 'art-lms/v1/checkout/submit' ) ),
-					'nonce'     => wp_create_nonce( 'wp_rest' ),
-					'strings'   => array(
-						'submitting'   => __( 'Создаём заказ…', 'art-lms' ),
-						'submitFailed' => Art_LMS_Settings::format_checkout_form_message( 'create_order_failed' ),
-						'verificationPending' => Art_LMS_Settings::format_checkout_form_message( 'email_verification_sent' ),
-					),
-				)
-			);
+		if ( self::is_design_preview_request() ) {
+			return;
 		}
 
+		wp_enqueue_script( 'art-lms-checkout' );
+		wp_localize_script(
+			'art-lms-checkout',
+			'artLmsCheckout',
+			array(
+				'config'   => Art_LMS_Settings::get_checkout_frontend_form_config(),
+				'buttonId' => absint( $_GET[ Art_LMS_Payment_Buttons::CHECKOUT_QUERY_ARG ] ?? 0 ),
+				'restUrl'  => esc_url_raw( rest_url( 'art-lms/v1/checkout/submit' ) ),
+				'nonce'    => wp_create_nonce( 'wp_rest' ),
+				'strings'  => array(
+					'submitting'            => __( 'Создаём заказ…', 'art-lms' ),
+					'submitFailed'          => Art_LMS_Settings::format_checkout_form_message( 'create_order_failed' ),
+					'verificationPending'   => Art_LMS_Settings::format_checkout_form_message( 'email_verification_sent' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Remove theme and third-party styles from the checkout page.
+	 */
+	public static function strip_foreign_styles() {
+		if ( ! self::is_checkout_request() ) {
+			return;
+		}
+
+		$allowed = apply_filters(
+			'art_lms_checkout_style_handles',
+			array(
+				'art-lms-public',
+				'admin-bar',
+				'dashicons',
+			)
+		);
+
+		global $wp_styles;
+
+		if ( ! ( $wp_styles instanceof WP_Styles ) ) {
+			return;
+		}
+
+		foreach ( array_keys( $wp_styles->registered ) as $handle ) {
+			if ( in_array( $handle, $allowed, true ) ) {
+				continue;
+			}
+
+			wp_dequeue_style( $handle );
+			wp_deregister_style( $handle );
+		}
+	}
+
+	/**
+	 * Render checkout page content.
+	 */
+	public static function render_content() {
 		include ART_LMS_PLUGIN_DIR . 'public/views/checkout-content.php';
 	}
 

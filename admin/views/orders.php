@@ -138,8 +138,9 @@ $has_filters   = $filters['buyer'] || $filters['status'] || $filters['date_from'
 			<?php else : ?>
 				<?php foreach ( $orders as $order ) : ?>
 					<?php
-					$edit_url = Art_LMS_Admin_Orders::get_edit_url( (int) $order->id );
-					$user     = $order->user_id ? get_userdata( (int) $order->user_id ) : false;
+					$edit_url   = Art_LMS_Admin_Orders::get_edit_url( (int) $order->id );
+					$delete_url = Art_LMS_Admin_Orders::get_delete_url( (int) $order->id, $filters );
+					$user       = $order->user_id ? get_userdata( (int) $order->user_id ) : false;
 					?>
 					<tr>
 						<td><?php echo esc_html( Art_LMS_Orders::format_admin_datetime( $order->created_at ) ); ?></td>
@@ -165,6 +166,12 @@ $has_filters   = $filters['buyer'] || $filters['status'] || $filters['date_from'
 							<a href="<?php echo esc_url( Art_LMS_Admin_Orders::get_view_url( (int) $order->id ) ); ?>"><?php esc_html_e( 'Просмотреть', 'art-lms' ); ?></a>
 							<span class="art-lms-actions-sep" aria-hidden="true">|</span>
 							<a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Изменить', 'art-lms' ); ?></a>
+							<span class="art-lms-actions-sep" aria-hidden="true">|</span>
+							<a
+								href="<?php echo esc_url( $delete_url ); ?>"
+								class="submitdelete"
+								onclick="return confirm('<?php echo esc_js( __( 'Удалить этот заказ безвозвратно?', 'art-lms' ) ); ?>');"
+							><?php esc_html_e( 'Удалить', 'art-lms' ); ?></a>
 						</td>
 					</tr>
 				<?php endforeach; ?>

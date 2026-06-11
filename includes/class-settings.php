@@ -17,7 +17,6 @@ class Art_LMS_Settings {
 	const OPTION_CHECKOUT = 'art_lms_settings_checkout';
 	const OPTION_EMAIL    = 'art_lms_settings_email';
 	const OPTION_MIGRATED              = 'art_lms_settings_migrated';
-	const OPTION_CAPITALIST_PURGED     = 'art_lms_capitalist_data_purged';
 	const OPTION_DELETE_DATA_ON_UNINSTALL = 'art_lms_delete_data_on_uninstall';
 
 	/**
@@ -32,62 +31,6 @@ class Art_LMS_Settings {
 	 */
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'bootstrap_settings' ), 5 );
-		add_action( 'init', array( __CLASS__, 'maybe_purge_capitalist_data' ), 6 );
-	}
-
-	/**
-	 * Remove legacy Capitalist gateway data from the database once.
-	 */
-	public static function maybe_purge_capitalist_data() {
-		if ( get_option( self::OPTION_CAPITALIST_PURGED ) ) {
-			return;
-		}
-
-		self::purge_capitalist_data();
-		update_option( self::OPTION_CAPITALIST_PURGED, ART_LMS_VERSION, false );
-	}
-
-	/**
-	 * Delete Capitalist gateway settings, transients, and related orders.
-	 */
-	public static function purge_capitalist_data() {
-		$payment = get_option( self::OPTION_PAYMENT, array() );
-
-		if ( is_array( $payment ) ) {
-			unset( $payment['gateways']['capitalist'] );
-
-			if ( ! empty( $payment['gateway_order'] ) && is_array( $payment['gateway_order'] ) ) {
-				$payment['gateway_order'] = array_values(
-					array_filter(
-						$payment['gateway_order'],
-						static function ( $gateway_id ) {
-							return 'capitalist' !== sanitize_key( (string) $gateway_id );
-						}
-					)
-				);
-			}
-
-			foreach ( array( 'default_gateway', 'active_gateway' ) as $gateway_key ) {
-				if ( 'capitalist' === sanitize_key( (string) ( $payment[ $gateway_key ] ?? '' ) ) ) {
-					$payment[ $gateway_key ] = '';
-				}
-			}
-
-			self::update_option( self::OPTION_PAYMENT, $payment );
-		}
-
-		delete_transient( 'art_lms_gateway_webhook_test_capitalist' );
-
-		global $wpdb;
-
-		$table = $wpdb->prefix . 'art_lms_orders';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->delete(
-			$table,
-			array( 'payment_gateway' => 'capitalist' ),
-			array( '%s' )
-		);
 	}
 
 	/**
@@ -283,6 +226,22 @@ class Art_LMS_Settings {
 	 */
 	public static function get_checkout() {
 		return self::get_option( self::OPTION_CHECKOUT, self::get_default_checkout() );
+	}
+
+	/**
+	 * Checkout form heading shown above the order form.
+	 *
+	 * @return string
+	 */
+	public static function get_checkout_form_title() {
+		$checkout = self::get_checkout();
+		$title    = trim( (string) ( $checkout['form_title'] ?? '' ) );
+
+		if ( '' === $title ) {
+			return self::get_default_checkout()['form_title'];
+		}
+
+		return $title;
 	}
 
 	/**
@@ -1336,6 +1295,76 @@ class Art_LMS_Settings {
 	}
 
 	/**
+	 * Default text sizing values for checkout design controls.
+	 *
+	 * @return array<string, int>
+	 */
+	public static function get_checkout_design_text_defaults() {
+		$defaults = self::get_default_checkout()['design'];
+
+		return array(
+			'title_font_size'         => (int) $defaults['title_font_size'],
+			'product_name_font_size'  => (int) $defaults['product_name_font_size'],
+			'compare_price_font_size' => (int) $defaults['compare_price_font_size'],
+			'price_font_size'         => (int) $defaults['price_font_size'],
+			'field_label_font_size'   => (int) $defaults['field_label_font_size'],
+			'field_input_font_size'   => (int) $defaults['field_input_font_size'],
+			'consent_checkbox_size'   => (int) $defaults['consent_checkbox_size'],
+			'consent_font_size'       => (int) $defaults['consent_font_size'],
+		);
+	}
+
+	/**
+	 * Text sizing field definitions for checkout design admin UI.
+	 *
+	 * @return array<string, array{label: string, min: int, max: int}>
+	 */
+	public static function get_checkout_design_text_fields() {
+		return array(
+			'title_font_size'         => array(
+				'label' => __( 'Размер шрифта «Оформление заказа»', 'art-lms' ),
+				'min'   => 10,
+				'max'   => 48,
+			),
+			'product_name_font_size'  => array(
+				'label' => __( 'Размер шрифта «Название товара»', 'art-lms' ),
+				'min'   => 10,
+				'max'   => 48,
+			),
+			'compare_price_font_size' => array(
+				'label' => __( 'Размер шрифта «зачёркнутая цена»', 'art-lms' ),
+				'min'   => 10,
+				'max'   => 48,
+			),
+			'price_font_size'         => array(
+				'label' => __( 'Размер шрифта «реальная цена»', 'art-lms' ),
+				'min'   => 10,
+				'max'   => 48,
+			),
+			'field_label_font_size'   => array(
+				'label' => __( 'Размер шрифта «лейбла полей»', 'art-lms' ),
+				'min'   => 10,
+				'max'   => 48,
+			),
+			'field_input_font_size'   => array(
+				'label' => __( 'Размер шрифта «полей формы»', 'art-lms' ),
+				'min'   => 10,
+				'max'   => 48,
+			),
+			'consent_checkbox_size'   => array(
+				'label' => __( 'Размер чек-бокса', 'art-lms' ),
+				'min'   => 12,
+				'max'   => 32,
+			),
+			'consent_font_size'       => array(
+				'label' => __( 'Размер шрифта «Согласий»', 'art-lms' ),
+				'min'   => 10,
+				'max'   => 48,
+			),
+		);
+	}
+
+	/**
 	 * Sanitize checkout design dimension in pixels.
 	 *
 	 * @param mixed  $value    Raw value.
@@ -1402,14 +1431,22 @@ class Art_LMS_Settings {
 		$design = self::get_checkout_design();
 
 		return sprintf(
-			':root{--art-lms-checkout-page-bg:%1$s;--art-lms-checkout-form-bg:%2$s;--art-lms-button-bg:%3$s;--art-lms-button-color:%4$s;--art-lms-checkout-form-width:%5$dpx;--art-lms-checkout-form-padding:%6$dpx;--art-lms-checkout-form-radius:%7$dpx;}',
+			':root{--art-lms-checkout-page-bg:%1$s;--art-lms-checkout-form-bg:%2$s;--art-lms-button-bg:%3$s;--art-lms-button-color:%4$s;--art-lms-checkout-form-width:%5$dpx;--art-lms-checkout-form-padding:%6$dpx;--art-lms-checkout-form-radius:%7$dpx;--art-lms-checkout-title-font-size:%8$dpx;--art-lms-checkout-product-name-font-size:%9$dpx;--art-lms-checkout-compare-price-font-size:%10$dpx;--art-lms-checkout-price-font-size:%11$dpx;--art-lms-checkout-field-label-font-size:%12$dpx;--art-lms-checkout-field-input-font-size:%13$dpx;--art-lms-checkout-consent-checkbox-size:%14$dpx;--art-lms-checkout-consent-font-size:%15$dpx;}',
 			esc_attr( $design['page_background_color'] ),
 			esc_attr( $design['form_background_color'] ),
 			esc_attr( $design['button_color'] ),
 			esc_attr( $design['button_text_color'] ),
 			(int) $design['form_max_width'],
 			(int) $design['form_padding'],
-			(int) $design['form_border_radius']
+			(int) $design['form_border_radius'],
+			(int) $design['title_font_size'],
+			(int) $design['product_name_font_size'],
+			(int) $design['compare_price_font_size'],
+			(int) $design['price_font_size'],
+			(int) $design['field_label_font_size'],
+			(int) $design['field_input_font_size'],
+			(int) $design['consent_checkbox_size'],
+			(int) $design['consent_font_size']
 		);
 	}
 
@@ -1433,6 +1470,14 @@ class Art_LMS_Settings {
 			'formMaxWidth'        => (int) $design['form_max_width'],
 			'formPadding'         => (int) $design['form_padding'],
 			'formBorderRadius'    => (int) $design['form_border_radius'],
+			'titleFontSize'       => (int) $design['title_font_size'],
+			'productNameFontSize' => (int) $design['product_name_font_size'],
+			'comparePriceFontSize' => (int) $design['compare_price_font_size'],
+			'priceFontSize'       => (int) $design['price_font_size'],
+			'fieldLabelFontSize'  => (int) $design['field_label_font_size'],
+			'fieldInputFontSize'  => (int) $design['field_input_font_size'],
+			'consentCheckboxSize' => (int) $design['consent_checkbox_size'],
+			'consentFontSize'     => (int) $design['consent_font_size'],
 		);
 	}
 
@@ -1941,6 +1986,19 @@ class Art_LMS_Settings {
 			$button_text = substr( $button_text, 0, 50 );
 		}
 
+		$text_defaults = self::get_checkout_design_text_defaults();
+		$text_fields   = self::get_checkout_design_text_fields();
+		$text_sizes    = array();
+
+		foreach ( $text_fields as $text_key => $text_field ) {
+			$text_sizes[ $text_key ] = self::sanitize_checkout_design_dimension(
+				$input[ $text_key ] ?? $defaults[ $text_key ] ?? $text_defaults[ $text_key ],
+				$text_defaults[ $text_key ],
+				(int) $text_field['min'],
+				(int) $text_field['max']
+			);
+		}
+
 		return array(
 			'template'              => $template,
 			'page_background_color' => $page_background ? $page_background : $defaults['page_background_color'],
@@ -1968,6 +2026,14 @@ class Art_LMS_Settings {
 				0,
 				64
 			),
+			'title_font_size'         => $text_sizes['title_font_size'],
+			'product_name_font_size'  => $text_sizes['product_name_font_size'],
+			'compare_price_font_size' => $text_sizes['compare_price_font_size'],
+			'price_font_size'         => $text_sizes['price_font_size'],
+			'field_label_font_size'   => $text_sizes['field_label_font_size'],
+			'field_input_font_size'   => $text_sizes['field_input_font_size'],
+			'consent_checkbox_size'   => $text_sizes['consent_checkbox_size'],
+			'consent_font_size'       => $text_sizes['consent_font_size'],
 		);
 	}
 
@@ -1986,8 +2052,23 @@ class Art_LMS_Settings {
 			$input = array();
 		}
 
+		$default_title = self::get_default_checkout()['form_title'];
+		$form_title    = isset( $input['form_title'] ) ? sanitize_text_field( wp_unslash( $input['form_title'] ) ) : ( $current['form_title'] ?? $default_title );
+		$form_title    = trim( $form_title );
+
+		if ( '' === $form_title ) {
+			$form_title = $default_title;
+		}
+
+		if ( function_exists( 'mb_substr' ) ) {
+			$form_title = mb_substr( $form_title, 0, 100 );
+		} else {
+			$form_title = substr( $form_title, 0, 100 );
+		}
+
 		return array(
 			'slug'          => self::get_default_checkout()['slug'],
+			'form_title'    => $form_title,
 			'fields'        => isset( $input['fields'] )
 				? self::sanitize_checkout_fields( $input['fields'] )
 				: $current['fields'],
@@ -2132,8 +2213,9 @@ class Art_LMS_Settings {
 	 */
 	public static function get_default_checkout() {
 		return array(
-			'slug'   => 'artout',
-			'fields' => array(
+			'slug'       => 'artout',
+			'form_title' => __( 'Оформление заказа', 'art-lms' ),
+			'fields'     => array(
 				'full_name' => array(
 					'enabled'  => 'yes',
 					'required' => 'yes',
@@ -2174,6 +2256,14 @@ class Art_LMS_Settings {
 				'form_max_width'        => 640,
 				'form_padding'          => 20,
 				'form_border_radius'    => 8,
+				'title_font_size'         => 24,
+				'product_name_font_size'  => 16,
+				'compare_price_font_size' => 16,
+				'price_font_size'         => 16,
+				'field_label_font_size'   => 16,
+				'field_input_font_size'   => 16,
+				'consent_checkbox_size'   => 16,
+				'consent_font_size'       => 16,
 			),
 			'messages'       => self::get_default_checkout_form_messages(),
 			'payment_status' => self::get_default_payment_status_messages(),

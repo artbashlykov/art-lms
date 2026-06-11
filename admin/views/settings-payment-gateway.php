@@ -32,7 +32,7 @@ $meta             = $gateway->get_meta();
 
 $gateway_settings = $settings['gateways'][ $gateway_id ] ?? $gateway->get_default_settings();
 
-$back_url         = Art_LMS_Admin_Settings::get_tab_url( Art_LMS_Admin_Settings::PAGE_SETTINGS, Art_LMS_Admin_Settings::TAB_PAYMENTS );
+$back_url = Art_LMS_Admin_Settings::get_tab_url( Art_LMS_Admin_Settings::PAGE_SETTINGS, Art_LMS_Admin_Settings::TAB_PAYMENTS );
 
 ?>
 
@@ -41,8 +41,6 @@ $back_url         = Art_LMS_Admin_Settings::get_tab_url( Art_LMS_Admin_Settings:
 	<a href="<?php echo esc_url( $back_url ); ?>">&larr; <?php esc_html_e( 'Вернуться ко всем способам оплаты', 'art-lms' ); ?></a>
 
 </p>
-
-
 
 <form method="post" action="options.php" class="art-lms-payment-gateway-settings-form">
 
@@ -65,6 +63,7 @@ $back_url         = Art_LMS_Admin_Settings::get_tab_url( Art_LMS_Admin_Settings:
 					<strong><?php echo esc_html( $meta['title'] ); ?></strong>
 
 					<p class="description"><?php echo esc_html( $gateway->get_admin_description() ); ?></p>
+					<?php $gateway->render_partner_signup_prompt( $gateway_settings ); ?>
 
 				</td>
 
@@ -112,7 +111,7 @@ $back_url         = Art_LMS_Admin_Settings::get_tab_url( Art_LMS_Admin_Settings:
 
 	</div>
 
-
+	<?php $gateway->render_documentation_panel(); ?>
 
 	<div class="art-lms-panel">
 

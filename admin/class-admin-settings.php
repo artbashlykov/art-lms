@@ -316,14 +316,16 @@ class Art_LMS_Admin_Settings {
 			'defaults' => array_merge(
 				Art_LMS_Settings::get_checkout_design_color_defaults(),
 				Art_LMS_Settings::get_checkout_design_dimension_defaults(),
+				Art_LMS_Settings::get_checkout_design_text_defaults(),
 				array(
 					'button_text' => Art_LMS_Settings::get_default_checkout()['design']['button_text'],
 				)
 			),
 			'strings'  => array(
-				'title'        => __( 'Оформление заказа', 'art-lms' ),
-				'productTitle' => __( 'Пример платежной кнопки', 'art-lms' ),
-				'productPrice' => __( '1 990 ₽', 'art-lms' ),
+				'title'        => Art_LMS_Settings::get_checkout_form_title(),
+				'productTitle'        => __( 'Пример платежной кнопки', 'art-lms' ),
+				'productComparePrice' => __( '2 490 ₽', 'art-lms' ),
+				'productPrice'        => __( '1 990 ₽', 'art-lms' ),
 				'pay'          => __( 'Оплатить', 'art-lms' ),
 				'empty'        => __( 'Нет полей для отображения. Включите хотя бы одно поле.', 'art-lms' ),
 				'header'       => __( 'Шапка сайта', 'art-lms' ),
