@@ -1,0 +1,186 @@
+/**
+ * jQuery UI Datepicker styles for ART LMS admin filters.
+ * Widget is appended to body, not inside page wrappers.
+ */
+
+#ui-datepicker-div.ui-datepicker {
+	position: absolute;
+	z-index: 100001 !important;
+	display: none;
+	width: 17em;
+	padding: 0;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	background: #fff;
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+	color: #1d2327;
+	font-size: 13px;
+}
+
+.ui-datepicker .ui-datepicker-header {
+	position: relative;
+	padding: 8px 10px;
+	border: 0;
+	border-bottom: 1px solid #dcdcde;
+	border-radius: 4px 4px 0 0;
+	background: #f6f7f7;
+	color: #1d2327;
+	font-weight: 600;
+}
+
+.ui-datepicker .ui-datepicker-prev,
+.ui-datepicker .ui-datepicker-next {
+	position: absolute;
+	top: 50%;
+	width: 1.8em;
+	height: 1.8em;
+	margin-top: -0.9em;
+	border: 0;
+	border-radius: 3px;
+	background: transparent;
+	color: #2271b1;
+	cursor: pointer;
+	text-indent: -9999px;
+	overflow: hidden;
+}
+
+.ui-datepicker .ui-datepicker-prev {
+	left: 6px;
+}
+
+.ui-datepicker .ui-datepicker-next {
+	right: 6px;
+}
+
+.ui-datepicker .ui-datepicker-prev::before,
+.ui-datepicker .ui-datepicker-next::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 0;
+	height: 0;
+	margin-top: -4px;
+	border-style: solid;
+}
+
+.ui-datepicker .ui-datepicker-prev::before {
+	margin-left: -2px;
+	border-width: 4px 6px 4px 0;
+	border-color: transparent #2271b1 transparent transparent;
+}
+
+.ui-datepicker .ui-datepicker-next::before {
+	margin-left: -4px;
+	border-width: 4px 0 4px 6px;
+	border-color: transparent transparent transparent #2271b1;
+}
+
+.ui-datepicker .ui-datepicker-prev:hover,
+.ui-datepicker .ui-datepicker-next:hover {
+	background: #f0f0f1;
+}
+
+.ui-datepicker .ui-datepicker-title {
+	margin: 0 2.3em;
+	line-height: 1.8em;
+	text-align: center;
+}
+
+.ui-datepicker .ui-datepicker-title select {
+	margin: 1px 2px;
+	font-size: 12px;
+}
+
+.ui-datepicker table {
+	width: 100%;
+	margin: 0;
+	border-collapse: collapse;
+	font-size: 12px;
+}
+
+.ui-datepicker th {
+	padding: 6px 0;
+	border: 0;
+	font-weight: 600;
+	color: #646970;
+	text-align: center;
+}
+
+.ui-datepicker td {
+	padding: 1px;
+	border: 0;
+	text-align: center;
+}
+
+.ui-datepicker td span,
+.ui-datepicker td a {
+	display: block;
+	padding: 5px;
+	border: 1px solid transparent;
+	border-radius: 3px;
+	color: #1d2327;
+	text-decoration: none;
+	text-align: center;
+}
+
+.ui-datepicker td a:hover {
+	border-color: #2271b1;
+	background: #f0f6fc;
+	color: #135e96;
+}
+
+.ui-datepicker .ui-state-active,
+.ui-datepicker .ui-state-active:hover {
+	border-color: #2271b1;
+	background: #2271b1;
+	color: #fff;
+}
+
+.ui-datepicker .ui-state-highlight {
+	border-color: #dba617;
+	background: #fcf9e8;
+	color: #1d2327;
+}
+
+.ui-datepicker .ui-state-disabled span,
+.ui-datepicker .ui-state-disabled a {
+	opacity: 0.35;
+	cursor: default;
+}
+
+.ui-datepicker .ui-datepicker-buttonpane {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	justify-content: flex-end;
+	margin: 0;
+	padding: 8px 10px;
+	border-top: 1px solid #dcdcde;
+	background: #f6f7f7;
+}
+
+.ui-datepicker .ui-datepicker-buttonpane button {
+	margin: 0;
+	padding: 4px 10px;
+	border: 1px solid #c3c4c7;
+	border-radius: 3px;
+	background: #f6f7f7;
+	color: #1d2327;
+	font-size: 12px;
+	line-height: 1.4;
+	cursor: pointer;
+}
+
+.ui-datepicker .ui-datepicker-buttonpane button:hover {
+	border-color: #8c8f94;
+	background: #f0f0f1;
+}
+
+.ui-datepicker .ui-datepicker-buttonpane .art-lms-datepicker-clear {
+	margin-right: auto;
+}
+
+.ui-datepicker .ui-datepicker-other-month {
+	opacity: 0.45;
+}

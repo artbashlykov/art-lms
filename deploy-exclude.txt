@@ -1,0 +1,5 @@
+# Exclude these paths from wordpress.org release ZIP archives.
+.cursor/
+.git/
+.gitignore
+deploy-exclude.txt

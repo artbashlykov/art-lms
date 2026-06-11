@@ -1,0 +1,135 @@
+/* Vertical spacing between ART LMS blocks in the block editor. */
+.block-editor-block-list__block[data-type^="art-lms/"] {
+	margin-block: 12px;
+}
+
+.editor-styles-wrapper .wp-block[class*="wp-block-art-lms-"] {
+	margin-block: 12px;
+}
+
+.editor-styles-wrapper .art-lms-editor-shell,
+.block-editor-block-list__block .art-lms-editor-shell,
+.art-lms-editor-shell {
+	box-sizing: border-box;
+	padding: 12px;
+	border: 1px dashed #c3c4c7;
+	border-radius: 8px;
+	background-color: #f6f7f7;
+}
+
+.editor-styles-wrapper .art-lms-editor-title,
+.block-editor-block-list__block .art-lms-editor-title,
+.art-lms-editor-title {
+	font-weight: 700;
+	margin: 0 0 4px;
+	color: #1e1e1e;
+}
+
+.editor-styles-wrapper .art-lms-editor-hint,
+.block-editor-block-list__block .art-lms-editor-hint,
+.art-lms-editor-hint {
+	margin: 0 0 10px;
+	opacity: 1;
+	font-size: 12px;
+	line-height: 1.45;
+	color: #646970;
+}
+
+.editor-styles-wrapper .art-lms-editor-details,
+.block-editor-block-list__block .art-lms-editor-details,
+.art-lms-editor-details {
+	display: grid;
+	gap: 4px;
+	font-size: 12px;
+	line-height: 1.45;
+	color: #1e1e1e;
+}
+
+.editor-styles-wrapper .art-lms-editor-detail__label,
+.block-editor-block-list__block .art-lms-editor-detail__label,
+.art-lms-editor-detail__label {
+	color: #646970;
+}
+
+.editor-styles-wrapper .art-lms-editor-detail__value,
+.block-editor-block-list__block .art-lms-editor-detail__value,
+.art-lms-editor-detail__value {
+	color: #1e1e1e;
+	font-weight: 600;
+}
+
+.art-lms-editor-shell .components-spinner {
+	margin-top: 10px;
+}
+
+.art-lms-editor-font-size-control__row {
+	display: flex;
+	gap: 8px;
+	align-items: flex-end;
+}
+
+.art-lms-editor-font-size-control__row .components-base-control {
+	flex: 1 1 auto;
+	margin-bottom: 0;
+}
+
+.art-lms-editor-font-size-control__row .components-button {
+	flex-shrink: 0;
+	margin-bottom: 0;
+	height: 36px;
+}
+
+.art-lms-editor-color-control__row {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.art-lms-editor-color-control__picker-wrap {
+	display: block;
+	flex: 0 0 36px;
+	width: 36px;
+	height: 36px;
+	border: 2px solid #000;
+	border-radius: 50%;
+	overflow: hidden;
+}
+
+.art-lms-editor-color-control__picker {
+	display: block;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	cursor: pointer;
+	overflow: hidden;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.art-lms-editor-color-control__picker::-webkit-color-swatch-wrapper {
+	padding: 0;
+}
+
+.art-lms-editor-color-control__picker::-webkit-color-swatch {
+	border: none;
+	border-radius: 50%;
+}
+
+.art-lms-editor-color-control__picker::-moz-color-swatch {
+	border: none;
+	border-radius: 50%;
+}
+
+.art-lms-editor-color-control__row .components-base-control {
+	flex: 1 1 auto;
+	margin-bottom: 0;
+}
+
+.art-lms-editor-color-control__row .components-button {
+	flex-shrink: 0;
+	height: 36px;
+}
