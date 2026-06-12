@@ -314,7 +314,7 @@ class Art_LMS_Email {
 	 * @return array<string, string>
 	 */
 	public static function build_purchase_email_tokens( $order_id, $order ) {
-		$account_url = Art_LMS_Settings::get_account_url() ?: wp_login_url();
+		$account_url = Art_LMS_Settings::get_account_url() ?: Art_LMS_Settings::get_login_page_url();
 		$name        = ! empty( $order->name ) ? $order->name : $order->email;
 		$email       = (string) $order->email;
 		$user_id     = absint( $order->user_id ?? 0 );

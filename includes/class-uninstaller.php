@@ -88,15 +88,8 @@ class Art_LMS_Uninstaller {
 	 * Delete plugin-specific user meta.
 	 */
 	private static function delete_user_meta() {
-		global $wpdb;
-
 		foreach ( self::USER_META_KEYS as $meta_key ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Bulk cleanup during uninstall.
-			$wpdb->delete(
-				$wpdb->usermeta,
-				array( 'meta_key' => $meta_key ),
-				array( '%s' )
-			);
+			delete_metadata( 'user', 0, $meta_key, '', true );
 		}
 	}
 

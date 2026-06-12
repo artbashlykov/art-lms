@@ -1,6 +1,0 @@
-# Excluded from wordpress.org plugin directory releases (Plugin Check / deploy).
-.cursor/
-.git/
-.gitignore
-.distignore
-deploy-exclude.txt

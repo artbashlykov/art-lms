@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 class Art_LMS_Settings {
 
 	const OPTION_GENERAL  = 'art_lms_settings_general';
+	const OPTION_LOGIN    = 'art_lms_settings_login';
 	const OPTION_PAYMENT  = 'art_lms_settings_payment';
 	const OPTION_CHECKOUT = 'art_lms_settings_checkout';
 	const OPTION_EMAIL    = 'art_lms_settings_email';
@@ -57,6 +58,10 @@ class Art_LMS_Settings {
 			self::save_payment( self::get_default_payment() );
 		}
 
+		if ( false === get_option( self::OPTION_LOGIN, false ) ) {
+			self::save_login( self::get_default_login() );
+		}
+
 		if ( false === get_option( self::OPTION_CHECKOUT, false ) ) {
 			self::save_checkout( self::get_default_checkout() );
 		}
@@ -64,6 +69,472 @@ class Art_LMS_Settings {
 		if ( false === get_option( self::OPTION_EMAIL, false ) ) {
 			self::save_emails( self::get_default_emails() );
 		}
+	}
+
+	/**
+	 * Get login page settings.
+	 *
+	 * @return array
+	 */
+	public static function get_login() {
+		return self::get_option( self::OPTION_LOGIN, self::get_default_login() );
+	}
+
+	/**
+	 * Whether custom login page is enabled.
+	 *
+	 * @return bool
+	 */
+	public static function is_custom_login_enabled() {
+		return 'yes' === ( self::get_login()['enabled'] ?? 'no' );
+	}
+
+	/**
+	 * Get configured custom login slug.
+	 *
+	 * @return string
+	 */
+	public static function get_login_slug() {
+		$login = self::get_login();
+		$slug  = sanitize_title( (string) ( $login['slug'] ?? '' ) );
+
+		if ( '' === $slug ) {
+			$slug = self::get_default_login()['slug'];
+		}
+
+		return $slug;
+	}
+
+	/**
+	 * Sanitize custom login slug.
+	 *
+	 * @param string $slug Raw slug.
+	 * @return string
+	 */
+	public static function sanitize_login_slug( $slug ) {
+		$slug = sanitize_title( (string) $slug );
+
+		if ( '' === $slug ) {
+			$slug = self::get_default_login()['slug'];
+		}
+
+		if ( $slug === self::get_checkout_slug() ) {
+			$slug .= '-login';
+		}
+
+		return $slug;
+	}
+
+	/**
+	 * Get login page URL (custom or default WordPress login).
+	 *
+	 * @param string $redirect     Redirect target after login.
+	 * @param bool   $force_reauth Whether to force reauthentication.
+	 * @return string
+	 */
+	public static function get_login_page_url( $redirect = '', $force_reauth = false ) {
+		return wp_login_url( $redirect, $force_reauth );
+	}
+
+	/**
+	 * Get login page design settings.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_login_design() {
+		$login    = self::get_login();
+		$defaults = self::get_default_login()['design'];
+
+		return wp_parse_args( $login['design'] ?? array(), $defaults );
+	}
+
+	/**
+	 * Default color values for login design controls.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_login_design_color_defaults() {
+		$defaults = self::get_default_login()['design'];
+
+		return array(
+			'page_background_color'    => $defaults['page_background_color'],
+			'form_background_color'    => $defaults['form_background_color'],
+			'form_border_color'      => $defaults['form_border_color'],
+			'field_border_color'     => $defaults['field_border_color'],
+			'field_focus_border_color' => $defaults['field_focus_border_color'],
+		);
+	}
+
+	/**
+	 * Default dimension values for login design controls.
+	 *
+	 * @return array<string, int>
+	 */
+	public static function get_login_design_dimension_defaults() {
+		$defaults = self::get_default_login()['design'];
+
+		return array(
+			'form_max_width'        => (int) $defaults['form_max_width'],
+			'form_padding'          => (int) $defaults['form_padding'],
+			'form_border_radius'    => (int) $defaults['form_border_radius'],
+			'field_label_font_size' => (int) $defaults['field_label_font_size'],
+			'field_input_font_size' => (int) $defaults['field_input_font_size'],
+		);
+	}
+
+	/**
+	 * Build inline CSS for login design tokens.
+	 *
+	 * @return string
+	 */
+	public static function get_login_design_css() {
+		if ( ! self::is_custom_login_enabled() ) {
+			return '';
+		}
+
+		$design = self::get_login_design();
+		$button = self::get_login_button();
+
+		return sprintf(
+			':root{--art-lms-login-page-bg:%1$s;--art-lms-login-form-bg:%2$s;--art-lms-login-form-border:%3$s;--art-lms-login-form-width:%4$dpx;--art-lms-login-form-padding:%5$dpx;--art-lms-login-form-radius:%6$dpx;--art-lms-login-field-label-font-size:%7$dpx;--art-lms-login-field-input-font-size:%8$dpx;--art-lms-login-field-border:%9$s;--art-lms-login-field-focus-border:%10$s;--art-lms-login-button-bg:%11$s;--art-lms-login-button-color:%12$s;--art-lms-login-button-font-size:%13$dpx;--art-lms-login-button-radius:%14$dpx;--art-lms-login-button-padding-y:%15$dpx;--art-lms-login-button-padding-x:%16$dpx;}',
+			esc_attr( $design['page_background_color'] ),
+			esc_attr( $design['form_background_color'] ),
+			esc_attr( $design['form_border_color'] ),
+			(int) $design['form_max_width'],
+			(int) $design['form_padding'],
+			(int) $design['form_border_radius'],
+			(int) $design['field_label_font_size'],
+			(int) $design['field_input_font_size'],
+			esc_attr( $design['field_border_color'] ),
+			esc_attr( $design['field_focus_border_color'] ),
+			esc_attr( $button['background_color'] ),
+			esc_attr( $button['text_color'] ),
+			(int) $button['font_size'],
+			(int) $button['border_radius'],
+			(int) $button['custom_padding_y'],
+			(int) $button['custom_padding_x']
+		);
+	}
+
+	/**
+	 * Get login button settings.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function get_login_button() {
+		$login    = self::get_login();
+		$defaults = self::get_default_login()['button'];
+
+		return wp_parse_args( $login['button'] ?? array(), $defaults );
+	}
+
+	/**
+	 * Default color values for login button controls.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_login_button_color_defaults() {
+		$defaults = self::get_default_login()['button'];
+
+		return array(
+			'background_color' => $defaults['background_color'],
+			'text_color'       => $defaults['text_color'],
+		);
+	}
+
+	/**
+	 * Default dimension values for login button controls.
+	 *
+	 * @return array<string, int>
+	 */
+	public static function get_login_button_dimension_defaults() {
+		$defaults = self::get_default_login()['button'];
+
+		return array(
+			'font_size'         => (int) $defaults['font_size'],
+			'border_radius'     => (int) $defaults['border_radius'],
+			'custom_padding_y'  => (int) $defaults['custom_padding_y'],
+			'custom_padding_x'  => (int) $defaults['custom_padding_x'],
+		);
+	}
+
+	/**
+	 * Button size options for login form.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_login_button_size_options() {
+		return array(
+			'small'  => __( 'Маленькая', 'art-lms' ),
+			'medium' => __( 'Средняя', 'art-lms' ),
+			'large'  => __( 'Большая', 'art-lms' ),
+			'custom' => __( 'Произвольный', 'art-lms' ),
+		);
+	}
+
+	/**
+	 * Button alignment options for login form.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_login_button_align_options() {
+		return array(
+			'left'   => __( 'Слева', 'art-lms' ),
+			'center' => __( 'По центру', 'art-lms' ),
+			'right'  => __( 'Справа', 'art-lms' ),
+			'full'   => __( 'На всю ширину', 'art-lms' ),
+		);
+	}
+
+	/**
+	 * CSS classes for login form button wrapper.
+	 *
+	 * @return string
+	 */
+	public static function get_login_button_wrapper_class() {
+		$button = self::get_login_button();
+		$sizes  = array_keys( self::get_login_button_size_options() );
+		$aligns = array_keys( self::get_login_button_align_options() );
+		$size   = $button['size'] ?? 'medium';
+		$align  = $button['align'] ?? 'full';
+
+		if ( ! in_array( $size, $sizes, true ) ) {
+			$size = 'medium';
+		}
+
+		if ( ! in_array( $align, $aligns, true ) ) {
+			$align = 'full';
+		}
+
+		return 'art-lms-login--button-size-' . $size . ' art-lms-login--button-align-' . $align;
+	}
+
+	/**
+	 * Sanitize login button settings.
+	 *
+	 * @param array $input Raw button input.
+	 * @return array<string, mixed>
+	 */
+	public static function sanitize_login_button( $input ) {
+		$defaults = self::get_default_login()['button'];
+		$sizes    = array_keys( self::get_login_button_size_options() );
+		$aligns   = array_keys( self::get_login_button_align_options() );
+
+		if ( ! is_array( $input ) ) {
+			$input = array();
+		}
+
+		$size  = isset( $input['size'] ) ? sanitize_key( $input['size'] ) : $defaults['size'];
+		$align = isset( $input['align'] ) ? sanitize_key( $input['align'] ) : $defaults['align'];
+
+		if ( ! in_array( $size, $sizes, true ) ) {
+			$size = $defaults['size'];
+		}
+
+		if ( ! in_array( $align, $aligns, true ) ) {
+			$align = $defaults['align'];
+		}
+
+		$background = isset( $input['background_color'] ) ? sanitize_hex_color( $input['background_color'] ) : '';
+		$text_color = isset( $input['text_color'] ) ? sanitize_hex_color( $input['text_color'] ) : '';
+
+		return array(
+			'text'              => self::sanitize_login_form_text(
+				$input['text'] ?? $defaults['text'],
+				$defaults['text'],
+				50
+			),
+			'font_size'         => self::sanitize_checkout_design_dimension(
+				$input['font_size'] ?? $defaults['font_size'],
+				$defaults['font_size'],
+				10,
+				48
+			),
+			'size'              => $size,
+			'align'             => $align,
+			'background_color'  => $background ? $background : $defaults['background_color'],
+			'text_color'        => $text_color ? $text_color : $defaults['text_color'],
+			'border_radius'     => self::sanitize_checkout_design_dimension(
+				$input['border_radius'] ?? $defaults['border_radius'],
+				$defaults['border_radius'],
+				0,
+				48
+			),
+			'custom_padding_y'  => self::sanitize_checkout_design_dimension(
+				$input['custom_padding_y'] ?? $defaults['custom_padding_y'],
+				$defaults['custom_padding_y'],
+				4,
+				40
+			),
+			'custom_padding_x'  => self::sanitize_checkout_design_dimension(
+				$input['custom_padding_x'] ?? $defaults['custom_padding_x'],
+				$defaults['custom_padding_x'],
+				8,
+				80
+			),
+		);
+	}
+
+	/**
+	 * Sanitize login page design settings.
+	 *
+	 * @param array $input Raw design input.
+	 * @return array<string, string>
+	 */
+	public static function sanitize_login_design( $input ) {
+		$defaults = self::get_default_login()['design'];
+
+		if ( ! is_array( $input ) ) {
+			$input = array();
+		}
+
+		$page_background = isset( $input['page_background_color'] ) ? sanitize_hex_color( $input['page_background_color'] ) : '';
+		$form_background = isset( $input['form_background_color'] ) ? sanitize_hex_color( $input['form_background_color'] ) : '';
+		$form_border     = isset( $input['form_border_color'] ) ? sanitize_hex_color( $input['form_border_color'] ) : '';
+		$field_border    = isset( $input['field_border_color'] ) ? sanitize_hex_color( $input['field_border_color'] ) : '';
+		$field_focus     = isset( $input['field_focus_border_color'] ) ? sanitize_hex_color( $input['field_focus_border_color'] ) : '';
+
+		return array(
+			'page_background_color'    => $page_background ? $page_background : $defaults['page_background_color'],
+			'form_background_color'    => $form_background ? $form_background : $defaults['form_background_color'],
+			'form_border_color'        => $form_border ? $form_border : $defaults['form_border_color'],
+			'form_max_width'           => self::sanitize_checkout_design_dimension(
+				$input['form_max_width'] ?? $defaults['form_max_width'],
+				$defaults['form_max_width'],
+				280,
+				720
+			),
+			'form_padding'             => self::sanitize_checkout_design_dimension(
+				$input['form_padding'] ?? $defaults['form_padding'],
+				$defaults['form_padding'],
+				0,
+				80
+			),
+			'form_border_radius'       => self::sanitize_checkout_design_dimension(
+				$input['form_border_radius'] ?? $defaults['form_border_radius'],
+				$defaults['form_border_radius'],
+				0,
+				48
+			),
+			'field_label_font_size'    => self::sanitize_checkout_design_dimension(
+				$input['field_label_font_size'] ?? $defaults['field_label_font_size'],
+				$defaults['field_label_font_size'],
+				10,
+				32
+			),
+			'field_input_font_size'    => self::sanitize_checkout_design_dimension(
+				$input['field_input_font_size'] ?? $defaults['field_input_font_size'],
+				$defaults['field_input_font_size'],
+				10,
+				32
+			),
+			'field_border_color'       => $field_border ? $field_border : $defaults['field_border_color'],
+			'field_focus_border_color' => $field_focus ? $field_focus : $defaults['field_focus_border_color'],
+		);
+	}
+
+	/**
+	 * Get login form content settings.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_login_form() {
+		$login    = self::get_login();
+		$defaults = self::get_default_login()['form'];
+
+		return wp_parse_args( $login['form'] ?? array(), $defaults );
+	}
+
+	/**
+	 * Default text values for login form controls.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_login_form_text_defaults() {
+		$defaults = self::get_default_login()['form'];
+
+		return array(
+			'title_text'          => $defaults['title_text'],
+			'subtitle_text'       => $defaults['subtitle_text'],
+			'username_label'      => $defaults['username_label'],
+			'password_label'      => $defaults['password_label'],
+			'remember_label'      => $defaults['remember_label'],
+			'lost_password_text' => $defaults['lost_password_text'],
+		);
+	}
+
+	/**
+	 * Sanitize login form content settings.
+	 *
+	 * @param array $input Raw form input.
+	 * @return array<string, string>
+	 */
+	public static function sanitize_login_form( $input ) {
+		$defaults = self::get_default_login()['form'];
+
+		if ( ! is_array( $input ) ) {
+			$input = array();
+		}
+
+		return array(
+			'title_enabled'         => ! empty( $input['title_enabled'] ) ? 'yes' : 'no',
+			'title_text'            => self::sanitize_login_form_text(
+				$input['title_text'] ?? $defaults['title_text'],
+				$defaults['title_text'],
+				100
+			),
+			'subtitle_enabled'      => ! empty( $input['subtitle_enabled'] ) ? 'yes' : 'no',
+			'subtitle_text'         => self::sanitize_login_form_text(
+				$input['subtitle_text'] ?? $defaults['subtitle_text'],
+				$defaults['subtitle_text'],
+				200
+			),
+			'username_label'        => self::sanitize_login_form_text(
+				$input['username_label'] ?? $defaults['username_label'],
+				$defaults['username_label'],
+				80
+			),
+			'password_label'        => self::sanitize_login_form_text(
+				$input['password_label'] ?? $defaults['password_label'],
+				$defaults['password_label'],
+				80
+			),
+			'remember_enabled'      => ! empty( $input['remember_enabled'] ) ? 'yes' : 'no',
+			'remember_label'        => self::sanitize_login_form_text(
+				$input['remember_label'] ?? $defaults['remember_label'],
+				$defaults['remember_label'],
+				80
+			),
+			'lost_password_enabled' => ! empty( $input['lost_password_enabled'] ) ? 'yes' : 'no',
+			'lost_password_text'    => self::sanitize_login_form_text(
+				$input['lost_password_text'] ?? $defaults['lost_password_text'],
+				$defaults['lost_password_text'],
+				80
+			),
+		);
+	}
+
+	/**
+	 * Sanitize a single login form text field.
+	 *
+	 * @param mixed  $value   Raw value.
+	 * @param string $default Default value.
+	 * @param int    $max     Maximum length.
+	 * @return string
+	 */
+	private static function sanitize_login_form_text( $value, $default, $max ) {
+		$value = sanitize_text_field( wp_unslash( (string) $value ) );
+		$value = trim( $value );
+
+		if ( '' === $value ) {
+			return $default;
+		}
+
+		if ( function_exists( 'mb_substr' ) ) {
+			return mb_substr( $value, 0, $max );
+		}
+
+		return substr( $value, 0, $max );
 	}
 
 	/**
@@ -872,6 +1343,49 @@ class Art_LMS_Settings {
 		self::update_option( self::OPTION_GENERAL, $data );
 
 		return $data;
+	}
+
+	/**
+	 * Save login page settings.
+	 *
+	 * @param array $input Raw input.
+	 * @return array
+	 */
+	public static function save_login( $input ) {
+		$data = self::sanitize_login( $input );
+		self::update_option( self::OPTION_LOGIN, $data );
+
+		return $data;
+	}
+
+	/**
+	 * Sanitize login page settings.
+	 *
+	 * @param array $input Raw input.
+	 * @return array
+	 */
+	public static function sanitize_login( $input ) {
+		if ( ! is_array( $input ) ) {
+			$input = array();
+		}
+
+		$slug = isset( $input['slug'] )
+			? self::sanitize_login_slug( wp_unslash( $input['slug'] ) )
+			: self::get_login_slug();
+
+		return array(
+			'enabled' => ! empty( $input['enabled'] ) ? 'yes' : 'no',
+			'slug'    => $slug,
+			'form'    => isset( $input['form'] )
+				? self::sanitize_login_form( $input['form'] )
+				: self::get_login_form(),
+			'button'  => isset( $input['button'] )
+				? self::sanitize_login_button( $input['button'] )
+				: self::get_login_button(),
+			'design'  => isset( $input['design'] )
+				? self::sanitize_login_design( $input['design'] )
+				: self::get_login_design(),
+		);
 	}
 
 	/**
@@ -2046,10 +2560,14 @@ class Art_LMS_Settings {
 	public static function sanitize_checkout( $input ) {
 		$current = self::get_checkout();
 
-		unset( $input['slug'] );
-
 		if ( ! is_array( $input ) ) {
 			$input = array();
+		}
+
+		$slug = isset( $current['slug'] ) ? self::sanitize_checkout_slug( $current['slug'] ) : self::get_default_checkout()['slug'];
+
+		if ( isset( $input['slug'] ) ) {
+			$slug = self::sanitize_checkout_slug( wp_unslash( $input['slug'] ) );
 		}
 
 		$default_title = self::get_default_checkout()['form_title'];
@@ -2067,7 +2585,7 @@ class Art_LMS_Settings {
 		}
 
 		return array(
-			'slug'          => self::get_default_checkout()['slug'],
+			'slug'          => $slug,
 			'form_title'    => $form_title,
 			'fields'        => isset( $input['fields'] )
 				? self::sanitize_checkout_fields( $input['fields'] )
@@ -2187,6 +2705,53 @@ class Art_LMS_Settings {
 	}
 
 	/**
+	 * Default login page settings.
+	 *
+	 * @return array
+	 */
+	public static function get_default_login() {
+		return array(
+			'enabled' => 'no',
+			'slug'    => 'artlogin',
+			'form'    => array(
+				'title_enabled'         => 'yes',
+				'title_text'            => __( 'Вход', 'art-lms' ),
+				'subtitle_enabled'      => 'no',
+				'subtitle_text'         => __( 'Войдите, чтобы открыть материалы', 'art-lms' ),
+				'username_label'        => __( 'Email', 'art-lms' ),
+				'password_label'        => __( 'Пароль', 'art-lms' ),
+				'remember_enabled'      => 'yes',
+				'remember_label'        => __( 'Запомнить меня', 'art-lms' ),
+				'lost_password_enabled' => 'yes',
+				'lost_password_text'    => __( 'Забыли пароль?', 'art-lms' ),
+			),
+			'button'  => array(
+				'text'             => __( 'Войти', 'art-lms' ),
+				'font_size'        => 16,
+				'size'             => 'medium',
+				'align'            => 'full',
+				'background_color' => '#2271b1',
+				'text_color'       => '#ffffff',
+				'border_radius'    => 4,
+				'custom_padding_y' => 10,
+				'custom_padding_x' => 16,
+			),
+			'design'  => array(
+				'page_background_color'    => '#f1f5f9',
+				'form_background_color'    => '#ffffff',
+				'form_border_color'      => '#c3c4c7',
+				'form_max_width'           => 360,
+				'form_padding'             => 24,
+				'form_border_radius'       => 8,
+				'field_label_font_size'    => 14,
+				'field_input_font_size'    => 16,
+				'field_border_color'       => '#c3c4c7',
+				'field_focus_border_color' => '#2271b1',
+			),
+		);
+	}
+
+	/**
 	 * Default payment settings.
 	 *
 	 * @return array
@@ -2253,7 +2818,7 @@ class Art_LMS_Settings {
 				'button_size'           => 'medium',
 				'button_align'          => 'center',
 				'button_text'           => __( 'Оплатить', 'art-lms' ),
-				'form_max_width'        => 640,
+				'form_max_width'        => 450,
 				'form_padding'          => 20,
 				'form_border_radius'    => 8,
 				'title_font_size'         => 24,
@@ -2340,7 +2905,22 @@ class Art_LMS_Settings {
 			$value['email_verification'] = wp_parse_args( $value['email_verification'] ?? array(), $default['email_verification'] );
 		}
 
+		if ( self::OPTION_LOGIN === $option ) {
+			$value['enabled'] = ( $value['enabled'] ?? 'no' ) === 'yes' ? 'yes' : 'no';
+			$value['slug']    = self::sanitize_login_slug( (string) ( $value['slug'] ?? $default['slug'] ) );
+			$value['form']    = self::sanitize_login_form(
+				wp_parse_args( $value['form'] ?? array(), $default['form'] )
+			);
+			$value['button']  = self::sanitize_login_button(
+				wp_parse_args( $value['button'] ?? array(), $default['button'] )
+			);
+			$value['design']  = self::sanitize_login_design(
+				wp_parse_args( $value['design'] ?? array(), $default['design'] )
+			);
+		}
+
 		if ( self::OPTION_CHECKOUT === $option ) {
+			$value['slug'] = self::sanitize_checkout_slug( (string) ( $value['slug'] ?? $default['slug'] ) );
 			$value['fields'] = wp_parse_args( $value['fields'] ?? array(), $default['fields'] );
 
 			foreach ( $default['fields'] as $key => $field_default ) {

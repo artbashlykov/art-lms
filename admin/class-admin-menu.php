@@ -685,6 +685,33 @@ class Art_LMS_Admin_Menu {
 					);
 				}
 
+				if ( Art_LMS_Admin_Settings::TAB_LOGIN === $tab ) {
+					wp_localize_script(
+						'art-lms-admin-settings',
+						'artLmsLoginSettings',
+						array(
+							'defaults'       => array_merge(
+								Art_LMS_Settings::get_login_design_color_defaults(),
+								Art_LMS_Settings::get_login_design_dimension_defaults()
+							),
+							'formDefaults'   => Art_LMS_Settings::get_login_form_text_defaults(),
+							'buttonDefaults' => array_merge(
+								Art_LMS_Settings::get_login_button_color_defaults(),
+								Art_LMS_Settings::get_login_button_dimension_defaults(),
+								array(
+									'text' => Art_LMS_Settings::get_default_login()['button']['text'],
+								)
+							),
+							'strings'      => array(
+								'disabled'   => __( 'Своя форма входа выключена', 'art-lms' ),
+								'copy'       => __( 'Скопировать', 'art-lms' ),
+								'copied'     => __( 'Скопировано!', 'art-lms' ),
+								'copyFailed' => __( 'Не удалось скопировать.', 'art-lms' ),
+							),
+						)
+					);
+				}
+
 			}
 
 		}

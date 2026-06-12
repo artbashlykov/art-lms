@@ -411,7 +411,7 @@ class Art_LMS_Materials {
 		$return_url = self::sanitize_return_url( $return_url );
 
 		if ( ! $access_denied ) {
-			$url = $return_url ? wp_login_url( $return_url ) : wp_login_url();
+			$url = $return_url ? Art_LMS_Settings::get_login_page_url( $return_url ) : Art_LMS_Settings::get_login_page_url();
 		} else {
 			$account_url = Art_LMS_Settings::get_account_url();
 			$args        = array();

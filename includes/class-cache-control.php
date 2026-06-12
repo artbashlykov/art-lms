@@ -44,6 +44,10 @@ class Art_LMS_Cache_Control {
 			return true;
 		}
 
+		if ( class_exists( 'Art_LMS_Custom_Login' ) && Art_LMS_Custom_Login::is_login_request() ) {
+			return true;
+		}
+
 		if ( Art_LMS_Settings::is_account_page() ) {
 			return true;
 		}

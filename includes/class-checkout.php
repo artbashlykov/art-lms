@@ -26,6 +26,7 @@ class Art_LMS_Checkout {
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'register_rewrite' ), 10 );
 		add_action( 'init', array( __CLASS__, 'maybe_flush_rewrites' ), 99 );
+		add_action( 'update_option_' . Art_LMS_Settings::OPTION_CHECKOUT, array( __CLASS__, 'on_checkout_settings_updated' ), 10, 2 );
 		add_filter( 'query_vars', array( __CLASS__, 'register_query_var' ) );
 		add_action( 'parse_request', array( __CLASS__, 'parse_checkout_request' ), 0 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ), 20 );
@@ -220,6 +221,32 @@ class Art_LMS_Checkout {
 			'index.php?' . self::QUERY_VAR . '=1',
 			'top'
 		);
+	}
+
+	/**
+	 * Flush rewrite rules when checkout settings change (e.g. slug).
+	 *
+	 * @param mixed $old_value Previous option value.
+	 * @param mixed $value     New option value.
+	 */
+	public static function on_checkout_settings_updated( $old_value, $value ) {
+		unset( $old_value );
+
+		if ( ! is_array( $value ) ) {
+			return;
+		}
+
+		$new_slug = Art_LMS_Settings::sanitize_checkout_slug( (string) ( $value['slug'] ?? '' ) );
+		$stored   = (string) get_option( 'art_lms_checkout_rewrite_slug', '' );
+
+		if ( $stored === $new_slug ) {
+			return;
+		}
+
+		self::register_rewrite();
+		flush_rewrite_rules( false );
+		update_option( 'art_lms_checkout_rewrite_slug', $new_slug, false );
+		update_option( 'art_lms_checkout_rewrite_version', ART_LMS_VERSION, false );
 	}
 
 	/**

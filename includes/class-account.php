@@ -673,7 +673,7 @@ class Art_LMS_Account {
 			$redirect_to = self::get_login_redirect_url();
 		}
 
-		wp_safe_redirect( wp_login_url( $redirect_to ) );
+		wp_safe_redirect( Art_LMS_Settings::get_login_page_url( $redirect_to ) );
 		exit;
 	}
 

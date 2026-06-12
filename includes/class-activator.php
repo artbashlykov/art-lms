@@ -119,7 +119,9 @@ class Art_LMS_Activator {
 	private static function set_default_options() {
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-settings.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-checkout.php';
+		require_once ART_LMS_PLUGIN_DIR . 'includes/class-custom-login.php';
 		Art_LMS_Settings::ensure_defaults();
 		Art_LMS_Checkout::register_rewrite();
+		Art_LMS_Custom_Login::register_rewrite();
 	}
 }

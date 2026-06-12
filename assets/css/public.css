@@ -359,7 +359,7 @@ a.art-lms-button.art-lms-button--size-large,
 
 .art-lms-checkout {
 	box-sizing: border-box;
-	max-width: var(--art-lms-checkout-form-width, 640px);
+	max-width: var(--art-lms-checkout-form-width, 450px);
 	margin: 0 auto 1.5rem;
 	padding: var(--art-lms-checkout-form-padding, 20px);
 	border: 1px solid #e2e8f0;
@@ -791,4 +791,189 @@ a.art-lms-button.art-lms-button--size-large,
 .art-lms-payment-status.is-pending .art-lms-button {
 	background: #d97706;
 	color: #fff;
+}
+
+.art-lms-login-page {
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+	font-size: 16px;
+	line-height: 1.5;
+	color: #1e1e1e;
+}
+
+.art-lms-login-standalone-body {
+	margin: 0;
+}
+
+.art-lms-login-page--standalone {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+	padding: 24px 16px;
+	background: var(--art-lms-login-page-bg, #f1f5f9);
+}
+
+.art-lms-login {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: var(--art-lms-login-form-width, 360px);
+	margin: 0 auto;
+	padding: var(--art-lms-login-form-padding, 24px);
+	border: 1px solid var(--art-lms-login-form-border, #c3c4c7);
+	border-radius: var(--art-lms-login-form-radius, 8px);
+	background: var(--art-lms-login-form-bg, #fff);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.art-lms-login__title {
+	margin: 0 0 20px;
+	font-size: 1.35rem;
+	line-height: 1.3;
+	text-align: center;
+}
+
+.art-lms-login__subtitle {
+	margin: -8px 0 20px;
+	font-size: 0.95rem;
+	line-height: 1.45;
+	text-align: center;
+	color: #646970;
+}
+
+.art-lms-login #art-lms-loginform > p:not(.login-remember):not(.submit) > label {
+	display: block;
+	margin-bottom: 4px;
+	font-size: var(--art-lms-login-field-label-font-size, 14px);
+	font-weight: 600;
+}
+
+.art-lms-login .input,
+.art-lms-login input[type="text"],
+.art-lms-login input[type="password"] {
+	box-sizing: border-box;
+	width: 100%;
+	margin-bottom: 12px;
+	padding: 10px 12px;
+	border: 1px solid var(--art-lms-login-field-border, #c3c4c7);
+	border-radius: 4px;
+	font: inherit;
+	font-size: var(--art-lms-login-field-input-font-size, 16px);
+}
+
+.art-lms-login .input:focus,
+.art-lms-login input[type="text"]:focus,
+.art-lms-login input[type="password"]:focus {
+	border-color: var(--art-lms-login-field-focus-border, #2271b1);
+	outline: none;
+	box-shadow: 0 0 0 1px var(--art-lms-login-field-focus-border, #2271b1);
+}
+
+.art-lms-login .login-remember,
+.art-lms-login .forgetmenot {
+	margin: 0 0 16px;
+	font-size: 0.9rem;
+	line-height: 1.4;
+}
+
+.art-lms-login .login-remember label,
+.art-lms-login .forgetmenot label {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	font-size: inherit;
+	font-weight: 400;
+	line-height: 1.4;
+	cursor: pointer;
+}
+
+.art-lms-login .login-remember input[type="checkbox"],
+.art-lms-login .forgetmenot input[type="checkbox"] {
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	margin: 0;
+}
+
+.art-lms-login .submit {
+	margin: 0;
+}
+
+.art-lms-login--button-align-left .submit {
+	text-align: left;
+}
+
+.art-lms-login--button-align-center .submit {
+	text-align: center;
+}
+
+.art-lms-login--button-align-right .submit {
+	text-align: right;
+}
+
+.art-lms-login .button-primary,
+.art-lms-login input[type="submit"].button-primary {
+	box-sizing: border-box;
+	display: inline-block;
+	margin: 0;
+	padding: 0.65rem 1.25rem;
+	border: 0;
+	border-radius: var(--art-lms-login-button-radius, 4px);
+	background: var(--art-lms-login-button-bg, #2271b1);
+	color: var(--art-lms-login-button-color, #fff);
+	font: inherit;
+	font-size: var(--art-lms-login-button-font-size, 16px);
+	font-weight: 600;
+	line-height: 1.2;
+	cursor: pointer;
+}
+
+.art-lms-login--button-size-small .button-primary,
+.art-lms-login--button-size-small input[type="submit"].button-primary {
+	padding: 0.45rem 0.95rem;
+}
+
+.art-lms-login--button-size-medium .button-primary,
+.art-lms-login--button-size-medium input[type="submit"].button-primary {
+	padding: 0.65rem 1.25rem;
+}
+
+.art-lms-login--button-size-large .button-primary,
+.art-lms-login--button-size-large input[type="submit"].button-primary {
+	padding: 0.85rem 1.6rem;
+}
+
+.art-lms-login--button-size-custom .button-primary,
+.art-lms-login--button-size-custom input[type="submit"].button-primary {
+	padding: var(--art-lms-login-button-padding-y, 10px) var(--art-lms-login-button-padding-x, 16px);
+}
+
+.art-lms-login--button-align-full #art-lms-loginform p.submit input[type="submit"],
+.art-lms-login--button-align-full #art-lms-loginform .button.button-primary {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.art-lms-login .button-primary:hover,
+.art-lms-login input[type="submit"].button-primary:hover {
+	filter: brightness(0.94);
+}
+
+.art-lms-login__links {
+	margin: 16px 0 0;
+	text-align: center;
+	font-size: 0.9rem;
+}
+
+.art-lms-login__links a {
+	color: var(--art-lms-login-button-bg, #2271b1);
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.art-lms-login__links a:hover {
+	text-decoration: underline;
 }

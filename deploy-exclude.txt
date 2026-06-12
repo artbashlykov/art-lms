@@ -1,6 +1,9 @@
-# Exclude these paths from wordpress.org release ZIP archives.
+# Excluded from wordpress.org release ZIP archives (and Plugin Check dev artifacts).
 .cursor/
 .git/
 .gitignore
+gitignore.template
 .distignore
 deploy-exclude.txt
+*.zip
+README.md

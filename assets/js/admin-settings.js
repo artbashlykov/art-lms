@@ -441,7 +441,7 @@
 			buttonSize: $form.find('select[name*="[design][button_size]"]').val() || 'medium',
 			buttonAlign: $form.find('select[name*="[design][button_align]"]').val() || 'center',
 			buttonText: $.trim($form.find('input[name*="[design][button_text]"]').val()) || defaults.button_text || 'Оплатить',
-			formMaxWidth: parseCheckoutDesignNumber($form, 'form_max_width', defaults.form_max_width || 640),
+			formMaxWidth: parseCheckoutDesignNumber($form, 'form_max_width', defaults.form_max_width || 450),
 			formPadding: parseCheckoutDesignNumber($form, 'form_padding', defaults.form_padding || 20),
 			formBorderRadius: parseCheckoutDesignNumber($form, 'form_border_radius', defaults.form_border_radius || 8),
 			titleFontSize: parseCheckoutDesignNumber($form, 'title_font_size', defaults.title_font_size || 24),
@@ -898,8 +898,595 @@
 		});
 	}
 
+	function initLoginPageSettings() {
+		var $form = $('.art-lms-login-settings-form');
+
+		if (!$form.length) {
+			return;
+		}
+
+		var loginConfig = window.artLmsLoginSettings || {};
+		var loginStrings = loginConfig.strings || {};
+		var designDefaults = loginConfig.defaults || {};
+		var formDefaults = loginConfig.formDefaults || {};
+		var buttonDefaults = loginConfig.buttonDefaults || {};
+		var $enabled = $('#art_lms_login_enabled');
+		var $slug = $('#art_lms_login_slug');
+		var $preview = $('#art-lms-login-preview');
+		var $previewCanvas = $('#art-lms-login-preview-canvas');
+		var $previewForm = $('#art-lms-login-preview-form');
+		var $previewUrl = $('#art-lms-login-preview-url');
+		var $previewUrlCopy = $('#art-lms-login-preview-url-copy');
+		var $urlPanel = $('.art-lms-login-settings-url-panel');
+		var $formPanel = $('.art-lms-login-settings-form-panel');
+		var $buttonPanel = $('.art-lms-login-settings-button-panel');
+		var $designPanel = $('.art-lms-login-settings-design-panel');
+		var $buttonSize = $('#art_lms_login_button_size');
+		var $buttonAlign = $('#art_lms_login_button_align');
+		var $buttonText = $('#art_lms_login_button_text');
+		var $buttonFontSize = $('#art_lms_login_button_font_size');
+		var $buttonBorderRadius = $('#art_lms_login_button_border_radius');
+		var $buttonCustomPaddingY = $('#art_lms_login_button_custom_padding_y');
+		var $buttonCustomPaddingX = $('#art_lms_login_button_custom_padding_x');
+		var $buttonCustomSizeRow = $('.art-lms-login-button-custom-size-row');
+		var $titleEnabled = $('#art_lms_login_title_enabled');
+		var $titleText = $('#art_lms_login_title_text');
+		var $subtitleEnabled = $('#art_lms_login_subtitle_enabled');
+		var $subtitleText = $('#art_lms_login_subtitle_text');
+		var $lostPasswordEnabled = $('#art_lms_login_lost_password_enabled');
+		var $lostPasswordText = $('#art_lms_login_lost_password_text');
+		var $usernameLabel = $('#art_lms_login_username_label');
+		var $passwordLabel = $('#art_lms_login_password_label');
+		var $rememberEnabled = $('#art_lms_login_remember_enabled');
+		var $rememberLabel = $('#art_lms_login_remember_label');
+		var $previewTitle = $('#art-lms-login-preview-title');
+		var $previewSubtitle = $('#art-lms-login-preview-subtitle');
+		var $previewLost = $('#art-lms-login-preview-lost');
+		var $previewUsernameLabel = $('#art-lms-login-preview-username-label');
+		var $designDimensionInputs = $form.find('.art-lms-login-design-dimension-input');
+		var $designDimensionResetButtons = $form.find('.art-lms-login-design-reset-dimension');
+		var $previewPasswordLabel = $('#art-lms-login-preview-password-label');
+		var $previewRemember = $('#art-lms-login-preview-remember');
+		var $previewRememberLabel = $('#art-lms-login-preview-remember-label');
+		var $previewSubmit = $('#art-lms-login-preview-submit');
+		var $designHexInputs = $form.find('.art-lms-login-design-color-hex');
+		var $designPickers = $form.find('.art-lms-login-design-color-picker');
+		var $designResetButtons = $form.find('.art-lms-login-design-reset-color');
+		var homeUrl = String($preview.data('homeUrl') || '');
+		var disabledText = loginStrings.disabled || 'Своя форма входа выключена';
+		var copyResetTimer = null;
+
+		function sanitizeSlug(value) {
+			return String(value || '')
+				.toLowerCase()
+				.replace(/[^a-z0-9-]+/g, '-')
+				.replace(/^-+|-+$/g, '');
+		}
+
+		function buildUrl(slug) {
+			if (!homeUrl || !slug) {
+				return '';
+			}
+
+			return homeUrl + '/' + slug + '/';
+		}
+
+		function isCopyableUrl(value) {
+			return !!value && value !== disabledText && /^https?:\/\//i.test(value);
+		}
+
+		function fallbackCopyLoginUrl(text, deferred) {
+			var textarea = document.createElement('textarea');
+
+			textarea.value = text;
+			textarea.setAttribute('readonly', '');
+			textarea.style.position = 'fixed';
+			textarea.style.top = '0';
+			textarea.style.left = '-9999px';
+
+			document.body.appendChild(textarea);
+			textarea.focus();
+			textarea.select();
+			textarea.setSelectionRange(0, text.length);
+
+			try {
+				if (document.execCommand('copy')) {
+					deferred.resolve();
+				} else {
+					deferred.reject();
+				}
+			} catch (error) {
+				deferred.reject(error);
+			}
+
+			document.body.removeChild(textarea);
+		}
+
+		function copyLoginUrl(text) {
+			var deferred = $.Deferred();
+
+			if (!text) {
+				return deferred.reject().promise();
+			}
+
+			if (navigator.clipboard && window.isSecureContext) {
+				navigator.clipboard.writeText(text).then(function () {
+					deferred.resolve();
+				}).catch(function () {
+					fallbackCopyLoginUrl(text, deferred);
+				});
+
+				return deferred.promise();
+			}
+
+			fallbackCopyLoginUrl(text, deferred);
+			return deferred.promise();
+		}
+
+		function resetCopyButtonState() {
+			if (copyResetTimer) {
+				window.clearTimeout(copyResetTimer);
+				copyResetTimer = null;
+			}
+
+			$previewUrlCopy.removeClass('is-copied');
+			$previewUrlCopy.attr('title', loginStrings.copy || 'Скопировать');
+		}
+
+		function markCopyButtonCopied() {
+			resetCopyButtonState();
+			$previewUrlCopy.addClass('is-copied');
+			$previewUrlCopy.attr('title', loginStrings.copied || 'Скопировано!');
+
+			copyResetTimer = window.setTimeout(function () {
+				resetCopyButtonState();
+			}, 1800);
+		}
+
+		function normalizeHexColor(value) {
+			var color = String(value || '').trim();
+
+			if (!color) {
+				return '';
+			}
+
+			if (color.charAt(0) !== '#') {
+				color = '#' + color;
+			}
+
+			if (/^#[0-9a-f]{3}$/i.test(color)) {
+				color = '#' + color.charAt(1) + color.charAt(1) + color.charAt(2) + color.charAt(2) + color.charAt(3) + color.charAt(3);
+			}
+
+			if (/^#[0-9a-f]{6}$/i.test(color)) {
+				return color.toLowerCase();
+			}
+
+			return '';
+		}
+
+		function getLoginColorValue(colorKey, fallback) {
+			var $hex = $form.find('input.art-lms-login-design-color-hex[name*="[design][' + colorKey + ']"]');
+			var normalized = normalizeHexColor($hex.val());
+
+			return normalized || fallback || '';
+		}
+
+		function syncLoginColorControl($hex, colorValue) {
+			var normalized = normalizeHexColor(colorValue);
+			var $control = $hex.closest('.art-lms-login-design-color-control');
+			var $picker = $control.find('.art-lms-login-design-color-picker');
+
+			if (!normalized) {
+				return;
+			}
+
+			$hex.val(normalized);
+
+			if ($picker.length) {
+				$picker.val(normalized);
+			}
+		}
+
+		function getLoginDesignDimensionValue(dimensionKey, fallback) {
+			var $input = $form.find('input.art-lms-login-design-dimension-input[data-dimension-key="' + dimensionKey + '"]');
+			var parsed = parseInt($input.val(), 10);
+
+			if (isNaN(parsed)) {
+				return fallback;
+			}
+
+			return parsed;
+		}
+
+		function getLoginDesignColors() {
+			return {
+				pageBackgroundColor: getLoginColorValue('page_background_color', designDefaults.page_background_color || '#f1f5f9'),
+				formBackgroundColor: getLoginColorValue('form_background_color', designDefaults.form_background_color || '#ffffff'),
+				formBorderColor: getLoginColorValue('form_border_color', designDefaults.form_border_color || '#c3c4c7'),
+				fieldBorderColor: getLoginColorValue('field_border_color', designDefaults.field_border_color || '#c3c4c7'),
+				fieldFocusBorderColor: getLoginColorValue('field_focus_border_color', designDefaults.field_focus_border_color || '#2271b1')
+			};
+		}
+
+		function updateLoginDesignPreview() {
+			var colors = getLoginDesignColors();
+			var formMaxWidth = getLoginDesignDimensionValue('form_max_width', designDefaults.form_max_width || 360);
+			var formPadding = getLoginDesignDimensionValue('form_padding', designDefaults.form_padding || 24);
+			var formBorderRadius = getLoginDesignDimensionValue('form_border_radius', designDefaults.form_border_radius || 8);
+			var labelFontSize = getLoginDesignDimensionValue('field_label_font_size', designDefaults.field_label_font_size || 14);
+			var inputFontSize = getLoginDesignDimensionValue('field_input_font_size', designDefaults.field_input_font_size || 16);
+
+			$previewCanvas.css('background-color', colors.pageBackgroundColor);
+			$previewForm.css({
+				backgroundColor: colors.formBackgroundColor,
+				borderColor: colors.formBorderColor,
+				maxWidth: formMaxWidth + 'px',
+				padding: formPadding + 'px',
+				borderRadius: formBorderRadius + 'px'
+			});
+
+			$previewForm.find('.art-lms-login-preview__field label').css('fontSize', labelFontSize + 'px');
+			$previewForm.find('.art-lms-login-preview__input').css({
+				borderColor: colors.fieldBorderColor,
+				fontSize: inputFontSize + 'px'
+			});
+			$previewLost.css('color', getLoginButtonColorValue('background_color', buttonDefaults.background_color || '#2271b1'));
+		}
+
+		function getLoginFormFieldValue($field, fallback) {
+			var value = $.trim($field.val() || '');
+
+			return value || fallback || '';
+		}
+
+		function updateLoginFormPreview() {
+			var titleOn = $titleEnabled.is(':checked');
+			var subtitleOn = $subtitleEnabled.is(':checked');
+			var subtitleText = getLoginFormFieldValue($subtitleText, formDefaults.subtitle_text || '');
+			var rememberOn = $rememberEnabled.is(':checked');
+			var lostOn = $lostPasswordEnabled.is(':checked');
+
+			$previewTitle
+				.toggleClass('is-hidden', !titleOn)
+				.text(getLoginFormFieldValue($titleText, formDefaults.title_text || 'Вход'));
+
+			$previewSubtitle
+				.toggleClass('is-hidden', !subtitleOn || !subtitleText)
+				.text(subtitleText);
+
+			$previewUsernameLabel.text(getLoginFormFieldValue($usernameLabel, formDefaults.username_label || 'Email'));
+			$previewPasswordLabel.text(getLoginFormFieldValue($passwordLabel, formDefaults.password_label || 'Пароль'));
+
+			$previewRemember.toggleClass('is-hidden', !rememberOn);
+			$previewRememberLabel.text(getLoginFormFieldValue($rememberLabel, formDefaults.remember_label || 'Запомнить меня'));
+
+			$previewLost
+				.toggleClass('is-hidden', !lostOn)
+				.text(getLoginFormFieldValue($lostPasswordText, formDefaults.lost_password_text || 'Забыли пароль?'));
+		}
+
+		function getLoginButtonColorValue(colorKey, fallback) {
+			var $hex = $form.find('input.art-lms-login-button-color-hex[name*="[button][' + colorKey + ']"]');
+			var normalized = normalizeHexColor($hex.val());
+
+			return normalized || fallback || '';
+		}
+
+		function syncLoginButtonColorControl($hex, colorValue) {
+			var normalized = normalizeHexColor(colorValue);
+			var $control = $hex.closest('.art-lms-login-design-color-control');
+			var $picker = $control.find('.art-lms-login-button-color-picker');
+
+			if (!normalized) {
+				return;
+			}
+
+			$hex.val(normalized);
+
+			if ($picker.length) {
+				$picker.val(normalized);
+			}
+		}
+
+		function getLoginButtonWrapperClasses() {
+			var size = $buttonSize.val() || 'medium';
+			var align = $buttonAlign.val() || 'full';
+
+			return 'art-lms-login--button-size-' + size + ' art-lms-login--button-align-' + align;
+		}
+
+		function stripLoginButtonWrapperClasses() {
+			var classes = ($previewForm.attr('class') || '').split(/\s+/).filter(function (className) {
+				return className.indexOf('art-lms-login--button-size-') !== 0 && className.indexOf('art-lms-login--button-align-') !== 0;
+			});
+
+			$previewForm.attr('class', classes.join(' '));
+		}
+
+		function syncButtonCustomSizeState() {
+			var isCustom = $buttonSize.val() === 'custom';
+			var loginOn = $enabled.is(':checked');
+
+			$buttonCustomSizeRow.toggleClass('is-hidden', !isCustom);
+			$buttonCustomPaddingY.prop('disabled', !loginOn || !isCustom);
+			$buttonCustomPaddingX.prop('disabled', !loginOn || !isCustom);
+			$buttonCustomSizeRow.find('.art-lms-login-button-reset-dimension').prop('disabled', !loginOn || !isCustom);
+		}
+
+		function updateLoginButtonPreview() {
+			var size = $buttonSize.val() || 'medium';
+			var fontSize = parseInt($buttonFontSize.val(), 10) || buttonDefaults.font_size || 16;
+			var borderRadius = parseInt($buttonBorderRadius.val(), 10) || buttonDefaults.border_radius || 4;
+			var paddingY = parseInt($buttonCustomPaddingY.val(), 10) || buttonDefaults.custom_padding_y || 10;
+			var paddingX = parseInt($buttonCustomPaddingX.val(), 10) || buttonDefaults.custom_padding_x || 16;
+			var backgroundColor = getLoginButtonColorValue('background_color', buttonDefaults.background_color || '#2271b1');
+			var textColor = getLoginButtonColorValue('text_color', buttonDefaults.text_color || '#ffffff');
+
+			stripLoginButtonWrapperClasses();
+			$previewForm.addClass(getLoginButtonWrapperClasses());
+
+			$previewSubmit.text(getLoginFormFieldValue($buttonText, buttonDefaults.text || 'Войти'));
+			$previewSubmit.css({
+				backgroundColor: backgroundColor,
+				color: textColor,
+				fontSize: fontSize + 'px',
+				borderRadius: borderRadius + 'px'
+			});
+
+			if (size === 'custom') {
+				$previewSubmit.css({
+					padding: paddingY + 'px ' + paddingX + 'px'
+				});
+			} else {
+				$previewSubmit.css({ padding: '' });
+			}
+
+			$previewLost.css('color', backgroundColor);
+		}
+
+		function syncFormFieldState() {
+			var loginOn = $enabled.is(':checked');
+
+			$titleText.prop('disabled', !loginOn || !$titleEnabled.is(':checked'));
+			$subtitleText.prop('disabled', !loginOn || !$subtitleEnabled.is(':checked'));
+			$rememberLabel.prop('disabled', !loginOn || !$rememberEnabled.is(':checked'));
+			$lostPasswordText.prop('disabled', !loginOn || !$lostPasswordEnabled.is(':checked'));
+		}
+
+		function syncState() {
+			var enabled = $enabled.is(':checked');
+			var url = enabled ? buildUrl(sanitizeSlug($slug.val())) : '';
+
+			$slug.prop('disabled', !enabled);
+			$urlPanel.toggleClass('is-disabled', !enabled);
+			$formPanel.toggleClass('is-disabled', !enabled);
+			$buttonPanel.toggleClass('is-disabled', !enabled);
+			$designPanel.toggleClass('is-disabled', !enabled);
+			$buttonPanel.find('input, select, button').prop('disabled', !enabled);
+			$titleEnabled.prop('disabled', !enabled);
+			$usernameLabel.prop('disabled', !enabled);
+			$passwordLabel.prop('disabled', !enabled);
+			$rememberEnabled.prop('disabled', !enabled);
+			$designHexInputs.prop('disabled', !enabled);
+			$designPickers.prop('disabled', !enabled);
+			$designResetButtons.prop('disabled', !enabled);
+			$designDimensionInputs.prop('disabled', !enabled);
+			$designDimensionResetButtons.prop('disabled', !enabled);
+			$subtitleEnabled.prop('disabled', !enabled);
+			$lostPasswordEnabled.prop('disabled', !enabled);
+			$preview.toggleClass('is-disabled', !enabled);
+			syncFormFieldState();
+			syncButtonCustomSizeState();
+
+			if (!enabled || !url) {
+				$previewUrl.val(disabledText);
+				$previewUrlCopy.prop('disabled', true);
+				return;
+			}
+
+			$previewUrl.val(url);
+			$previewUrlCopy.prop('disabled', false);
+		}
+
+		$previewUrl.on('focus click', function () {
+			this.select();
+		});
+
+		$previewUrlCopy.on('click', function () {
+			var text = $.trim($previewUrl.val() || '');
+
+			if (!isCopyableUrl(text)) {
+				return;
+			}
+
+			copyLoginUrl(text)
+				.done(function () {
+					markCopyButtonCopied();
+				})
+				.fail(function () {
+					window.alert(loginStrings.copyFailed || 'Не удалось скопировать.');
+				});
+		});
+
+		$form.on('input', '.art-lms-login-design-color-hex', function () {
+			var $hex = $(this);
+			var normalized = normalizeHexColor($hex.val());
+
+			if (normalized) {
+				syncLoginColorControl($hex, normalized);
+				updateLoginDesignPreview();
+			}
+		});
+
+		$form.on('blur', '.art-lms-login-design-color-hex', function () {
+			var $hex = $(this);
+			var normalized = normalizeHexColor($hex.val());
+
+			if (normalized) {
+				syncLoginColorControl($hex, normalized);
+			}
+
+			updateLoginDesignPreview();
+		});
+
+		$form.on('input change', '.art-lms-login-design-color-picker', function () {
+			var $picker = $(this);
+			var $hex = $picker.closest('.art-lms-login-design-color-control').find('.art-lms-login-design-color-hex');
+
+			syncLoginColorControl($hex, $picker.val());
+			updateLoginDesignPreview();
+		});
+
+		$form.on('click', '.art-lms-login-design-reset-color', function (event) {
+			event.preventDefault();
+
+			var $button = $(this);
+			var colorKey = $button.attr('data-color-key');
+			var defaultColor = $button.attr('data-default-color') || designDefaults[colorKey] || '';
+			var $hex = $form.find('input.art-lms-login-design-color-hex[name*="[design][' + colorKey + ']"]');
+
+			if (!colorKey || !defaultColor || $button.prop('disabled') || !$hex.length) {
+				return;
+			}
+
+			syncLoginColorControl($hex, defaultColor);
+			updateLoginDesignPreview();
+		});
+
+		$form.on('input change', '#art_lms_login_title_text, #art_lms_login_subtitle_text, #art_lms_login_username_label, #art_lms_login_password_label, #art_lms_login_remember_label, #art_lms_login_lost_password_text', function () {
+			updateLoginFormPreview();
+		});
+
+		$form.on('input change', '.art-lms-login-design-dimension-input', function () {
+			updateLoginDesignPreview();
+		});
+
+		$form.on('click', '.art-lms-login-design-reset-dimension', function (event) {
+			event.preventDefault();
+
+			var $button = $(this);
+			var dimensionKey = $button.attr('data-dimension-key');
+			var defaultValue = $button.attr('data-default-value');
+
+			if (!dimensionKey || defaultValue === undefined || defaultValue === '' || $button.prop('disabled')) {
+				return;
+			}
+
+			$form.find('input.art-lms-login-design-dimension-input[data-dimension-key="' + dimensionKey + '"]').val(defaultValue);
+			updateLoginDesignPreview();
+		});
+
+		$form.on('input change', '#art_lms_login_button_text, #art_lms_login_button_font_size, #art_lms_login_button_border_radius, #art_lms_login_button_custom_padding_y, #art_lms_login_button_custom_padding_x, #art_lms_login_button_size, #art_lms_login_button_align', function () {
+			syncButtonCustomSizeState();
+			updateLoginButtonPreview();
+		});
+
+		$form.on('input', '.art-lms-login-button-color-hex', function () {
+			var $hex = $(this);
+			var normalized = normalizeHexColor($hex.val());
+
+			if (normalized) {
+				syncLoginButtonColorControl($hex, normalized);
+				updateLoginButtonPreview();
+			}
+		});
+
+		$form.on('blur', '.art-lms-login-button-color-hex', function () {
+			var $hex = $(this);
+			var normalized = normalizeHexColor($hex.val());
+
+			if (normalized) {
+				syncLoginButtonColorControl($hex, normalized);
+			}
+
+			updateLoginButtonPreview();
+		});
+
+		$form.on('input change', '.art-lms-login-button-color-picker', function () {
+			var $picker = $(this);
+			var $hex = $picker.closest('.art-lms-login-design-color-control').find('.art-lms-login-button-color-hex');
+
+			syncLoginButtonColorControl($hex, $picker.val());
+			updateLoginButtonPreview();
+		});
+
+		$form.on('click', '.art-lms-login-button-reset-color', function (event) {
+			event.preventDefault();
+
+			var $button = $(this);
+			var colorKey = $button.attr('data-color-key');
+			var defaultColor = $button.attr('data-default-color') || buttonDefaults[colorKey] || '';
+			var $hex = $form.find('input.art-lms-login-button-color-hex[name*="[button][' + colorKey + ']"]');
+
+			if (!colorKey || !defaultColor || $button.prop('disabled') || !$hex.length) {
+				return;
+			}
+
+			syncLoginButtonColorControl($hex, defaultColor);
+			updateLoginButtonPreview();
+		});
+
+		$form.on('click', '.art-lms-login-button-reset-dimension', function (event) {
+			event.preventDefault();
+
+			var $button = $(this);
+			var dimensionKey = $button.attr('data-dimension-key');
+			var defaultValue = $button.attr('data-default-value');
+
+			if (!dimensionKey || defaultValue === undefined || defaultValue === '' || $button.prop('disabled')) {
+				return;
+			}
+
+			$form.find('input[name*="[button][' + dimensionKey + ']"]').val(defaultValue);
+			updateLoginButtonPreview();
+		});
+
+		$titleEnabled.on('change', function () {
+			syncFormFieldState();
+			updateLoginFormPreview();
+		});
+
+		$subtitleEnabled.on('change', function () {
+			syncFormFieldState();
+			updateLoginFormPreview();
+		});
+
+		$lostPasswordEnabled.on('change', function () {
+			syncFormFieldState();
+			updateLoginFormPreview();
+		});
+
+		$rememberEnabled.on('change', function () {
+			syncFormFieldState();
+			updateLoginFormPreview();
+		});
+
+		$enabled.on('change', function () {
+			syncState();
+			updateLoginFormPreview();
+			updateLoginButtonPreview();
+		});
+		$slug.on('input', function () {
+			var sanitized = sanitizeSlug($slug.val());
+
+			if ($slug.val() !== sanitized) {
+				$slug.val(sanitized);
+			}
+
+			syncState();
+		});
+
+		syncState();
+		updateLoginDesignPreview();
+		updateLoginFormPreview();
+		syncButtonCustomSizeState();
+		updateLoginButtonPreview();
+	}
+
 	$(document).ready(function () {
 		initGeneralPageSettings();
+		initLoginPageSettings();
 		initGatewayStatusControls();
 		initYookassaReceiptsPanel();
 		initPaymentGatewayList();

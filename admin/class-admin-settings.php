@@ -22,6 +22,7 @@ class Art_LMS_Admin_Settings {
 	const TAB_CONFIRMATION  = 'confirmation';
 	const TAB_EMAIL         = 'email';
 	const TAB_GENERAL  = 'general';
+	const TAB_LOGIN    = 'login';
 	const TAB_PAYMENTS = 'payments';
 
 	/**
@@ -44,6 +45,15 @@ class Art_LMS_Admin_Settings {
 			array(
 				'type'              => 'array',
 				'sanitize_callback' => array( 'Art_LMS_Settings', 'sanitize_general' ),
+			)
+		);
+
+		register_setting(
+			'art_lms_login_group',
+			Art_LMS_Settings::OPTION_LOGIN,
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( 'Art_LMS_Settings', 'sanitize_login' ),
 			)
 		);
 
@@ -110,7 +120,7 @@ class Art_LMS_Admin_Settings {
 		}
 
 		$active_tab = self::get_current_tab(
-			array( self::TAB_GENERAL, self::TAB_PAYMENTS ),
+			array( self::TAB_GENERAL, self::TAB_LOGIN, self::TAB_PAYMENTS ),
 			self::TAB_GENERAL
 		);
 
@@ -361,6 +371,14 @@ class Art_LMS_Admin_Settings {
 	public static function render_general_partial() {
 		$settings = Art_LMS_Settings::get_general();
 		include ART_LMS_PLUGIN_DIR . 'admin/views/settings-general.php';
+	}
+
+	/**
+	 * Load custom login page settings partial.
+	 */
+	public static function render_login_partial() {
+		$settings = Art_LMS_Settings::get_login();
+		include ART_LMS_PLUGIN_DIR . 'admin/views/settings-login.php';
 	}
 
 	/**

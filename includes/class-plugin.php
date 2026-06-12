@@ -62,6 +62,7 @@ class Art_LMS_Plugin {
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-statistics.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-checkout-rate-limit.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-checkout.php';
+		require_once ART_LMS_PLUGIN_DIR . 'includes/class-custom-login.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-cache-control.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/abstract-payment-gateway.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/gateways/class-gateway-test.php';
@@ -107,6 +108,7 @@ class Art_LMS_Plugin {
 		Art_LMS_Pages::init();
 		Art_LMS_Statistics::init();
 		Art_LMS_Checkout::init();
+		Art_LMS_Custom_Login::init();
 		Art_LMS_Cache_Control::init();
 		Art_LMS_Materials::init();
 		Art_LMS_Payment_Buttons::init();

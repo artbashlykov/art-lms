@@ -32,13 +32,23 @@ $home_url       = home_url( '/' );
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Адрес checkout', 'art-lms' ); ?></th>
 				<td>
-					<div class="art-lms-checkout-slug-field art-lms-checkout-slug-field--readonly">
+					<div class="art-lms-checkout-slug-field">
 						<span class="art-lms-checkout-slug-field__prefix"><?php echo esc_html( untrailingslashit( $home_url ) ); ?>/</span>
-						<code class="art-lms-checkout-slug-field__value"><?php echo esc_html( $slug ); ?></code>
+						<input
+							type="text"
+							class="regular-text"
+							id="art_lms_checkout_slug"
+							name="<?php echo esc_attr( $option ); ?>[slug]"
+							value="<?php echo esc_attr( $slug ); ?>"
+							autocomplete="off"
+							spellcheck="false"
+							pattern="[a-z0-9\-]+"
+							required
+						>
 						<span class="art-lms-checkout-slug-field__suffix">/</span>
 					</div>
 					<p class="description">
-						<?php esc_html_e( 'По этому адресу откроется оформление заказа после нажатия на платежную кнопку.', 'art-lms' ); ?>
+						<?php esc_html_e( 'По этому адресу откроется оформление заказа после нажатия на платежную кнопку. Используйте латиницу, цифры и дефис. После смены адреса обновите ссылки на платежных кнопках и в рассылках.', 'art-lms' ); ?>
 					</p>
 				</td>
 			</tr>
