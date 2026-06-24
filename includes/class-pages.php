@@ -26,6 +26,7 @@ class Art_LMS_Pages {
 	 */
 	public static function init() {
 		add_action( 'admin_init', array( __CLASS__, 'maybe_backfill_template_page_ids' ), 5 );
+		add_filter( 'display_post_states', array( __CLASS__, 'add_page_post_states' ), 10, 2 );
 	}
 
 	/**
@@ -274,6 +275,31 @@ class Art_LMS_Pages {
 		}
 
 		return new WP_Error( 'invalid_type', __( 'Неизвестный тип страницы.', 'art-lms' ) );
+	}
+
+	/**
+	 * Show ART LMS page roles in the Pages list table.
+	 *
+	 * @param string[] $post_states An array of post display states.
+	 * @param WP_Post  $post        Current post object.
+	 * @return string[]
+	 */
+	public static function add_page_post_states( $post_states, $post ) {
+		if ( ! $post instanceof WP_Post || 'page' !== $post->post_type ) {
+			return $post_states;
+		}
+
+		$page_id = (int) $post->ID;
+
+		if ( $page_id === Art_LMS_Settings::get_account_page_id() ) {
+			$post_states['art_lms_account'] = __( 'ART LMS - кабинет', 'art-lms' );
+		}
+
+		if ( $page_id === Art_LMS_Settings::get_success_page_id() ) {
+			$post_states['art_lms_success'] = __( 'ART LMS - страница оплаты', 'art-lms' );
+		}
+
+		return $post_states;
 	}
 
 	/**

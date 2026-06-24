@@ -612,6 +612,7 @@ class Art_LMS_Gateway_Plisio extends Art_LMS_Payment_Gateway {
 					</div>
 					<p class="description">
 						<?php esc_html_e( 'Укажите этот URL в поле Status URL в кабинете Plisio или оставьте передачу через callback_url при создании счёта.', 'art-lms' ); ?>
+						<?php esc_html_e( 'Допустимое отклонение суммы при колебании курса настраивается в кабинете Plisio. Статус mismatch принимается в пределах этой настройки.', 'art-lms' ); ?>
 					</p>
 				</td>
 			</tr>

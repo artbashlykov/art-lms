@@ -425,27 +425,38 @@ class Art_LMS_User_Registration {
 
 
 		$snapshot = is_array( $pending['snapshot'] ?? null ) ? $pending['snapshot'] : array();
+		$pending_input = is_array( $pending['input'] ?? null ) ? $pending['input'] : array();
+		$button_id = absint( $pending['button_id'] ?? 0 );
 
+		$button_check = Art_LMS_Payment_Buttons::validate_order_form_button( $button_id );
 
+		if ( is_wp_error( $button_check ) ) {
+			return $button_check;
+		}
+
+		$payment_gateway = sanitize_key( (string) ( $pending_input['payment_gateway'] ?? '' ) );
+
+		if ( '' === $payment_gateway ) {
+			$payment_gateway = Art_LMS_Settings::get_default_checkout_gateway();
+		}
+
+		if ( '' === $payment_gateway || ! Art_LMS_Settings::is_checkout_gateway_available( $payment_gateway ) ) {
+			return new WP_Error(
+				'payment_method_required',
+				Art_LMS_Settings::format_checkout_form_message( 'payment_method_required' )
+			);
+		}
 
 		return Art_LMS_Orders::create_checkout_order(
-
-			absint( $pending['button_id'] ?? 0 ),
-
+			$button_id,
 			array(
-
-				'user_id'   => $user_id,
-
-				'email'     => $email,
-
-				'name'      => sanitize_text_field( $pending['name'] ?? '' ),
-
-				'phone'     => sanitize_text_field( $pending['phone'] ?? '' ),
-
-				'form_data' => Art_LMS_Order_Form_Data::encode( $snapshot ),
-
+				'user_id'         => $user_id,
+				'email'           => $email,
+				'name'            => sanitize_text_field( $pending['name'] ?? '' ),
+				'phone'           => sanitize_text_field( $pending['phone'] ?? '' ),
+				'form_data'       => Art_LMS_Order_Form_Data::encode( $snapshot ),
+				'payment_gateway' => $payment_gateway,
 			)
-
 		);
 
 	}

@@ -50,6 +50,7 @@ class Art_LMS_Plugin {
 	private function load_dependencies() {
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-transliteration.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-materials.php';
+		require_once ART_LMS_PLUGIN_DIR . 'includes/class-protected-media.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-payment-buttons.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-orders.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-order-form-data.php';
@@ -111,6 +112,7 @@ class Art_LMS_Plugin {
 		Art_LMS_Custom_Login::init();
 		Art_LMS_Cache_Control::init();
 		Art_LMS_Materials::init();
+		Art_LMS_Protected_Media::init();
 		Art_LMS_Payment_Buttons::init();
 		Art_LMS_Orders::init();
 		Art_LMS_Access::init();

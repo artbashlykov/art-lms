@@ -4,7 +4,7 @@ Tags: lms, elearning, payments, digital products, checkout
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.16.0
+Stable tag: 2.16.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,7 +58,23 @@ To accept live payments, configure one of the supported payment gateways in the 
 
 = What data does the plugin store? =
 
-ART LMS stores order and access data in custom database tables on your WordPress site. This typically includes order status, amount, currency, customer email, name, phone (if enabled on the checkout form), payment gateway name, and timestamps. Access records link users or guest email addresses to purchased materials.
+ART LMS stores order and access data in custom database tables on your WordPress site. This typically includes order status, amount, currency, customer email, name, phone (if enabled on the checkout form), payment gateway name, and timestamps. Access records link WordPress user accounts to purchased materials.
+
+= How does access delivery work? =
+
+After a successful payment, ART LMS creates or links a WordPress user account and grants access to the purchased materials. Buyers open materials from the customer account page or from links in the purchase email. Access is tied to the WordPress user account, not to a standalone guest session.
+
+= Are files in the Media Library protected? =
+
+Files embedded in LMS materials are served through a protected download route and blocked on attachment pages when possible. Direct static requests to `/wp-content/uploads/` may still be served by your web server without running PHP on some hosts. Re-save materials after updating if you need to register older attachments for protection.
+
+= How are refunds handled? =
+
+Payment provider refunds and chargebacks are not processed automatically. If an order must be revoked, change the order status in the ART LMS admin area to refunded or cancelled; access will be removed accordingly.
+
+= What about Plisio crypto payments? =
+
+Plisio may send a `mismatch` status when the paid amount is within the tolerance configured in your Plisio account (for example after exchange-rate movement). ART LMS accepts `completed` and `mismatch` callbacks after signature verification. If `source_amount` is present in the callback, it is compared with the order total.
 
 = Does the plugin send email? =
 
@@ -73,6 +89,11 @@ When a customer completes checkout with a live payment gateway enabled, the plug
 By default, no. If you enable **Delete all plugin data when uninstalling ART LMS** in the general plugin settings and then delete the plugin from the Plugins screen, the plugin removes its custom database tables, settings, materials, payment buttons, order/access records, plugin-specific user meta, and the `art_lms_customer` role. WordPress pages you selected in the settings are not deleted.
 
 == Changelog ==
+
+= 2.16.1 =
+* Protected downloads for files embedded in LMS materials.
+* Email verification checkout now keeps the selected payment gateway and re-validates the payment button.
+* Readme FAQ updated with access, file protection, refunds, and Plisio notes.
 
 = 2.16.0 =
 * Custom login page with configurable URL, form texts, button styling, and form design (colors, dimensions, field styles).
