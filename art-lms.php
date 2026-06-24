@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       ART LMS
  * Description:       Мини-LMS с автовыдачей цифровых продуктов и автоприемом платежей для физлиц, ИП и самозанятых.
- * Version:           2.16.1
+ * Version:           2.16.2
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Арт Башлыков
@@ -16,13 +16,15 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'ART_LMS_VERSION', '2.16.1' );
+define( 'ART_LMS_VERSION', '2.16.2' );
 define( 'ART_LMS_ADMIN_MENU_SLUG', 'art-lms' );
 define( 'ART_LMS_AUTHOR_URL', 'https://forge.artbashlykov.ru' );
 define( 'ART_LMS_PLUGIN_FILE', __FILE__ );
 define( 'ART_LMS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ART_LMS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'ART_LMS_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+
+add_filter( 'puc_view_details_link-' . ART_LMS_ADMIN_MENU_SLUG, '__return_empty_string' );
 
 require_once ART_LMS_PLUGIN_DIR . 'includes/class-activator.php';
 require_once ART_LMS_PLUGIN_DIR . 'includes/class-deactivator.php';

@@ -40,6 +40,7 @@ class Art_LMS_Materials {
 		add_filter( 'body_class', array( __CLASS__, 'filter_material_body_class' ) );
 		add_filter( 'render_block', array( __CLASS__, 'filter_single_material_blocks' ), 10, 2 );
 		add_filter( 'rest_pre_dispatch', array( __CLASS__, 'rest_guard_material' ), 10, 3 );
+		add_filter( 'wp_sitemaps_post_types', array( __CLASS__, 'exclude_from_sitemaps' ) );
 	}
 
 	/**
@@ -470,6 +471,18 @@ class Art_LMS_Materials {
 		}
 
 		return Art_LMS_Access::user_has_access( $user_id, $material_id );
+	}
+
+	/**
+	 * Exclude paid materials from WordPress core sitemaps.
+	 *
+	 * @param array<string, WP_Post_Type> $post_types Post types included in sitemaps.
+	 * @return array<string, WP_Post_Type>
+	 */
+	public static function exclude_from_sitemaps( $post_types ) {
+		unset( $post_types[ self::POST_TYPE ] );
+
+		return $post_types;
 	}
 
 	/**

@@ -78,6 +78,7 @@ class Art_LMS_Plugin {
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-email.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-shortcodes.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-blocks.php';
+		require_once ART_LMS_PLUGIN_DIR . 'includes/class-updater.php';
 		require_once ART_LMS_PLUGIN_DIR . 'admin/class-admin-statistics.php';
 		require_once ART_LMS_PLUGIN_DIR . 'admin/class-admin-settings.php';
 		require_once ART_LMS_PLUGIN_DIR . 'admin/class-admin-menu.php';
@@ -137,6 +138,7 @@ class Art_LMS_Plugin {
 
 		self::$admin_initialized = true;
 
+		Art_LMS_Updater::init();
 		Art_LMS_Admin_Statistics::init();
 		Art_LMS_Admin_Settings::init();
 		Art_LMS_Admin_Menu::init();
