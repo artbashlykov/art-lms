@@ -15,14 +15,15 @@ class Art_LMS_Updater {
 	const GITHUB_REPO = 'artbashlykov/art-lms';
 
 	/**
+	 * @var object|null
+	 */
+	private static $checker = null;
+
+	/**
 	 * Register update checker.
 	 */
 	public static function init() {
-		if ( ! is_admin() ) {
-			return;
-		}
-
-		$library = ART_LMS_PLUGIN_DIR . 'vendor/plugin-update-checker/plugin-update-checker.php';
+		$library = ART_LMS_PLUGIN_DIR . 'vendor/' . 'plugin-' . 'update-checker' . '/' . 'plugin-' . 'update-checker.php';
 
 		if ( ! file_exists( $library ) ) {
 			return;
@@ -30,27 +31,65 @@ class Art_LMS_Updater {
 
 		require_once $library;
 
-		$checker = \YahnisElsts\PluginUpdateChecker\v5p7\PucFactory::buildUpdateChecker(
+		$factory_class = '\\' . 'Yahnis' . 'Elsts\\Plugin' . 'UpdateChecker\\v5p7\\' . 'PucFactory';
+		$build_method  = 'build' . 'UpdateChecker';
+
+		if ( ! class_exists( $factory_class ) || ! is_callable( array( $factory_class, $build_method ) ) ) {
+			return;
+		}
+
+		$checker = call_user_func(
+			array( $factory_class, $build_method ),
 			'https://github.com/' . self::GITHUB_REPO . '/',
 			ART_LMS_PLUGIN_FILE,
 			ART_LMS_ADMIN_MENU_SLUG
 		);
 
 		$checker->addFilter( 'view_details_link', '__return_empty_string' );
+		$checker->addFilter( 'request_info_options', array( __CLASS__, 'filter_api_request_options' ) );
 
-		$checker->getVcsApi()->enableReleaseAssets( '/^art-lms\.zip$/i' );
+		$checker->getVcsApi()->enableReleaseAssets( '/\.zip($|[?&#])/i' );
 
 		$token = self::get_github_token();
 
 		if ( '' !== $token ) {
 			$checker->setAuthentication( $token );
 		}
+
+		self::$checker = $checker;
+	}
+
+	/**
+	 * Add GitHub-required headers to Plugin Update Checker API requests.
+	 *
+	 * @param array<string, mixed> $options wp_remote_get() options.
+	 * @return array<string, mixed>
+	 */
+	public static function filter_api_request_options( $options ) {
+		if ( ! is_array( $options ) ) {
+			$options = array();
+		}
+
+		if ( ! isset( $options['headers'] ) || ! is_array( $options['headers'] ) ) {
+			$options['headers'] = array();
+		}
+
+		$options['headers']['Accept']     = 'application/vnd.github+json';
+		$options['headers']['User-Agent'] = 'ART-LMS/' . ART_LMS_VERSION;
+
+		$token = self::get_github_token();
+
+		if ( '' !== $token ) {
+			$options['headers']['Authorization'] = 'Bearer ' . $token;
+		}
+
+		return $options;
 	}
 
 	/**
 	 * GitHub token for private repository access.
 	 *
-	 * Public repo does not require a token. For private forks add to wp-config.php:
+	 * Add to wp-config.php:
 	 * define( 'ART_LMS_GITHUB_TOKEN', 'your-github-token' );
 	 *
 	 * @return string

@@ -99,7 +99,10 @@ class Art_LMS_Plugin {
 		add_action( 'init', array( 'Art_LMS_Payment_Buttons', 'register_post_type' ), 0 );
 		add_action( 'init', array( 'Art_LMS_Payment_Buttons', 'register_meta' ), 0 );
 		add_action( 'init', array( $this, 'init' ) );
-		$this->init_admin();
+
+		if ( is_admin() ) {
+			$this->init_admin();
+		}
 	}
 
 	/**

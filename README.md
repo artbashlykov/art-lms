@@ -2,7 +2,7 @@
 
 WordPress-плагин: мини-LMS с автовыдачей цифровых продуктов и приёмом платежей (ЮKassa, ЮMoney, Prodamus, Plisio).
 
-**Версия:** 2.16.2  
+**Версия:** 2.16.4  
 **Требования:** WordPress 6.0+, PHP 7.4+
 
 ## Установка из репозитория
@@ -12,15 +12,13 @@ WordPress-плагин: мини-LMS с автовыдачей цифровых 
 3. Активируйте плагин в админке WordPress.
 4. Настройте страницы, платежи и материалы в разделе **ART LMS**.
 
-## Обновления (GitHub Releases)
+## Обновления
 
-Плагин проверяет обновления через [Plugin Update Checker](https://github.com/YahnisElsts/plugin-update-checker) из публичного репозитория [artbashlykov/art-lms](https://github.com/artbashlykov/art-lms). На странице **Плагины** доступны ссылка **Проверить обновления** и стандартное уведомление WordPress при новой версии; автообновление включается там же, если хостинг это поддерживает.
+- **GitHub** — на странице **Плагины**: «Проверить обновления» и стандартное обновление WordPress из [GitHub Releases](https://github.com/artbashlykov/art-lms) (`art-lms.zip`). Репозиторий публичный — токен не нужен.
+- **ART Master Install** — альтернативный канал: **Настройки → Плагины Арта**.
+- **WordPress.org** — после публикации в каталоге обновления идут через wordpress.org (сборка без PUC для каталога).
 
-Токен GitHub на сайте не нужен. Для приватного форка в `wp-config.php`:
-
-```php
-define( 'ART_LMS_GITHUB_TOKEN', 'your-github-token' );
-```
+Сборка релиза: `php scripts/build-release.php` → `art-lms.zip` (включает `vendor/plugin-update-checker/`).
 
 ## Ограничения и важные моменты
 
