@@ -27,9 +27,10 @@
 	width: 100%;
 }
 
-.art-lms-account--no-border {
+.art-lms-account.art-lms-account--no-border {
 	border: 0;
 	box-shadow: none;
+	padding-block: 0;
 	padding-inline: 0;
 }
 
@@ -120,13 +121,14 @@
 	line-height: 1.35;
 }
 
-.art-lms-account__item-title a {
+.art-lms-account__item-title a,
+.art-lms-account__item-title a:hover,
+.art-lms-account__item-title a:focus,
+.art-lms-account__item-title a:focus-visible,
+.art-lms-account__item-title a:active,
+.art-lms-account__item-title a:visited {
 	color: #0f172a;
 	text-decoration: none;
-}
-
-.art-lms-account__item-title a:hover {
-	color: #2563eb;
 }
 
 .art-lms-account__item-actions {
