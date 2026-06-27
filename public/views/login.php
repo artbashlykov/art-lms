@@ -14,6 +14,7 @@ defined( 'ABSPATH' ) || exit;
 <head>
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<?php Art_LMS_Custom_Login::print_template_styles(); ?>
 	<?php wp_head(); ?>
 </head>
 <body <?php body_class( 'art-lms-login-standalone-body' ); ?>>

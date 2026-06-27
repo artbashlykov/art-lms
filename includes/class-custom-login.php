@@ -17,6 +17,13 @@ class Art_LMS_Custom_Login {
 	const QUERY_VAR = 'art_lms_login';
 
 	/**
+	 * Whether the custom login template is being rendered.
+	 *
+	 * @var bool
+	 */
+	private static $is_serving_template = false;
+
+	/**
 	 * Register hooks.
 	 */
 	public static function init() {
@@ -27,8 +34,11 @@ class Art_LMS_Custom_Login {
 		add_action( 'parse_request', array( __CLASS__, 'parse_login_request' ), 0 );
 		add_action( 'login_init', array( __CLASS__, 'maybe_redirect_wp_login' ), 1 );
 		add_filter( 'login_url', array( __CLASS__, 'filter_login_url' ), 10, 3 );
+		add_filter( 'login_redirect', array( __CLASS__, 'filter_login_redirect' ), 10, 3 );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ), 20 );
 		add_action( 'template_redirect', array( __CLASS__, 'maybe_serve_login' ), 0 );
 		add_filter( 'template_include', array( __CLASS__, 'filter_template' ) );
+		add_action( 'wp_before_include_template', array( __CLASS__, 'on_before_include_template' ), 10, 1 );
 	}
 
 	/**
@@ -213,6 +223,7 @@ class Art_LMS_Custom_Login {
 		status_header( 200 );
 		Art_LMS_Cache_Control::prevent_page_cache();
 
+		self::mark_serving_template();
 		self::load_template();
 		exit;
 	}
@@ -226,7 +237,8 @@ class Art_LMS_Custom_Login {
 		}
 
 		$redirect_to = self::get_sanitized_redirect_to_from_get();
-		$destination = $redirect_to ? $redirect_to : home_url( '/' );
+		$user        = wp_get_current_user();
+		$destination = self::get_post_login_redirect_url( $user, $redirect_to );
 
 		wp_safe_redirect( $destination );
 		exit;
@@ -244,7 +256,6 @@ class Art_LMS_Custom_Login {
 			wp_die( esc_html__( 'Шаблон страницы входа не найден.', 'art-lms' ), '', array( 'response' => 500 ) );
 		}
 
-		self::enqueue_assets();
 		include $path;
 	}
 
@@ -261,7 +272,49 @@ class Art_LMS_Custom_Login {
 
 		$login_template = ART_LMS_PLUGIN_DIR . 'public/views/login.php';
 
-		return file_exists( $login_template ) ? $login_template : $template;
+		if ( ! file_exists( $login_template ) ) {
+			return $template;
+		}
+
+		self::mark_serving_template();
+
+		return $login_template;
+	}
+
+	/**
+	 * Mark login template before WordPress includes it.
+	 *
+	 * @param string $template Absolute template path.
+	 */
+	public static function on_before_include_template( $template ) {
+		$login_template = ART_LMS_PLUGIN_DIR . 'public/views/login.php';
+
+		if ( ! file_exists( $login_template ) ) {
+			return;
+		}
+
+		$resolved_template = realpath( (string) $template );
+		$resolved_login    = realpath( $login_template );
+
+		if ( false !== $resolved_template && false !== $resolved_login && $resolved_template === $resolved_login ) {
+			self::mark_serving_template();
+		}
+	}
+
+	/**
+	 * Flag that the custom login template is being rendered.
+	 */
+	private static function mark_serving_template() {
+		self::$is_serving_template = true;
+	}
+
+	/**
+	 * Whether the custom login template is being rendered.
+	 *
+	 * @return bool
+	 */
+	public static function is_serving_template() {
+		return self::$is_serving_template;
 	}
 
 	/**
@@ -397,6 +450,83 @@ class Art_LMS_Custom_Login {
 	}
 
 	/**
+	 * Whether URL points to the custom login page.
+	 *
+	 * @param string $url URL to check.
+	 * @return bool
+	 */
+	public static function is_redirect_to_login_page( $url ) {
+		$url = is_string( $url ) ? trim( $url ) : '';
+
+		if ( '' === $url ) {
+			return false;
+		}
+
+		$login_url = self::get_url();
+		$parts     = wp_parse_url( $url );
+		$login     = wp_parse_url( $login_url );
+
+		if ( ! is_array( $parts ) || ! is_array( $login ) ) {
+			return false;
+		}
+
+		$path        = isset( $parts['path'] ) ? untrailingslashit( (string) $parts['path'] ) : '';
+		$login_path  = isset( $login['path'] ) ? untrailingslashit( (string) $login['path'] ) : '';
+		$login_hosts = array_filter( array( $login['host'] ?? '', wp_parse_url( home_url( '/' ), PHP_URL_HOST ) ) );
+
+		if ( '' === $path || '' === $login_path ) {
+			return false;
+		}
+
+		if ( ! in_array( (string) ( $parts['host'] ?? '' ), $login_hosts, true ) ) {
+			return false;
+		}
+
+		return $path === $login_path;
+	}
+
+	/**
+	 * Resolve redirect destination after a successful login.
+	 *
+	 * @param WP_User $user                  Logged-in user.
+	 * @param string  $requested_redirect_to Redirect requested in the login URL or form.
+	 * @return string
+	 */
+	public static function get_post_login_redirect_url( $user, $requested_redirect_to = '' ) {
+		$requested = is_string( $requested_redirect_to ) ? trim( $requested_redirect_to ) : '';
+
+		if ( '' !== $requested && ! self::is_redirect_to_login_page( $requested ) ) {
+			$validated = wp_validate_redirect( $requested, '' );
+
+			if ( $validated ) {
+				return $validated;
+			}
+		}
+
+		if ( $user instanceof WP_User && ( user_can( $user, 'manage_options' ) || user_can( $user, 'edit_posts' ) ) ) {
+			return admin_url();
+		}
+
+		return home_url( '/' );
+	}
+
+	/**
+	 * Redirect users after login from wp-login.php.
+	 *
+	 * @param string           $redirect_to           Current redirect destination.
+	 * @param string           $requested_redirect_to Requested redirect from the form or URL.
+	 * @param WP_User|WP_Error $user                  Authenticated user or error.
+	 * @return string
+	 */
+	public static function filter_login_redirect( $redirect_to, $requested_redirect_to, $user ) {
+		if ( ! self::is_enabled() || is_wp_error( $user ) || ! ( $user instanceof WP_User ) ) {
+			return $redirect_to;
+		}
+
+		return self::get_post_login_redirect_url( $user, $requested_redirect_to );
+	}
+
+	/**
 	 * Render login page content.
 	 */
 	public static function render_content() {
@@ -404,9 +534,59 @@ class Art_LMS_Custom_Login {
 	}
 
 	/**
+	 * Print login stylesheet tags for the standalone template.
+	 *
+	 * WordPress may skip queued styles when the login template is rendered
+	 * outside the normal theme flow, so output the link explicitly here.
+	 */
+	public static function print_template_styles() {
+		if ( ! self::is_enabled() ) {
+			return;
+		}
+
+		self::mark_serving_template();
+
+		$href = add_query_arg(
+			'ver',
+			ART_LMS_VERSION,
+			ART_LMS_PLUGIN_URL . 'assets/css/public.css'
+		);
+
+		echo '<link rel="stylesheet" id="art-lms-public-css" href="' . esc_url( $href ) . '" media="all" />' . "\n";
+
+		$css = Art_LMS_Settings::get_login_design_css();
+
+		if ( $css ) {
+			echo '<style id="art-lms-public-inline-css">' . "\n";
+			echo wp_strip_all_tags( $css ) . "\n";
+			echo "</style>\n";
+		}
+	}
+
+	/**
 	 * Enqueue login page assets.
 	 */
 	public static function enqueue_assets() {
+		if ( ! self::is_enabled() || ! self::is_serving_template() ) {
+			return;
+		}
+
+		self::enqueue_login_styles();
+	}
+
+	/**
+	 * Register and enqueue login page styles.
+	 */
+	private static function enqueue_login_styles() {
+		if ( ! wp_style_is( 'art-lms-public', 'registered' ) ) {
+			wp_register_style(
+				'art-lms-public',
+				ART_LMS_PLUGIN_URL . 'assets/css/public.css',
+				array(),
+				ART_LMS_VERSION
+			);
+		}
+
 		wp_enqueue_style( 'art-lms-public' );
 
 		$css = Art_LMS_Settings::get_login_design_css();

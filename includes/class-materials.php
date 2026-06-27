@@ -20,6 +20,13 @@ class Art_LMS_Materials {
 	const QUERY_ACCESS_DENIED = 'art_lms_access_denied';
 
 	/**
+	 * Whether the material page header was already prepended to the content.
+	 *
+	 * @var bool
+	 */
+	private static $material_page_header_prepended = false;
+
+	/**
 	 * Register hooks.
 	 */
 	public static function init() {
@@ -39,6 +46,8 @@ class Art_LMS_Materials {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_single_material_assets' ) );
 		add_filter( 'body_class', array( __CLASS__, 'filter_material_body_class' ) );
 		add_filter( 'render_block', array( __CLASS__, 'filter_single_material_blocks' ), 10, 2 );
+		add_filter( 'the_content', array( __CLASS__, 'prepend_material_page_header' ), 1 );
+		add_filter( 'hello_elementor_page_title', array( __CLASS__, 'filter_hello_elementor_page_title' ), 20 );
 		add_filter( 'rest_pre_dispatch', array( __CLASS__, 'rest_guard_material' ), 10, 3 );
 		add_filter( 'wp_sitemaps_post_types', array( __CLASS__, 'exclude_from_sitemaps' ) );
 	}
@@ -703,6 +712,89 @@ class Art_LMS_Materials {
 		}
 
 		return $block_content;
+	}
+
+	/**
+	 * Hide the theme page title on material pages — we render our own header above content.
+	 *
+	 * @param bool $show Whether Hello Elementor should render the page title.
+	 * @return bool
+	 */
+	public static function filter_hello_elementor_page_title( $show ) {
+		if ( is_singular( self::POST_TYPE ) ) {
+			return false;
+		}
+
+		return $show;
+	}
+
+	/**
+	 * Prepend material title and back link above the material content.
+	 *
+	 * @param string $content Post content.
+	 * @return string
+	 */
+	public static function prepend_material_page_header( $content ) {
+		if ( ! is_singular( self::POST_TYPE ) || ! in_the_loop() || ! is_main_query() ) {
+			return $content;
+		}
+
+		if ( self::$material_page_header_prepended ) {
+			return $content;
+		}
+
+		self::$material_page_header_prepended = true;
+
+		$header  = '<div class="art-lms-material-page-header">';
+		$back    = self::get_back_to_account_link_html();
+		$title   = get_the_title();
+		$title   = is_string( $title ) ? $title : '';
+
+		if ( '' !== $title ) {
+			$header .= '<h1 class="art-lms-material-page-header__title entry-title">';
+			$header .= esc_html( $title );
+			$header .= '</h1>';
+		}
+
+		if ( '' !== $back ) {
+			$header .= $back;
+		}
+
+		$header .= '</div>';
+
+		return $header . $content;
+	}
+
+	/**
+	 * Build HTML for the back-to-account link below the material title.
+	 *
+	 * @return string
+	 */
+	public static function get_back_to_account_link_html() {
+		if ( ! is_singular( self::POST_TYPE ) ) {
+			return '';
+		}
+
+		if ( ! Art_LMS_Settings::get_account_page_id() ) {
+			return '';
+		}
+
+		$account_url = Art_LMS_Settings::get_account_url();
+
+		if ( '' === $account_url ) {
+			return '';
+		}
+
+		ob_start();
+		?>
+		<div class="art-lms-material-back">
+			<a class="art-lms-material-back__link" href="<?php echo esc_url( $account_url ); ?>">
+				<span class="art-lms-material-back__icon" aria-hidden="true">&larr;</span>
+				<?php esc_html_e( 'Вернуться в личный кабинет', 'art-lms' ); ?>
+			</a>
+		</div>
+		<?php
+		return (string) ob_get_clean();
 	}
 
 	/**

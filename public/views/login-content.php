@@ -25,17 +25,20 @@ $lost_pw_enabled  = 'yes' === ( $form_settings['lost_password_enabled'] ?? 'yes'
 	<?php endif; ?>
 
 	<?php
-	wp_login_form(
-		array(
-			'redirect'       => $redirect_to,
-			'form_id'        => 'art-lms-loginform',
-			'label_username' => $form_settings['username_label'],
-			'label_password' => $form_settings['password_label'],
-			'label_remember' => $form_settings['remember_label'],
-			'label_log_in'   => $button_settings['text'],
-			'remember'       => 'yes' === ( $form_settings['remember_enabled'] ?? 'yes' ),
-		)
+	$form_args = array(
+		'form_id'        => 'art-lms-loginform',
+		'label_username' => $form_settings['username_label'],
+		'label_password' => $form_settings['password_label'],
+		'label_remember' => $form_settings['remember_label'],
+		'label_log_in'   => $button_settings['text'],
+		'remember'       => 'yes' === ( $form_settings['remember_enabled'] ?? 'yes' ),
 	);
+
+	if ( '' !== $redirect_to ) {
+		$form_args['redirect'] = $redirect_to;
+	}
+
+	wp_login_form( $form_args );
 	?>
 
 	<?php if ( $lost_pw_enabled ) : ?>
