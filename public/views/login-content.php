@@ -15,6 +15,7 @@ $button_settings  = Art_LMS_Settings::get_login_button();
 $subtitle_enabled = 'yes' === ( $form_settings['subtitle_enabled'] ?? 'no' );
 $lost_pw_enabled  = 'yes' === ( $form_settings['lost_password_enabled'] ?? 'yes' );
 ?>
+<div class="art-lms-login-page-shell">
 <div class="art-lms-login <?php echo esc_attr( Art_LMS_Settings::get_login_button_wrapper_class() ); ?>">
 	<?php if ( 'yes' === ( $form_settings['title_enabled'] ?? 'yes' ) ) : ?>
 		<h1 class="art-lms-login__title"><?php echo esc_html( $form_settings['title_text'] ); ?></h1>
@@ -48,4 +49,12 @@ $lost_pw_enabled  = 'yes' === ( $form_settings['lost_password_enabled'] ?? 'yes'
 			</a>
 		</p>
 	<?php endif; ?>
+</div>
+
+<p class="art-lms-login__back">
+	<a class="art-lms-login__back-link" href="<?php echo esc_url( home_url( '/' ) ); ?>">
+		<span class="art-lms-login__back-icon" aria-hidden="true">&larr;</span>
+		<?php esc_html_e( 'Вернуться на сайт', 'art-lms' ); ?>
+	</a>
+</p>
 </div>

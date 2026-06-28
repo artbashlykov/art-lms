@@ -911,6 +911,13 @@ a.art-lms-button.art-lms-button--size-large,
 	background: var(--art-lms-login-page-bg, #f1f5f9);
 }
 
+.art-lms-login-page-shell {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: var(--art-lms-login-form-width, 360px);
+	margin: 0 auto;
+}
+
 .art-lms-login {
 	box-sizing: border-box;
 	width: 100%;
@@ -1073,4 +1080,37 @@ a.art-lms-button.art-lms-button--size-large,
 
 .art-lms-login__links a:hover {
 	text-decoration: underline;
+}
+
+.art-lms-login__back {
+	margin: 1rem 0 0;
+	padding: 0;
+	text-align: center;
+	font-size: 0.875rem;
+	line-height: 1.4;
+}
+
+.art-lms-login__back-link,
+.art-lms-login__back-link:link,
+.art-lms-login__back-link:visited,
+.art-lms-login__back-link:hover,
+.art-lms-login__back-link:focus,
+.art-lms-login__back-link:focus-visible,
+.art-lms-login__back-link:active {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	color: #475569;
+	text-decoration: none;
+}
+
+.art-lms-login__back-link:hover,
+.art-lms-login__back-link:focus,
+.art-lms-login__back-link:focus-visible,
+.art-lms-login__back-link:active {
+	color: #0f172a;
+}
+
+.art-lms-login__back-icon {
+	line-height: 1;
 }
