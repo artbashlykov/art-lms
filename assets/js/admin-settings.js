@@ -533,6 +533,38 @@
 			return;
 		}
 
+		function resolvePageUrl(pageId) {
+			var url = pageUrls[pageId] || pageUrls[String(pageId)] || '';
+
+			if (!url && pageId && config.homeUrl) {
+				url = String(config.homeUrl).replace(/\/$/, '') + '/?page_id=' + pageId;
+			}
+
+			return url;
+		}
+
+		function setPageViewLinkState($link, url) {
+			if (!$link.length) {
+				return;
+			}
+
+			if (url) {
+				$link
+					.attr('href', url)
+					.attr('title', url)
+					.prop('hidden', false)
+					.removeClass('hidden')
+					.removeAttr('aria-hidden');
+			} else {
+				$link
+					.attr('href', '#')
+					.removeAttr('title')
+					.prop('hidden', true)
+					.addClass('hidden')
+					.attr('aria-hidden', 'true');
+			}
+		}
+
 		function updatePageViewLink(fieldId) {
 			var $select = $('#' + fieldId);
 			var $link = $('#' + fieldId + '_view');
@@ -542,13 +574,9 @@
 			}
 
 			var pageId = parseInt($select.val(), 10) || 0;
-			var url = pageUrls[pageId] || pageUrls[String(pageId)] || '';
+			var url = pageId ? resolvePageUrl(pageId) : '';
 
-			if (pageId && url) {
-				$link.attr('href', url).prop('hidden', false);
-			} else {
-				$link.attr('href', '').prop('hidden', true);
-			}
+			setPageViewLinkState($link, url);
 		}
 
 		pageFieldIds.forEach(function (fieldId) {
@@ -629,11 +657,17 @@
 
 					if (data.view_url) {
 						pageUrls[data.page_id] = data.view_url;
+						pageUrls[String(data.page_id)] = data.view_url;
 					}
 
 					updatePageViewLink($select.attr('id'));
 
 					var message = escapeHtml(data.message || '');
+
+					if (data.view_url) {
+						message += ' <a href="' + escapeHtml(data.view_url) + '" target="_blank" rel="noopener noreferrer">' +
+							escapeHtml(strings.viewPage || 'Перейти') + '</a>';
+					}
 
 					if (data.edit_url) {
 						message += ' <a href="' + escapeHtml(data.edit_url) + '" target="_blank" rel="noopener noreferrer">' +

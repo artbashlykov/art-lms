@@ -92,15 +92,17 @@ $page_pickers     = array(
 
 							<a
 
-								href="<?php echo esc_url( $view_url ? $view_url : '' ); ?>"
+								href="<?php echo esc_url( $view_url ? $view_url : '#' ); ?>"
 
-								class="art-lms-page-picker__view<?php echo esc_attr( $view_url ? '' : ' hidden' ); ?>"
+								class="art-lms-page-picker__view"
 
 								id="<?php echo esc_attr( $picker['field'] ); ?>_view"
 
 								target="_blank"
 
 								rel="noopener noreferrer"
+
+								<?php echo $view_url ? '' : 'hidden'; ?>
 
 							>
 

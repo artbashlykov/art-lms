@@ -379,7 +379,8 @@
 	text-decoration: none;
 }
 
-.art-lms-page-picker__view[hidden] {
+.art-lms-page-picker__view[hidden],
+.art-lms-page-picker__view.hidden {
 	display: none;
 }
 

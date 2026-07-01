@@ -677,6 +677,7 @@ class Art_LMS_Admin_Menu {
 							'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
 							'nonce'    => wp_create_nonce( 'art_lms_general_settings' ),
 							'pageUrls' => Art_LMS_Pages::get_admin_page_urls(),
+							'homeUrl'  => home_url( '/' ),
 							'strings'  => array(
 								'creating'     => __( 'Создаём страницу…', 'art-lms' ),
 								'createFailed' => __( 'Не удалось создать страницу.', 'art-lms' ),

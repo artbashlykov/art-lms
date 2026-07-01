@@ -82,8 +82,14 @@ class Art_LMS_Pages {
 
 		$stored = self::get_stored_template_page_ids();
 
-		if ( ! empty( $stored[ $type ] ) && self::is_template_page( (int) $stored[ $type ], $type ) ) {
-			return (int) $stored[ $type ];
+		if ( ! empty( $stored[ $type ] ) ) {
+			$stored_id = (int) $stored[ $type ];
+
+			if ( self::is_template_page( $stored_id, $type ) ) {
+				return $stored_id;
+			}
+
+			self::remove_stored_template_page_id( $type );
 		}
 
 		$settings_page_id = self::get_settings_page_id_for_type( $type );
@@ -175,6 +181,28 @@ class Art_LMS_Pages {
 	}
 
 	/**
+	 * Whether a page can be selected or assigned in plugin settings.
+	 *
+	 * @param int $page_id Page ID.
+	 * @return bool
+	 */
+	private static function is_usable_page( $page_id ) {
+		$page_id = absint( $page_id );
+
+		if ( ! $page_id ) {
+			return false;
+		}
+
+		$post = get_post( $page_id );
+
+		if ( ! $post instanceof WP_Post || 'page' !== $post->post_type ) {
+			return false;
+		}
+
+		return in_array( $post->post_status, array( 'publish', 'draft', 'private', 'pending', 'future' ), true );
+	}
+
+	/**
 	 * Whether a page is a plugin template of the given type.
 	 *
 	 * @param int    $page_id Page ID.
@@ -184,11 +212,34 @@ class Art_LMS_Pages {
 	private static function is_template_page( $page_id, $type ) {
 		$page_id = absint( $page_id );
 
-		if ( ! $page_id || 'page' !== get_post_type( $page_id ) ) {
+		if ( ! self::is_usable_page( $page_id ) ) {
 			return false;
 		}
 
 		return sanitize_key( $type ) === sanitize_key( (string) get_post_meta( $page_id, self::META_KEY, true ) );
+	}
+
+	/**
+	 * Remove a cached template page ID.
+	 *
+	 * @param string $type Page type.
+	 */
+	private static function remove_stored_template_page_id( $type ) {
+		$type = sanitize_key( $type );
+
+		if ( ! $type ) {
+			return;
+		}
+
+		$stored = self::get_stored_template_page_ids();
+
+		if ( empty( $stored[ $type ] ) ) {
+			return;
+		}
+
+		unset( $stored[ $type ] );
+
+		update_option( self::TEMPLATE_PAGE_IDS_OPTION, $stored, false );
 	}
 
 	/**
@@ -260,7 +311,7 @@ class Art_LMS_Pages {
 	public static function assign_page_to_settings( $type, $page_id ) {
 		$page_id = absint( $page_id );
 
-		if ( ! $page_id || 'page' !== get_post_type( $page_id ) ) {
+		if ( ! self::is_usable_page( $page_id ) ) {
 			return new WP_Error( 'invalid_page', __( 'Страница не найдена.', 'art-lms' ) );
 		}
 
