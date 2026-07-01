@@ -449,7 +449,7 @@
 			openButtonText: __('Открыть', 'art-lms'),
 			logoutLinkText: __('Выйти', 'art-lms'),
 			resetPasswordLinkText: __('Сменить пароль', 'art-lms'),
-			hideMaterialsTitle: false,
+			hideMaterialsTitle: true,
 			hideAccessLabel: false,
 			hideOpenButton: false,
 			hideLogoutLink: false,
@@ -950,7 +950,7 @@
 				},
 				hideMaterialsTitle: {
 					type: 'boolean',
-					default: false,
+					default: true,
 				},
 				hideAccessLabel: {
 					type: 'boolean',
@@ -1059,7 +1059,7 @@
 				},
 				hideComparePrice: {
 					type: 'boolean',
-					default: false,
+					default: true,
 				},
 				hidePrice: {
 					type: 'boolean',

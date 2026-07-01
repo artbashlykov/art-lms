@@ -224,7 +224,7 @@ class Art_LMS_Blocks {
 					),
 					'hideComparePrice' => array(
 						'type'    => 'boolean',
-						'default' => false,
+						'default' => true,
 					),
 					'hidePrice'       => array(
 						'type'    => 'boolean',

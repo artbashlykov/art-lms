@@ -422,7 +422,7 @@ class Art_LMS_Account {
 			'open_button_text'       => __( 'Открыть', 'art-lms' ),
 			'logout_link_text'       => __( 'Выйти', 'art-lms' ),
 			'reset_password_link_text' => __( 'Сменить пароль', 'art-lms' ),
-			'hide_materials_title'    => false,
+			'hide_materials_title'    => true,
 			'hide_access_label'      => false,
 			'hide_open_button'       => false,
 			'hide_logout_link'       => false,

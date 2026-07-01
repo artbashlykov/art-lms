@@ -2792,7 +2792,7 @@ class Art_LMS_Settings {
 					'label'    => __( 'Почта', 'art-lms' ),
 				),
 				'phone'     => array(
-					'enabled'  => 'yes',
+					'enabled'  => 'no',
 					'required' => 'no',
 					'label'    => __( 'Телефон', 'art-lms' ),
 				),

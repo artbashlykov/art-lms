@@ -767,48 +767,34 @@
 	color: #a7aaad !important;
 }
 
-#adminmenu li.art-lms-admin-menu-settings-start {
-	margin-top: 6px;
-	padding-top: 0;
-}
-
-#adminmenu li.art-lms-admin-menu-settings-start::before {
-	content: '';
-	display: block;
-	height: 1px;
-	margin: 0 12px 8px;
-	background-color: rgba(240, 240, 241, 0.18);
-}
-
-body.admin-color-light #adminmenu li.art-lms-admin-menu-settings-start::before,
-body.admin-color-modern #adminmenu li.art-lms-admin-menu-settings-start::before,
-body.admin-color-blue #adminmenu li.art-lms-admin-menu-settings-start::before {
-	background-color: rgba(0, 0, 0, 0.12);
-}
-
-.folded #adminmenu li.art-lms-admin-menu-settings-start::before {
-	margin: 0 8px 8px;
-}
-
+#adminmenu li.art-lms-admin-menu-settings-start,
 #adminmenu li.art-lms-admin-menu-stats-start {
 	margin-top: 6px;
 	padding-top: 0;
 }
 
+#adminmenu li.art-lms-admin-menu-settings-start::before,
 #adminmenu li.art-lms-admin-menu-stats-start::before {
 	content: '';
 	display: block;
 	height: 1px;
 	margin: 0 12px 8px;
-	background-color: rgba(240, 240, 241, 0.18);
+	background-color: rgba(240, 240, 241, 0.4);
 }
 
-body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start::before,
-body.admin-color-modern #adminmenu li.art-lms-admin-menu-stats-start::before,
-body.admin-color-blue #adminmenu li.art-lms-admin-menu-stats-start::before {
-	background-color: rgba(0, 0, 0, 0.12);
+@supports (color: color-mix(in srgb, white 50%, black)) {
+	#adminmenu li.art-lms-admin-menu-settings-start::before,
+	#adminmenu li.art-lms-admin-menu-stats-start::before {
+		background-color: color-mix(in srgb, currentColor 34%, transparent);
+	}
 }
 
+body.admin-color-light #adminmenu li.art-lms-admin-menu-settings-start::before,
+body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start::before {
+	background-color: rgba(0, 0, 0, 0.18);
+}
+
+.folded #adminmenu li.art-lms-admin-menu-settings-start::before,
 .folded #adminmenu li.art-lms-admin-menu-stats-start::before {
 	margin: 0 8px 8px;
 }
@@ -1537,14 +1523,28 @@ body.admin-color-blue #adminmenu li.art-lms-admin-menu-stats-start::before {
 	}
 }
 
+.art-lms-checkout-consents {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.art-lms-checkout-consents-table {
+	width: 100%;
+	min-width: 52rem;
+}
+
 .art-lms-checkout-consents-table .regular-text {
 	width: 100%;
-	min-width: 160px;
-	max-width: 280px;
+	min-width: 0;
+	max-width: none;
+	box-sizing: border-box;
 }
 
 .art-lms-checkout-consents-table select {
-	max-width: 220px;
+	width: 100%;
+	min-width: 0;
+	max-width: none;
+	box-sizing: border-box;
 }
 
 #art-lms-checkout-preview .art-lms-checkout-form__consent label,

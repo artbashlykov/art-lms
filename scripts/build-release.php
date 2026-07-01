@@ -2,7 +2,9 @@
 /**
  * Build GitHub Release zip for ART LMS.
  *
- * Usage: php scripts/build-release.php [output-path]
+ * Usage: php scripts/build-release.php
+ *
+ * Writes art-lms.zip to the system temp directory and prints the full path to stdout.
  *
  * @package Art_LMS
  */
@@ -37,7 +39,7 @@ function art_lms_build_release( array $art_lms_argv ) {
 
 	$art_lms_plugin_dir = dirname( __DIR__ );
 	$art_lms_slug       = basename( $art_lms_plugin_dir );
-	$art_lms_output     = $art_lms_argv[1] ?? ( sys_get_temp_dir() . DIRECTORY_SEPARATOR . $art_lms_slug . '.zip' );
+	$art_lms_output     = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $art_lms_slug . '.zip';
 
 	$art_lms_exclude_dirs          = array( '.git', '.cursor', '.idea', '.vscode', 'node_modules', 'scripts' );
 	$art_lms_exclude_file_patterns = array(

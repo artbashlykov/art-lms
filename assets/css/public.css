@@ -462,6 +462,7 @@ a.art-lms-button.art-lms-button--size-large,
 	border: 1px solid #e2e8f0;
 	border-radius: var(--art-lms-checkout-form-radius, 8px);
 	background: var(--art-lms-checkout-form-bg, #fff);
+	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
 	font: inherit;
 	color: inherit;
 }

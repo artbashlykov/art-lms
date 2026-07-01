@@ -312,7 +312,7 @@ class Art_LMS_Pages {
 		if ( self::TYPE_ACCOUNT === $type ) {
 			return array(
 				'title'   => __( 'Личный кабинет', 'art-lms' ),
-				'slug'    => 'lichnyj-kabinet',
+				'slug'    => 'cabinet',
 				'content' => self::get_account_page_content(),
 			);
 		}
@@ -320,7 +320,7 @@ class Art_LMS_Pages {
 		if ( self::TYPE_SUCCESS === $type ) {
 			return array(
 				'title'   => __( 'Оплата успешна', 'art-lms' ),
-				'slug'    => 'oplata-uspeshna',
+				'slug'    => 'payment-check',
 				'content' => self::get_success_page_content(),
 			);
 		}
