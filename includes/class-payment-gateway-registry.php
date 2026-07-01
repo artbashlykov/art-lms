@@ -27,6 +27,58 @@ class Art_LMS_Payment_Gateway_Registry {
 	private static $booted = false;
 
 	/**
+	 * Default display order for built-in payment gateways.
+	 *
+	 * @return string[]
+	 */
+	public static function get_builtin_order() {
+		return array(
+			'test',
+			'yoomoney',
+			'prodamus',
+			'yookassa',
+			'plisio',
+		);
+	}
+
+	/**
+	 * Sort gateway IDs using the built-in order, appending unknown IDs at the end.
+	 *
+	 * @param string[] $gateway_ids Gateway IDs.
+	 * @return string[]
+	 */
+	public static function sort_gateway_ids( array $gateway_ids ) {
+		$registry_ids = array_keys( self::all() );
+		$sorted       = array();
+
+		foreach ( self::get_builtin_order() as $gateway_id ) {
+			if ( in_array( $gateway_id, $gateway_ids, true ) ) {
+				$sorted[] = $gateway_id;
+			}
+		}
+
+		foreach ( $gateway_ids as $gateway_id ) {
+			$gateway_id = sanitize_key( (string) $gateway_id );
+
+			if ( '' === $gateway_id || in_array( $gateway_id, $sorted, true ) ) {
+				continue;
+			}
+
+			if ( in_array( $gateway_id, $registry_ids, true ) ) {
+				$sorted[] = $gateway_id;
+			}
+		}
+
+		foreach ( $registry_ids as $gateway_id ) {
+			if ( ! in_array( $gateway_id, $sorted, true ) ) {
+				$sorted[] = $gateway_id;
+			}
+		}
+
+		return $sorted;
+	}
+
+	/**
 	 * Register built-in gateways.
 	 */
 	public static function boot() {
@@ -38,8 +90,8 @@ class Art_LMS_Payment_Gateway_Registry {
 
 		self::register( new Art_LMS_Gateway_Test() );
 		self::register( new Art_LMS_Gateway_Yoomoney() );
-		self::register( new Art_LMS_Gateway_Yookassa() );
 		self::register( new Art_LMS_Gateway_Prodamus() );
+		self::register( new Art_LMS_Gateway_Yookassa() );
 		self::register( new Art_LMS_Gateway_Plisio() );
 
 		/**

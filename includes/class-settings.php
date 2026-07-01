@@ -19,6 +19,7 @@ class Art_LMS_Settings {
 	const OPTION_EMAIL    = 'art_lms_settings_email';
 	const OPTION_MIGRATED              = 'art_lms_settings_migrated';
 	const OPTION_DELETE_DATA_ON_UNINSTALL = 'art_lms_delete_data_on_uninstall';
+	const GATEWAY_ORDER_VERSION           = 'builtin-v1';
 
 	/**
 	 * In-request cache.
@@ -32,6 +33,7 @@ class Art_LMS_Settings {
 	 */
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'bootstrap_settings' ), 5 );
+		add_action( 'init', array( __CLASS__, 'maybe_migrate_gateway_order' ), 6 );
 	}
 
 	/**
@@ -2675,10 +2677,31 @@ class Art_LMS_Settings {
 
 		return array(
 			'default_gateway' => '',
-			'gateway_order'   => array_keys( $gateways ),
+			'gateway_order'   => Art_LMS_Payment_Gateway_Registry::sort_gateway_ids( array_keys( $gateways ) ),
 			'active_gateway'  => '',
 			'gateways'        => $gateways,
 		);
+	}
+
+	/**
+	 * Apply the built-in gateway order to saved payment settings once.
+	 */
+	public static function maybe_migrate_gateway_order() {
+		if ( get_option( 'art_lms_gateway_order_version', '' ) === self::GATEWAY_ORDER_VERSION ) {
+			return;
+		}
+
+		$payment = get_option( self::OPTION_PAYMENT, false );
+
+		if ( false !== $payment && is_array( $payment ) ) {
+			$current_order = is_array( $payment['gateway_order'] ?? null ) ? $payment['gateway_order'] : array();
+
+			$payment['gateway_order'] = Art_LMS_Payment_Gateway_Registry::sort_gateway_ids( $current_order );
+			update_option( self::OPTION_PAYMENT, $payment, false );
+			unset( self::$cache[ self::OPTION_PAYMENT ] );
+		}
+
+		update_option( 'art_lms_gateway_order_version', self::GATEWAY_ORDER_VERSION, false );
 	}
 
 	/**

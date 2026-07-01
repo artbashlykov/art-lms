@@ -501,6 +501,8 @@ a.art-lms-button.art-lms-button--size-large,
 
 .art-lms-checkout__summary strong {
 	font-size: var(--art-lms-checkout-product-name-font-size, 16px);
+	flex-basis: 100%;
+	width: 100%;
 }
 
 .art-lms-checkout__summary {
@@ -516,8 +518,11 @@ a.art-lms-button.art-lms-button--size-large,
 .art-lms-checkout__prices {
 	display: inline-flex;
 	flex-wrap: wrap;
+	flex-basis: 100%;
+	width: 100%;
 	gap: 0.35rem 0.75rem;
 	align-items: baseline;
+	justify-content: center;
 }
 
 .art-lms-checkout__compare {
