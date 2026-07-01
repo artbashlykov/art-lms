@@ -4,7 +4,7 @@ Tags: lms, elearning, payments, digital products, checkout
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.17.2
+Stable tag: 2.17.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -89,6 +89,12 @@ When a customer completes checkout with a live payment gateway enabled, the plug
 By default, no. If you enable **Delete all plugin data when uninstalling ART LMS** in the general plugin settings and then delete the plugin from the Plugins screen, the plugin removes its custom database tables, settings, materials, payment buttons, order/access records, plugin-specific user meta, and the `art_lms_customer` role. WordPress pages you selected in the settings are not deleted.
 
 == Changelog ==
+
+= 2.17.3 =
+* Database: create orders/access tables automatically on plugin load when missing (no re-activation required after install or update).
+* Database: repair schema migrations when columns are missing despite a stored schema version.
+* Database: backfill unique payment_label values for legacy orders stored as an empty string.
+* Checkout: retry order insert after ensuring tables/schema when the first insert fails.
 
 = 2.17.2 =
 * Checkout field settings: added «Preview on site» button to the form preview panel.

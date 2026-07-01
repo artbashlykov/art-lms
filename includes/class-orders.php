@@ -25,8 +25,94 @@ class Art_LMS_Orders {
 	 * Register hooks.
 	 */
 	public static function init() {
+		self::ensure_tables();
 		self::maybe_upgrade_schema();
 		self::maybe_upgrade_indexes();
+	}
+
+	/**
+	 * Create plugin tables when missing (e.g. after manual update without re-activation).
+	 */
+	public static function ensure_tables() {
+		require_once ART_LMS_PLUGIN_DIR . 'includes/class-activator.php';
+		Art_LMS_Activator::ensure_tables();
+	}
+
+	/**
+	 * Whether the orders table exists.
+	 *
+	 * @return bool
+	 */
+	private static function table_exists() {
+		global $wpdb;
+
+		$table = self::table_name();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal schema check; table name is plugin-controlled.
+		return $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table;
+	}
+
+	/**
+	 * Whether a column exists on the orders table.
+	 *
+	 * @param string $name Column name.
+	 * @return bool
+	 */
+	private static function column_exists( $name ) {
+		global $wpdb;
+
+		$table = self::table_name();
+		$name  = (string) $name;
+
+		if ( '' === $name || ! self::table_exists() ) {
+			return false;
+		}
+
+		// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal schema migration; table name is plugin-controlled.
+		$exists = ! empty(
+			$wpdb->get_results(
+				$wpdb->prepare(
+					"SHOW COLUMNS FROM `{$table}` LIKE %s",
+					$name
+				)
+			)
+		);
+		// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter
+
+		return $exists;
+	}
+
+	/**
+	 * Whether required orders table columns are present.
+	 *
+	 * @return bool
+	 */
+	private static function schema_is_ready() {
+		if ( ! self::table_exists() ) {
+			return false;
+		}
+
+		foreach ( self::get_required_schema_columns() as $column ) {
+			if ( ! self::column_exists( $column ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Columns that must exist on the orders table.
+	 *
+	 * @return string[]
+	 */
+	private static function get_required_schema_columns() {
+		return array(
+			'form_data',
+			'gateway_transaction_id',
+			'gateway_payment_method',
+			'payment_gateway',
+		);
 	}
 
 	/**
@@ -35,27 +121,14 @@ class Art_LMS_Orders {
 	public static function maybe_upgrade_schema() {
 		global $wpdb;
 
+		self::ensure_tables();
+
 		$table          = self::table_name();
 		$stored_version = get_option( 'art_lms_orders_schema_version', '' );
 
-		if ( ART_LMS_VERSION === $stored_version ) {
+		if ( ART_LMS_VERSION === $stored_version && self::schema_is_ready() ) {
 			return;
 		}
-
-		$column_exists = static function ( $name ) use ( $wpdb, $table ) {
-			// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal schema migration; table name is plugin-controlled.
-			$exists = ! empty(
-				$wpdb->get_results(
-					$wpdb->prepare(
-						"SHOW COLUMNS FROM `{$table}` LIKE %s",
-						$name
-					)
-				)
-			);
-			// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter
-
-			return $exists;
-		};
 
 		$additions = array(
 			'form_data'              => 'ADD COLUMN form_data longtext NULL AFTER phone',
@@ -65,18 +138,62 @@ class Art_LMS_Orders {
 		);
 
 		foreach ( $additions as $column => $sql_part ) {
-			if ( ! $column_exists( $column ) ) {
+			if ( ! self::column_exists( $column ) ) {
 				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Internal schema migration; table name is plugin-controlled.
 				$wpdb->query( 'ALTER TABLE `' . $table . '` ' . $sql_part );
 			}
 		}
 
-		if ( $column_exists( 'gateway_transaction_id' ) && empty( $wpdb->get_results( "SHOW INDEX FROM `{$table}` WHERE Key_name = 'gateway_transaction_id'" ) ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( self::column_exists( 'gateway_transaction_id' ) && empty( $wpdb->get_results( "SHOW INDEX FROM `{$table}` WHERE Key_name = 'gateway_transaction_id'" ) ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Internal schema migration; table name is plugin-controlled.
 			$wpdb->query( 'ALTER TABLE `' . $table . '` ADD KEY gateway_transaction_id (gateway_transaction_id)' );
 		}
 
-		update_option( 'art_lms_orders_schema_version', ART_LMS_VERSION, false );
+		self::maybe_backfill_payment_labels();
+
+		if ( self::schema_is_ready() ) {
+			update_option( 'art_lms_orders_schema_version', ART_LMS_VERSION, false );
+		}
+	}
+
+	/**
+	 * Assign unique payment labels to legacy rows stored as an empty string.
+	 */
+	private static function maybe_backfill_payment_labels() {
+		global $wpdb;
+
+		if ( ! self::table_exists() ) {
+			return;
+		}
+
+		$table = self::table_name();
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Internal data repair; table name is plugin-controlled.
+		$order_ids = $wpdb->get_col( "SELECT id FROM `{$table}` WHERE payment_label = '' ORDER BY id ASC LIMIT 500" );
+
+		if ( empty( $order_ids ) ) {
+			return;
+		}
+
+		foreach ( $order_ids as $order_id ) {
+			$order_id = absint( $order_id );
+
+			if ( ! $order_id ) {
+				continue;
+			}
+
+			$wpdb->update(
+				$table,
+				array(
+					'payment_label' => self::generate_payment_label(),
+				),
+				array(
+					'id' => $order_id,
+				),
+				array( '%s' ),
+				array( '%d' )
+			);
+		}
 	}
 
 	/**
@@ -287,6 +404,7 @@ class Art_LMS_Orders {
 	public static function create( $data ) {
 		global $wpdb;
 
+		self::ensure_tables();
 		self::maybe_upgrade_schema();
 
 		$defaults = array(
@@ -312,39 +430,55 @@ class Art_LMS_Orders {
 			$data['payment_label'] = self::generate_payment_label();
 		}
 
-		$inserted = $wpdb->insert(
-			self::table_name(),
-			array(
-				'order_key'       => sanitize_text_field( $data['order_key'] ),
-				'user_id'         => absint( $data['user_id'] ),
-				'product_id'      => absint( $data['product_id'] ),
-				'email'           => sanitize_email( $data['email'] ),
-				'name'            => sanitize_text_field( $data['name'] ),
-				'phone'           => sanitize_text_field( $data['phone'] ),
-				'form_data'       => is_string( $data['form_data'] ?? '' ) ? $data['form_data'] : '',
-				'amount'          => floatval( $data['amount'] ),
-				'currency'        => sanitize_text_field( $data['currency'] ),
-				'status'          => sanitize_text_field( $data['status'] ),
-				'payment_label'          => sanitize_text_field( $data['payment_label'] ),
-				'gateway_payment_method' => sanitize_text_field( $data['gateway_payment_method'] ),
-				'payment_gateway'        => sanitize_text_field( $data['payment_gateway'] ),
-				'created_at'      => $data['created_at'],
-			),
-			array( '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s', '%s', '%s' )
+		$row = array(
+			'order_key'              => sanitize_text_field( $data['order_key'] ),
+			'user_id'                => absint( $data['user_id'] ),
+			'product_id'             => absint( $data['product_id'] ),
+			'email'                  => sanitize_email( $data['email'] ),
+			'name'                   => sanitize_text_field( $data['name'] ),
+			'phone'                  => sanitize_text_field( $data['phone'] ),
+			'form_data'              => is_string( $data['form_data'] ?? '' ) ? $data['form_data'] : '',
+			'amount'                 => floatval( $data['amount'] ),
+			'currency'               => sanitize_text_field( $data['currency'] ),
+			'status'                 => sanitize_text_field( $data['status'] ),
+			'payment_label'          => sanitize_text_field( $data['payment_label'] ),
+			'gateway_payment_method' => sanitize_text_field( $data['gateway_payment_method'] ),
+			'payment_gateway'        => sanitize_text_field( $data['payment_gateway'] ),
+			'created_at'             => $data['created_at'],
 		);
 
+		$formats = array( '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s', '%s', '%s' );
+
+		$inserted = $wpdb->insert( self::table_name(), $row, $formats );
+
 		if ( ! $inserted ) {
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! empty( $wpdb->last_error ) ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( 'ART LMS order insert failed: ' . $wpdb->last_error );
-			}
+			self::ensure_tables();
+			self::maybe_upgrade_schema();
+			$row['payment_label'] = self::generate_payment_label();
+			$inserted             = $wpdb->insert( self::table_name(), $row, $formats );
+		}
+
+		if ( ! $inserted ) {
+			self::log_insert_failure();
 
 			return false;
 		}
 
-		$order_id = (int) $wpdb->insert_id;
+		return (int) $wpdb->insert_id;
+	}
 
-		return $order_id;
+	/**
+	 * Log order insert failures for troubleshooting.
+	 */
+	private static function log_insert_failure() {
+		global $wpdb;
+
+		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG || empty( $wpdb->last_error ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		error_log( 'ART LMS order insert failed: ' . $wpdb->last_error );
 	}
 
 	/**

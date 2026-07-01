@@ -43,6 +43,13 @@ class Art_LMS_Activator {
 	}
 
 	/**
+	 * Ensure plugin tables exist (safe to call on every request).
+	 */
+	public static function ensure_tables() {
+		self::create_tables();
+	}
+
+	/**
 	 * Create custom database tables.
 	 */
 	private static function create_tables() {
