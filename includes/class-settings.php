@@ -2325,13 +2325,18 @@ class Art_LMS_Settings {
 		}
 
 		$payment_methods = self::get_checkout_payment_methods();
+		$default_gateway = self::get_default_checkout_gateway();
+
+		if ( '' === $default_gateway && 1 === count( $payment_methods ) ) {
+			$default_gateway = sanitize_key( (string) ( $payment_methods[0]['id'] ?? '' ) );
+		}
 
 		return array(
 			'fields'                 => $fields,
 			'consents'               => $consents,
 			'messages'               => self::get_checkout_form_messages(),
 			'paymentMethods'         => $payment_methods,
-			'defaultGateway'         => self::get_default_checkout_gateway(),
+			'defaultGateway'         => $default_gateway,
 			'requirePayment'         => count( $payment_methods ) > 0,
 		);
 	}

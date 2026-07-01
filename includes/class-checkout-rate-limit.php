@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class Art_LMS_Checkout_Rate_Limit {
 
-	const EMAIL_COOLDOWN_SECONDS = 40;
+	const EMAIL_COOLDOWN_SECONDS = 5;
 
 	const IP_MAX_ATTEMPTS = 7;
 
@@ -23,12 +23,16 @@ class Art_LMS_Checkout_Rate_Limit {
 	const TRANSIENT_IP_PREFIX = 'art_lms_checkout_rl_ip_';
 
 	/**
-	 * Enforce checkout submit limits. Records the attempt when allowed.
+	 * Validate checkout submit limits without recording the attempt.
 	 *
 	 * @param array<string, mixed> $params Checkout submission payload.
 	 * @return true|WP_Error
 	 */
-	public static function enforce( array $params ) {
+	public static function check( array $params ) {
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
 		$ip_error = self::check_ip_limit();
 
 		if ( is_wp_error( $ip_error ) ) {
@@ -45,10 +49,23 @@ class Art_LMS_Checkout_Rate_Limit {
 			}
 		}
 
+		return true;
+	}
+
+	/**
+	 * Record a successful checkout submit attempt.
+	 *
+	 * @param array<string, mixed> $params Checkout submission payload.
+	 */
+	public static function record( array $params ) {
+		if ( current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$email = self::resolve_submission_email( $params );
+
 		self::record_ip_attempt();
 		self::record_email_attempt( $email );
-
-		return true;
 	}
 
 	/**
@@ -167,9 +184,9 @@ class Art_LMS_Checkout_Rate_Limit {
 			return array();
 		}
 
-		$now     = time();
-		$window  = self::IP_WINDOW_SECONDS;
-		$recent  = array();
+		$now    = time();
+		$window = self::IP_WINDOW_SECONDS;
+		$recent = array();
 
 		foreach ( $attempts as $timestamp ) {
 			$timestamp = (int) $timestamp;

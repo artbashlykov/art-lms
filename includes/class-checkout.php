@@ -118,7 +118,7 @@ class Art_LMS_Checkout {
 		$button_id = absint( $params['button_id'] ?? 0 );
 		unset( $params['button_id'] );
 
-		$rate_limit = Art_LMS_Checkout_Rate_Limit::enforce( $params );
+		$rate_limit = Art_LMS_Checkout_Rate_Limit::check( $params );
 
 		if ( is_wp_error( $rate_limit ) ) {
 			return $rate_limit;
@@ -153,6 +153,8 @@ class Art_LMS_Checkout {
 				array( 'status' => 500 )
 			);
 		}
+
+		Art_LMS_Checkout_Rate_Limit::record( $params );
 
 		return new WP_REST_Response(
 			array(

@@ -308,6 +308,10 @@ class Art_LMS_Orders {
 
 		$data = wp_parse_args( $data, $defaults );
 
+		if ( '' === (string) ( $data['payment_label'] ?? '' ) ) {
+			$data['payment_label'] = self::generate_payment_label();
+		}
+
 		$inserted = $wpdb->insert(
 			self::table_name(),
 			array(
@@ -339,15 +343,6 @@ class Art_LMS_Orders {
 		}
 
 		$order_id = (int) $wpdb->insert_id;
-		$label    = self::generate_payment_label( $order_id );
-
-		$wpdb->update(
-			self::table_name(),
-			array( 'payment_label' => $label ),
-			array( 'id' => $order_id ),
-			array( '%s' ),
-			array( '%d' )
-		);
 
 		return $order_id;
 	}
@@ -472,6 +467,14 @@ class Art_LMS_Orders {
 
 		if ( '' === $payment_gateway ) {
 			$payment_gateway = $default_gateway;
+		}
+
+		if ( '' === $payment_gateway || ! Art_LMS_Settings::is_checkout_gateway_available( $payment_gateway ) ) {
+			$methods = Art_LMS_Settings::get_checkout_payment_methods();
+
+			if ( 1 === count( $methods ) ) {
+				$payment_gateway = sanitize_key( (string) ( $methods[0]['id'] ?? '' ) );
+			}
 		}
 
 		if ( '' === $payment_gateway || ! Art_LMS_Settings::is_checkout_gateway_available( $payment_gateway ) ) {

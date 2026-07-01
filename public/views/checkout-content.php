@@ -155,6 +155,9 @@ $actions_class = Art_LMS_Settings::get_checkout_button_actions_class();
 			<?php
 			$payment_methods   = Art_LMS_Settings::get_checkout_payment_methods();
 			$default_gateway   = Art_LMS_Settings::get_default_checkout_gateway();
+			if ( '' === $default_gateway && 1 === count( $payment_methods ) ) {
+				$default_gateway = sanitize_key( (string) ( $payment_methods[0]['id'] ?? '' ) );
+			}
 			$show_payment_pick = ! $is_preview && count( $payment_methods ) > 0;
 			?>
 			<?php if ( $show_payment_pick ) : ?>

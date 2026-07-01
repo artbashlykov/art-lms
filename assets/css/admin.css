@@ -1576,6 +1576,7 @@ body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start.wp-has-curre
 	top: 32px;
 }
 
+.art-lms-settings-checkout-page .art-lms-checkout-design-preview-panel__header,
 .art-lms-settings-checkout-design-page .art-lms-checkout-design-preview-panel__header {
 	display: flex;
 	flex-wrap: wrap;
@@ -1585,14 +1586,17 @@ body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start.wp-has-curre
 	margin-bottom: 12px;
 }
 
+.art-lms-settings-checkout-page .art-lms-checkout-design-preview-panel__header h2,
 .art-lms-settings-checkout-design-page .art-lms-checkout-design-preview-panel__header h2 {
 	margin: 0 0 4px;
 }
 
+.art-lms-settings-checkout-page .art-lms-checkout-design-preview-panel__header .description,
 .art-lms-settings-checkout-design-page .art-lms-checkout-design-preview-panel__header .description {
 	margin: 0;
 }
 
+.art-lms-settings-checkout-page .art-lms-checkout-design-site-preview,
 .art-lms-settings-checkout-design-page .art-lms-checkout-design-site-preview {
 	flex-shrink: 0;
 }

@@ -20,6 +20,7 @@ $custom_consents = $settings['custom_consents'] ?? array();
 $consent_catalog = Art_LMS_Settings::get_checkout_consent_catalog();
 $slug           = Art_LMS_Settings::get_checkout_slug();
 $home_url       = home_url( '/' );
+$site_preview_url = Art_LMS_Checkout::get_design_preview_url();
 ?>
 <p class="description"><?php esc_html_e( 'На этой вкладке мы настраиваем ОДНУ ОБЩУЮ форму оформления заказов, на которую попадут клиенты со всех платежных кнопок', 'art-lms' ); ?></p>
 
@@ -343,8 +344,22 @@ $home_url       = home_url( '/' );
 
 		<aside class="art-lms-checkout-settings-preview" aria-label="<?php esc_attr_e( 'Предпросмотр формы', 'art-lms' ); ?>">
 			<div class="art-lms-panel art-lms-checkout-preview-panel">
-				<h2><?php esc_html_e( 'Предпросмотр формы', 'art-lms' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'Так форма будет выглядеть для покупателя на checkout.', 'art-lms' ); ?></p>
+				<div class="art-lms-checkout-design-preview-panel__header">
+					<div>
+						<h2><?php esc_html_e( 'Предпросмотр формы', 'art-lms' ); ?></h2>
+						<p class="description"><?php esc_html_e( 'Так форма будет выглядеть для покупателя на checkout.', 'art-lms' ); ?></p>
+					</div>
+					<?php if ( $site_preview_url ) : ?>
+						<a
+							class="button button-secondary art-lms-checkout-design-site-preview"
+							href="<?php echo esc_url( $site_preview_url ); ?>"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<?php esc_html_e( 'Предпросмотр на сайте', 'art-lms' ); ?>
+						</a>
+					<?php endif; ?>
+				</div>
 				<div id="art-lms-checkout-preview" class="art-lms-checkout-preview"></div>
 			</div>
 		</aside>
