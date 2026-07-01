@@ -31,7 +31,6 @@ class Art_LMS_Materials {
 	 */
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'maybe_flush_rewrites' ), 99 );
-		add_action( 'init', array( __CLASS__, 'maybe_migrate_material_slugs' ), 20 );
 		add_filter( 'wp_insert_post_data', array( __CLASS__, 'force_latin_post_slug' ), 10, 2 );
 		add_filter( 'wp_unique_post_slug', array( __CLASS__, 'filter_unique_material_slug' ), 10, 6 );
 		add_filter( 'rest_pre_insert_' . self::POST_TYPE, array( __CLASS__, 'rest_force_latin_slug' ), 10, 2 );
@@ -208,37 +207,6 @@ class Art_LMS_Materials {
 		}
 
 		return Art_LMS_Transliteration::to_slug( self::resolve_slug_source( $name, $title ) );
-	}
-
-	/**
-	 * Convert existing material slugs to Latin once per plugin version.
-	 */
-	public static function maybe_migrate_material_slugs() {
-		$option_key = 'art_lms_materials_latin_slugs_version';
-
-		if ( get_option( $option_key ) === ART_LMS_VERSION . '-3' ) {
-			return;
-		}
-
-		$post_ids = get_posts(
-			array(
-				'post_type'              => self::POST_TYPE,
-				'post_status'            => array( 'publish', 'draft', 'pending', 'private', 'future' ),
-				'posts_per_page'         => -1,
-				'fields'                 => 'ids',
-				'no_found_rows'          => true,
-				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
-			)
-		);
-
-		foreach ( $post_ids as $post_id ) {
-			self::update_material_slug( (int) $post_id );
-		}
-
-		update_option( $option_key, ART_LMS_VERSION . '-3', false );
-		delete_option( 'art_lms_materials_rewrite_version' );
-		self::maybe_flush_rewrites();
 	}
 
 	/**

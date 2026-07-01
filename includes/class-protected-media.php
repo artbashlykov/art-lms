@@ -34,7 +34,6 @@ class Art_LMS_Protected_Media {
 		add_action( 'init', array( __CLASS__, 'maybe_block_direct_upload_request' ), 0 );
 		add_filter( 'the_content', array( __CLASS__, 'filter_material_content_urls' ), 20 );
 		add_filter( 'rest_pre_dispatch', array( __CLASS__, 'rest_guard_attachment' ), 10, 3 );
-		add_action( 'admin_init', array( __CLASS__, 'maybe_backfill_material_attachments' ), 20 );
 	}
 
 	/**
@@ -129,38 +128,6 @@ class Art_LMS_Protected_Media {
 		}
 
 		delete_post_meta( $post_id, self::MATERIAL_ATTACHMENT_META );
-	}
-
-	/**
-	 * Backfill attachment registry for materials created before file protection.
-	 */
-	public static function maybe_backfill_material_attachments() {
-		if ( get_option( 'art_lms_protected_media_backfilled' ) === ART_LMS_VERSION ) {
-			return;
-		}
-
-		if ( ! is_admin() || ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
-		$material_ids = get_posts(
-			array(
-				'post_type'      => Art_LMS_Materials::POST_TYPE,
-				'post_status'    => 'any',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-			)
-		);
-
-		foreach ( $material_ids as $material_id ) {
-			$post = get_post( $material_id );
-
-			if ( $post instanceof WP_Post ) {
-				self::sync_material_attachments( (int) $material_id, $post );
-			}
-		}
-
-		update_option( 'art_lms_protected_media_backfilled', ART_LMS_VERSION, false );
 	}
 
 	/**

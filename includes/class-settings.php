@@ -750,7 +750,7 @@ class Art_LMS_Settings {
 	}
 
 	/**
-	 * Get legacy active gateway slug (alias for default checkout gateway).
+	 * Get resolved checkout gateway slug.
 	 *
 	 * @return string
 	 */
@@ -890,15 +890,6 @@ class Art_LMS_Settings {
 		$gateway_id = $gateway_id ?: self::get_active_gateway();
 
 		return $payment['gateways'][ $gateway_id ] ?? array();
-	}
-
-	/**
-	 * Get registered payment gateways metadata.
-	 *
-	 * @return array
-	 */
-	public static function get_available_gateways() {
-		return Art_LMS_Payment_Gateway_Registry::get_available_meta();
 	}
 
 	/**
@@ -1766,13 +1757,7 @@ class Art_LMS_Settings {
 		$defaults = self::get_default_checkout()['design'];
 		$raw      = is_array( $checkout['design'] ?? null ) ? $checkout['design'] : array();
 
-		if ( isset( $raw['background_color'] ) && ! isset( $raw['page_background_color'] ) ) {
-			$raw['page_background_color'] = $raw['background_color'];
-			$raw['form_background_color'] = $raw['background_color'];
-		}
-
 		$design = wp_parse_args( $raw, $defaults );
-		unset( $design['background_color'] );
 
 		return $design;
 	}
@@ -2129,76 +2114,6 @@ class Art_LMS_Settings {
 	}
 
 	/**
-	 * Migrate legacy payment status message keys.
-	 *
-	 * @param array $stored Stored messages.
-	 * @return array
-	 */
-	private static function migrate_payment_status_messages( array $stored ) {
-		if ( isset( $stored['paid_title'] ) || empty( $stored ) ) {
-			return $stored;
-		}
-
-		if ( ! isset( $stored['paidTitle'] ) ) {
-			return $stored;
-		}
-
-		return array(
-			'paid_title'              => (string) ( $stored['paidTitle'] ?? '' ),
-			'paid_description'        => self::join_payment_status_paragraphs(
-				array(
-					$stored['paidEmailSent'] ?? '',
-					$stored['paidEmailDisabled'] ?? '',
-					$stored['paidSpamHint'] ?? '',
-					$stored['paidPasswordHint'] ?? '',
-					isset( $stored['paidOrderMeta'] )
-						? str_replace(
-							array( '%1$s', '%2$s', '%3$s' ),
-							array( '{order}', '{product}', '{amount}' ),
-							(string) $stored['paidOrderMeta']
-						)
-						: '',
-				)
-			),
-			'paid_show_account_button'  => 'yes',
-			'account_button_label'      => (string) ( $stored['accountButton'] ?? '' ),
-			'pending_title'             => (string) ( $stored['pendingTitle'] ?? '' ),
-			'pending_description'       => self::join_payment_status_paragraphs(
-				array(
-					$stored['pendingIntro'] ?? '',
-					$stored['pendingWait'] ?? '',
-					str_replace( '%s', '{email}', (string) ( $stored['pendingEmailNotice'] ?? $stored['pendingEmailNoticeNoMail'] ?? '' ) ),
-					$stored['pendingLongWait'] ?? '',
-				)
-			),
-			'failed_title'              => (string) ( $stored['failedTitle'] ?? '' ),
-			'failed_description'        => self::join_payment_status_paragraphs(
-				array(
-					$stored['failedCancelled'] ?? $stored['failedGeneric'] ?? '',
-					str_replace( '%s', '{support}', (string) ( $stored['failedSupport'] ?? '' ) ),
-				)
-			),
-			'timeout_title'               => (string) ( $stored['timeoutTitle'] ?? '' ),
-			'timeout_description'         => self::join_payment_status_paragraphs(
-				array(
-					$stored['timeoutBody'] ?? '',
-					$stored['timeoutWarning'] ?? '',
-					str_replace( '%s', '{support}', (string) ( $stored['timeoutSupport'] ?? '' ) ),
-				)
-			),
-			'not_found_title'             => (string) ( $stored['notFoundTitle'] ?? '' ),
-			'not_found_description'       => (string) ( $stored['notFoundBody'] ?? '' ),
-			'missing_order_title'         => (string) ( $stored['missingOrderTitle'] ?? '' ),
-			'missing_order_description'   => self::join_payment_status_paragraphs(
-				array(
-					$stored['missingOrderBody'] ?? '',
-					$stored['missingOrderAccount'] ?? '',
-				)
-			),
-		);
-	}
-
-	/**
 	 * Get payment confirmation page messages.
 	 *
 	 * @return array<string, string>
@@ -2209,8 +2124,6 @@ class Art_LMS_Settings {
 		if ( ! is_array( $messages ) ) {
 			$messages = array();
 		}
-
-		$messages = self::migrate_payment_status_messages( $messages );
 
 		return wp_parse_args( $messages, self::get_default_payment_status_messages() );
 	}
@@ -2478,14 +2391,6 @@ class Art_LMS_Settings {
 		$form_background = isset( $input['form_background_color'] ) ? sanitize_hex_color( $input['form_background_color'] ) : '';
 		$button          = isset( $input['button_color'] ) ? sanitize_hex_color( $input['button_color'] ) : '';
 		$button_text_color = isset( $input['button_text_color'] ) ? sanitize_hex_color( $input['button_text_color'] ) : '';
-
-		if ( ! $page_background && isset( $input['background_color'] ) ) {
-			$page_background = sanitize_hex_color( $input['background_color'] );
-		}
-
-		if ( ! $form_background && isset( $input['background_color'] ) ) {
-			$form_background = sanitize_hex_color( $input['background_color'] );
-		}
 
 		$button_text = isset( $input['button_text'] ) ? sanitize_text_field( wp_unslash( $input['button_text'] ) ) : $defaults['button_text'];
 		$button_text = trim( $button_text );

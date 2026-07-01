@@ -14,8 +14,6 @@ class Art_LMS_Roles {
 
 	const ROLE_CUSTOMER = 'art_lms_customer';
 
-	const MIGRATION_OPTION = 'art_lms_customer_role_migrated';
-
 	/**
 	 * Register hooks.
 	 */
@@ -24,11 +22,10 @@ class Art_LMS_Roles {
 	}
 
 	/**
-	 * Create customer role and migrate legacy plugin buyers.
+	 * Create customer role if missing.
 	 */
 	public static function ensure_role() {
 		self::register_role();
-		self::maybe_migrate_legacy_customers();
 	}
 
 	/**
@@ -55,44 +52,6 @@ class Art_LMS_Roles {
 			__( 'Покупатель ART LMS', 'art-lms' ),
 			$capabilities
 		);
-	}
-
-	/**
-	 * Move plugin-created subscribers to the dedicated customer role.
-	 */
-	public static function maybe_migrate_legacy_customers() {
-		if ( get_option( self::MIGRATION_OPTION ) ) {
-			return;
-		}
-
-		if ( ! get_role( self::ROLE_CUSTOMER ) ) {
-			return;
-		}
-
-		$subscriber_ids = get_users(
-			array(
-				'fields' => 'ID',
-				'role'   => 'subscriber',
-			)
-		);
-
-		foreach ( $subscriber_ids as $user_id ) {
-			$user_id = (int) $user_id;
-
-			if ( 'yes' !== get_user_meta( $user_id, 'art_lms_created_via_plugin', true ) ) {
-				continue;
-			}
-
-			$user = new WP_User( $user_id );
-
-			if ( ! $user->exists() ) {
-				continue;
-			}
-
-			$user->set_role( self::ROLE_CUSTOMER );
-		}
-
-		update_option( self::MIGRATION_OPTION, ART_LMS_VERSION );
 	}
 
 	/**

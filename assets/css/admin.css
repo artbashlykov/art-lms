@@ -748,26 +748,6 @@
 	margin: 0 0 0.5rem;
 }
 
-#adminmenu .art-lms-admin-menu-heading-item {
-	pointer-events: none;
-}
-
-#adminmenu .art-lms-admin-menu-heading-item a {
-	pointer-events: none;
-	cursor: default;
-	color: #a7aaad !important;
-	font-size: 11px;
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-	padding-top: 12px;
-}
-
-#adminmenu .art-lms-admin-menu-heading-item.wp-not-current-submenu .art-lms-admin-menu-heading,
-#adminmenu .art-lms-admin-menu-heading-item.wp-not-current-submenu a {
-	color: #a7aaad !important;
-}
-
 #adminmenu li.art-lms-admin-menu-settings-start,
 #adminmenu li.art-lms-admin-menu-stats-start {
 	margin-top: 6px;
@@ -775,24 +755,33 @@
 }
 
 #adminmenu li.art-lms-admin-menu-settings-start::before,
-#adminmenu li.art-lms-admin-menu-stats-start::before {
+#adminmenu li.art-lms-admin-menu-settings-start:hover::before,
+#adminmenu li.art-lms-admin-menu-settings-start:focus::before,
+#adminmenu li.art-lms-admin-menu-settings-start.current::before,
+#adminmenu li.art-lms-admin-menu-settings-start.wp-has-current-submenu::before,
+#adminmenu li.art-lms-admin-menu-stats-start::before,
+#adminmenu li.art-lms-admin-menu-stats-start:hover::before,
+#adminmenu li.art-lms-admin-menu-stats-start:focus::before,
+#adminmenu li.art-lms-admin-menu-stats-start.current::before,
+#adminmenu li.art-lms-admin-menu-stats-start.wp-has-current-submenu::before {
 	content: '';
 	display: block;
 	height: 1px;
 	margin: 0 12px 8px;
-	background-color: rgba(240, 240, 241, 0.4);
-}
-
-@supports (color: color-mix(in srgb, white 50%, black)) {
-	#adminmenu li.art-lms-admin-menu-settings-start::before,
-	#adminmenu li.art-lms-admin-menu-stats-start::before {
-		background-color: color-mix(in srgb, currentColor 34%, transparent);
-	}
+	background-color: #50575e;
 }
 
 body.admin-color-light #adminmenu li.art-lms-admin-menu-settings-start::before,
-body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start::before {
-	background-color: rgba(0, 0, 0, 0.18);
+body.admin-color-light #adminmenu li.art-lms-admin-menu-settings-start:hover::before,
+body.admin-color-light #adminmenu li.art-lms-admin-menu-settings-start:focus::before,
+body.admin-color-light #adminmenu li.art-lms-admin-menu-settings-start.current::before,
+body.admin-color-light #adminmenu li.art-lms-admin-menu-settings-start.wp-has-current-submenu::before,
+body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start::before,
+body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start:hover::before,
+body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start:focus::before,
+body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start.current::before,
+body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start.wp-has-current-submenu::before {
+	background-color: #c3c4c7;
 }
 
 .folded #adminmenu li.art-lms-admin-menu-settings-start::before,

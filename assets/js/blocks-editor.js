@@ -1022,7 +1022,7 @@
 			title: __('АРТ ЛМС: Статус оплаты', 'art-lms'),
 			category: 'art-lms',
 			icon: 'yes-alt',
-			description: __('Блок проверки оплаты для страницы «Спасибо за покупку».', 'art-lms'),
+			description: __('Блок проверки оплаты для страницы «Проверка оплаты».', 'art-lms'),
 			keywords: ['art', 'lms', 'art lms', 'оплата', 'статус', 'success'],
 			supports: {
 				html: false,

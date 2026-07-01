@@ -16,8 +16,6 @@ class Art_LMS_Pages {
 
 	const TEMPLATE_PAGE_IDS_OPTION = 'art_lms_template_page_ids';
 
-	const TEMPLATE_PAGES_BACKFILLED_OPTION = 'art_lms_template_pages_backfilled';
-
 	const TYPE_ACCOUNT = 'account';
 	const TYPE_SUCCESS = 'success';
 
@@ -25,7 +23,6 @@ class Art_LMS_Pages {
 	 * Register hooks.
 	 */
 	public static function init() {
-		add_action( 'admin_init', array( __CLASS__, 'maybe_backfill_template_page_ids' ), 5 );
 		add_filter( 'display_post_states', array( __CLASS__, 'add_page_post_states' ), 10, 2 );
 	}
 
@@ -41,8 +38,6 @@ class Art_LMS_Pages {
 		if ( ! in_array( $type, array( self::TYPE_ACCOUNT, self::TYPE_SUCCESS ), true ) ) {
 			return new WP_Error( 'invalid_type', __( 'Неизвестный тип страницы.', 'art-lms' ) );
 		}
-
-		self::maybe_backfill_template_page_ids();
 
 		$existing_id = self::find_template_page_id( $type );
 
@@ -100,35 +95,6 @@ class Art_LMS_Pages {
 		}
 
 		return 0;
-	}
-
-	/**
-	 * Backfill template page IDs for installs created before option caching.
-	 *
-	 * @param bool $force Skip admin capability checks (plugin activation).
-	 */
-	public static function maybe_backfill_template_page_ids( $force = false ) {
-		if ( get_option( self::TEMPLATE_PAGES_BACKFILLED_OPTION ) ) {
-			return;
-		}
-
-		if ( ! $force && ( ! is_admin() || ! current_user_can( 'manage_options' ) ) ) {
-			return;
-		}
-
-		foreach ( array( self::TYPE_ACCOUNT, self::TYPE_SUCCESS ) as $type ) {
-			if ( self::find_template_page_id( $type ) ) {
-				continue;
-			}
-
-			$page_id = self::discover_legacy_template_page_id( $type );
-
-			if ( $page_id ) {
-				self::store_template_page_id( $type, $page_id );
-			}
-		}
-
-		update_option( self::TEMPLATE_PAGES_BACKFILLED_OPTION, ART_LMS_VERSION, false );
 	}
 
 	/**
@@ -243,31 +209,6 @@ class Art_LMS_Pages {
 	}
 
 	/**
-	 * One-time legacy lookup by post meta before template IDs were cached.
-	 *
-	 * @param string $type Page type.
-	 * @return int
-	 */
-	private static function discover_legacy_template_page_id( $type ) {
-		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Runs once per site during admin backfill; result is cached in options.
-		$pages = get_posts(
-			array(
-				'post_type'      => 'page',
-				'post_status'    => array( 'publish', 'draft', 'private' ),
-				'posts_per_page' => 1,
-				'orderby'        => 'ID',
-				'order'          => 'ASC',
-				'meta_key'       => self::META_KEY,
-				'meta_value'     => sanitize_key( $type ),
-				'fields'         => 'ids',
-			)
-		);
-		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-
-		return ! empty( $pages ) ? (int) $pages[0] : 0;
-	}
-
-	/**
 	 * Create a page from plugin template.
 	 *
 	 * @param string $type Page type.
@@ -370,7 +311,7 @@ class Art_LMS_Pages {
 
 		if ( self::TYPE_SUCCESS === $type ) {
 			return array(
-				'title'   => __( 'Оплата успешна', 'art-lms' ),
+				'title'   => __( 'Проверка оплаты', 'art-lms' ),
 				'slug'    => 'payment-check',
 				'content' => self::get_success_page_content(),
 			);
@@ -430,9 +371,7 @@ class Art_LMS_Pages {
 	 * @return string
 	 */
 	private static function get_account_page_content() {
-		$heading = esc_html__( 'Личный кабинет', 'art-lms' );
-
-		return "<!-- wp:heading {\"level\":1} -->\n<h1 class=\"wp-block-heading\">{$heading}</h1>\n<!-- /wp:heading -->\n\n<!-- wp:art-lms/customer-account /-->";
+		return '<!-- wp:art-lms/customer-account /-->';
 	}
 
 	/**
@@ -441,8 +380,6 @@ class Art_LMS_Pages {
 	 * @return string
 	 */
 	private static function get_success_page_content() {
-		$heading = esc_html__( 'Спасибо за покупку!', 'art-lms' );
-
-		return "<!-- wp:heading {\"level\":1} -->\n<h1 class=\"wp-block-heading\">{$heading}</h1>\n<!-- /wp:heading -->\n\n<!-- wp:art-lms/payment-status /-->";
+		return '<!-- wp:art-lms/payment-status /-->';
 	}
 }

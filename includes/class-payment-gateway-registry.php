@@ -69,21 +69,6 @@ class Art_LMS_Payment_Gateway_Registry {
 	}
 
 	/**
-	 * Get gateway metadata for admin UI.
-	 *
-	 * @return array<string, array<string, string>>
-	 */
-	public static function get_available_meta() {
-		$gateways = array();
-
-		foreach ( self::all() as $gateway_id => $gateway ) {
-			$gateways[ $gateway_id ] = $gateway->get_meta();
-		}
-
-		return $gateways;
-	}
-
-	/**
 	 * Get gateway by ID.
 	 *
 	 * @param string $gateway_id Gateway ID.

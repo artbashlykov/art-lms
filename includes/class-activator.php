@@ -27,10 +27,6 @@ class Art_LMS_Activator {
 		Art_LMS_Orders::maybe_upgrade_schema();
 		Art_LMS_Orders::maybe_upgrade_indexes();
 
-		require_once ART_LMS_PLUGIN_DIR . 'includes/class-settings.php';
-		require_once ART_LMS_PLUGIN_DIR . 'includes/class-pages.php';
-		Art_LMS_Pages::maybe_backfill_template_page_ids( true );
-
 		flush_rewrite_rules();
 	}
 
