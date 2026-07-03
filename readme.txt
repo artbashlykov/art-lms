@@ -4,7 +4,7 @@ Tags: lms, elearning, payments, digital products, checkout
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.17.8
+Stable tag: 2.17.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -89,6 +89,11 @@ When a customer completes checkout with a live payment gateway enabled, the plug
 By default, no. If you enable **Delete all plugin data when uninstalling ART LMS** in the general plugin settings and then delete the plugin from the Plugins screen, the plugin removes its custom database tables, settings, materials, payment buttons, order/access records, plugin-specific user meta, and the `art_lms_customer` role. WordPress pages you selected in the settings are not deleted.
 
 == Changelog ==
+
+= 2.17.9 =
+* Payment gateways: enable/disable only when saving the gateways list (removed instant AJAX toggle).
+* Payment gateways: fix status saving and preserve enabled/disabled state on the single gateway settings page.
+* Custom login: enqueue login styles via wp_enqueue_style for Plugin Check compliance.
 
 = 2.17.8 =
 * Checkout form settings: unchecking "Show field" clears and disables "Required".

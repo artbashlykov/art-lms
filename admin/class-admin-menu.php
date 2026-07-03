@@ -754,17 +754,8 @@ class Art_LMS_Admin_Menu {
 					'art-lms-admin-settings',
 					'artLmsPaymentSettings',
 					array(
-						'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
-						'nonce'          => wp_create_nonce( 'art_lms_payment_settings' ),
-						'optionName'     => Art_LMS_Settings::OPTION_PAYMENT,
-						'gatewayLabels'  => $gateway_labels,
-						'enabledIds'     => Art_LMS_Settings::get_enabled_gateway_ids(),
-						'defaultGateway' => sanitize_key( (string) ( Art_LMS_Settings::get_payment()['default_gateway'] ?? '' ) ),
-						'strings'        => array(
-							'saved'       => __( 'Сохранено', 'art-lms' ),
-							'saveFailed'  => __( 'Не удалось сохранить', 'art-lms' ),
-							'notSelected' => __( 'Не выбран', 'art-lms' ),
-						),
+						'optionName'    => Art_LMS_Settings::OPTION_PAYMENT,
+						'gatewayLabels' => $gateway_labels,
 					)
 				);
 			}

@@ -34,7 +34,6 @@ class Art_LMS_Admin_Settings {
 		add_action( 'wp_ajax_art_lms_preview_purchase_email', array( __CLASS__, 'ajax_preview_purchase_email' ) );
 		add_action( 'wp_ajax_art_lms_send_test_purchase_email', array( __CLASS__, 'ajax_send_test_purchase_email' ) );
 		add_action( 'wp_ajax_art_lms_create_settings_page', array( __CLASS__, 'ajax_create_settings_page' ) );
-		add_action( 'wp_ajax_art_lms_toggle_payment_gateway', array( __CLASS__, 'ajax_toggle_payment_gateway' ) );
 	}
 
 	/**
@@ -555,57 +554,6 @@ class Art_LMS_Admin_Settings {
 				array(
 					'message' => $message,
 				)
-			)
-		);
-	}
-
-	/**
-	 * AJAX: save payment gateway enabled/disabled state immediately.
-	 */
-	public static function ajax_toggle_payment_gateway() {
-		if ( ! Art_LMS_Security::can_manage() ) {
-			wp_send_json_error(
-				array( 'message' => __( 'Недостаточно прав.', 'art-lms' ) ),
-				403
-			);
-		}
-
-		check_ajax_referer( 'art_lms_payment_settings', 'nonce' );
-
-		$gateway_id = isset( $_POST['gateway_id'] ) ? sanitize_key( wp_unslash( $_POST['gateway_id'] ) ) : '';
-		$enabled    = ! empty( $_POST['enabled'] );
-
-		if ( '' === $gateway_id || ! Art_LMS_Payment_Gateway_Registry::get( $gateway_id ) ) {
-			wp_send_json_error(
-				array( 'message' => __( 'Неизвестный платёжный шлюз.', 'art-lms' ) ),
-				400
-			);
-		}
-
-		if ( ! Art_LMS_Settings::set_gateway_enabled( $gateway_id, $enabled ) ) {
-			wp_send_json_error(
-				array( 'message' => __( 'Не удалось сохранить статус шлюза.', 'art-lms' ) ),
-				500
-			);
-		}
-
-		$enabled_ids = Art_LMS_Settings::get_enabled_gateway_ids();
-		$labels      = array();
-
-		foreach ( $enabled_ids as $enabled_id ) {
-			$labels[ $enabled_id ] = Art_LMS_Settings::get_gateway_display_name( $enabled_id );
-		}
-
-		$payment         = Art_LMS_Settings::get_payment();
-		$default_gateway = sanitize_key( (string) ( $payment['default_gateway'] ?? '' ) );
-
-		wp_send_json_success(
-			array(
-				'gateway_id'      => $gateway_id,
-				'enabled'         => $enabled,
-				'enabled_ids'     => $enabled_ids,
-				'gateway_labels'  => $labels,
-				'default_gateway' => $default_gateway,
 			)
 		);
 	}

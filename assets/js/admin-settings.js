@@ -906,29 +906,22 @@
 		return match ? match[1] : '';
 	}
 
-	function showGatewaySaveFeedback($control, message, isError) {
-		var $feedback = $control.find('.art-lms-gateway-status-control__feedback');
+	function collectListEnabledGatewayIds($form) {
+		var enabledIds = [];
 
-		if (!$feedback.length) {
-			$feedback = $('<span class="art-lms-gateway-status-control__feedback" aria-live="polite" />');
-			$control.append($feedback);
-		}
+		$form.find('.art-lms-payment-gateway-list__item').each(function () {
+			var gatewayId = String($(this).data('gateway-id') || '');
 
-		$feedback
-			.toggleClass('is-error', !!isError)
-			.text(message || '');
+			if (!gatewayId) {
+				return;
+			}
 
-		if (!message) {
-			return;
-		}
+			if ($(this).find('.art-lms-gateway-status-switch__input').is(':checked')) {
+				enabledIds.push(gatewayId);
+			}
+		});
 
-		window.clearTimeout($control.data('feedbackTimer'));
-		$control.data(
-			'feedbackTimer',
-			window.setTimeout(function () {
-				$feedback.text('');
-			}, 2200)
-		);
+		return enabledIds;
 	}
 
 	function updateDefaultGatewayOptions(data) {
@@ -940,7 +933,7 @@
 
 		var config = window.artLmsPaymentSettings || {};
 		var enabledIds = data.enabled_ids || [];
-		var labels = data.gateway_labels || {};
+		var labels = data.gateway_labels || config.gatewayLabels || {};
 		var defaultGateway = data.default_gateway || '';
 		var optionName = config.optionName || 'art_lms_settings_payment';
 
@@ -965,7 +958,18 @@
 		}
 	}
 
-	var paymentGatewayToggleRequest = null;
+	function updateDefaultGatewayOptionsFromForm($form) {
+		var $fieldset = $('#art-lms-payment-default-gateway');
+
+		if (!$fieldset.length || !$form.length) {
+			return;
+		}
+
+		updateDefaultGatewayOptions({
+			enabled_ids: collectListEnabledGatewayIds($form),
+			default_gateway: $fieldset.find('input[name*="[default_gateway]"]:checked').val() || '',
+		});
+	}
 
 	function syncGatewaySettingsFieldsState($form) {
 		if (!$form || !$form.length) {
@@ -993,7 +997,7 @@
 				return;
 			}
 
-			if (name.indexOf('[enabled]') !== -1 || name.indexOf('[save_gateway]') !== -1) {
+			if (name.indexOf('[enabled]') !== -1) {
 				return;
 			}
 
@@ -1003,81 +1007,56 @@
 
 	function initPaymentGatewaySettingsForms() {
 		$('.art-lms-payment-gateway-settings-form').each(function () {
-			syncGatewaySettingsFieldsState($(this));
+			var $form = $(this);
+
+			$form.find('.art-lms-gateway-status-control').each(function () {
+				syncGatewayStatusControl($(this));
+			});
+			syncGatewaySettingsFieldsState($form);
 		});
 
 		$(document).on('change', '.art-lms-payment-gateway-settings-form .art-lms-gateway-status-switch__input', function () {
+			var $control = $(this).closest('.art-lms-gateway-status-control');
+
+			syncGatewayStatusControl($control);
 			syncGatewaySettingsFieldsState($(this).closest('form'));
 		});
 	}
 
-	function initPaymentGatewayAutoSave() {
-		var config = window.artLmsPaymentSettings || {};
+	function initPaymentGatewayListForm() {
+		var $form = $('.art-lms-payment-settings-form');
 
-		if (!config.ajaxUrl || !config.nonce) {
+		if (!$form.length) {
 			return;
 		}
 
-		$(document).on('change', '.art-lms-payment-settings-form .art-lms-gateway-status-switch__input, .art-lms-payment-gateway-settings-form .art-lms-gateway-status-switch__input', function () {
+		$form.find('.art-lms-gateway-status-control').each(function () {
+			syncGatewayStatusControl($(this));
+		});
+
+		$form.on('change', '.art-lms-gateway-status-switch__input', function () {
 			var $input = $(this);
 			var $control = $input.closest('.art-lms-gateway-status-control');
 			var gatewayId = resolvePaymentGatewayId($input);
-
-			if (!gatewayId) {
-				return;
-			}
-
 			var enabled = $input.is(':checked');
-			var $form = $input.closest('form');
 
 			syncGatewayStatusControl($control);
-			syncGatewaySettingsFieldsState($form);
 
-			if (paymentGatewayToggleRequest && paymentGatewayToggleRequest.abort) {
-				paymentGatewayToggleRequest.abort();
+			var $item = $input.closest('[data-gateway-id="' + gatewayId + '"]');
+
+			if ($item.length) {
+				$item.find('.art-lms-gateway-partner-signup').toggle(!enabled);
 			}
 
-			$control.addClass('is-saving');
-			showGatewaySaveFeedback($control, '', false);
-
-			paymentGatewayToggleRequest = $.post(config.ajaxUrl, {
-				action: 'art_lms_toggle_payment_gateway',
-				nonce: config.nonce,
-				gateway_id: gatewayId,
-				enabled: enabled ? '1' : ''
-			})
-				.done(function (response) {
-					if (!response || !response.success) {
-						var failMessage = (response && response.data && response.data.message) || config.strings.saveFailed;
-						showGatewaySaveFeedback($control, failMessage, true);
-						$input.prop('checked', !enabled);
-						syncGatewayStatusControl($control);
-						syncGatewaySettingsFieldsState($form);
-						return;
-					}
-
-					showGatewaySaveFeedback($control, config.strings.saved, false);
-					updateDefaultGatewayOptions(response.data || {});
-
-					var $item = $input.closest('[data-gateway-id="' + gatewayId + '"]');
-
-					if ($item.length) {
-						$item.find('.art-lms-gateway-partner-signup').toggle(!enabled);
-					}
-				})
-				.fail(function () {
-					showGatewaySaveFeedback($control, config.strings.saveFailed, true);
-					$input.prop('checked', !enabled);
-					syncGatewayStatusControl($control);
-					syncGatewaySettingsFieldsState($form);
-				})
-				.always(function () {
-					$control.removeClass('is-saving');
-				});
+			updateDefaultGatewayOptionsFromForm($form);
 		});
 	}
 
 	function initGatewayStatusControls() {
+		$('.art-lms-gateway-status-control').each(function () {
+			syncGatewayStatusControl($(this));
+		});
+
 		$(document).on('change', '.art-lms-gateway-status-switch__input', function () {
 			syncGatewayStatusControl($(this).closest('.art-lms-gateway-status-control'));
 		});
@@ -1745,8 +1724,8 @@
 		initGeneralPageSettings();
 		initLoginPageSettings();
 		initGatewayStatusControls();
+		initPaymentGatewayListForm();
 		initPaymentGatewaySettingsForms();
-		initPaymentGatewayAutoSave();
 		initYookassaReceiptsPanel();
 		initPaymentGatewayList();
 

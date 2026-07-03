@@ -1422,8 +1422,7 @@ class Art_LMS_Settings {
 		$payment  = self::get_payment();
 		$existing = $payment['gateways'][ $gateway_id ] ?? $gateway->get_default_settings();
 		$raw      = array(
-			'save_gateway' => '1',
-			'enabled'      => $enabled ? '1' : '0',
+			'enabled' => $enabled ? '1' : '0',
 		);
 
 		$payment['gateways'][ $gateway_id ] = $gateway->sanitize_settings( $raw, $existing );

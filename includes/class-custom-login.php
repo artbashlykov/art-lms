@@ -589,10 +589,10 @@ class Art_LMS_Custom_Login {
 	}
 
 	/**
-	 * Print login stylesheet tags for the standalone template.
+	 * Ensure login styles are queued before wp_head() prints them.
 	 *
-	 * WordPress may skip queued styles when the login template is rendered
-	 * outside the normal theme flow, so output the link explicitly here.
+	 * The standalone login template is rendered outside the normal theme flow,
+	 * so styles are registered here early and printed via WordPress APIs.
 	 */
 	public static function print_template_styles() {
 		if ( ! self::is_enabled() ) {
@@ -600,21 +600,10 @@ class Art_LMS_Custom_Login {
 		}
 
 		self::mark_serving_template();
+		self::enqueue_login_styles();
 
-		$href = add_query_arg(
-			'ver',
-			ART_LMS_VERSION,
-			ART_LMS_PLUGIN_URL . 'assets/css/public.css'
-		);
-
-		echo '<link rel="stylesheet" id="art-lms-public-css" href="' . esc_url( $href ) . '" media="all" />' . "\n";
-
-		$css = Art_LMS_Settings::get_login_design_css();
-
-		if ( $css ) {
-			echo '<style id="art-lms-public-inline-css">' . "\n";
-			echo wp_strip_all_tags( $css ) . "\n";
-			echo "</style>\n";
+		if ( wp_style_is( 'art-lms-public', 'enqueued' ) ) {
+			wp_print_styles( 'art-lms-public' );
 		}
 	}
 
