@@ -182,6 +182,24 @@ class Art_LMS_Admin_Menu {
 
 			self::MENU_SLUG,
 
+			__( 'Платежные шлюзы', 'art-lms' ),
+
+			__( 'Платежные шлюзы', 'art-lms' ),
+
+			'manage_options',
+
+			Art_LMS_Admin_Settings::PAGE_PAYMENTS,
+
+			array( 'Art_LMS_Admin_Settings', 'render_payments_page' )
+
+		);
+
+
+
+		add_submenu_page(
+
+			self::MENU_SLUG,
+
 			__( 'Статистика', 'art-lms' ),
 
 			__( 'Статистика', 'art-lms' ),
@@ -308,9 +326,11 @@ class Art_LMS_Admin_Menu {
 
 		$append_fn( Art_LMS_Admin_Payment_Buttons::PAGE_LIST );
 
-		$append_fn( Art_LMS_Admin_Settings::PAGE_TECH, 'art-lms-admin-menu-settings-start' );
+		$append_fn( Art_LMS_Admin_Settings::PAGE_SETTINGS, 'art-lms-admin-menu-settings-start' );
 
-		$append_fn( Art_LMS_Admin_Settings::PAGE_SETTINGS );
+		$append_fn( Art_LMS_Admin_Settings::PAGE_TECH );
+
+		$append_fn( Art_LMS_Admin_Settings::PAGE_PAYMENTS );
 
 		$append_fn( Art_LMS_Admin_Statistics::PAGE_LIST, 'art-lms-admin-menu-stats-start' );
 
@@ -409,6 +429,10 @@ class Art_LMS_Admin_Menu {
 
 		if ( in_array( $page, array( Art_LMS_Admin_Orders::PAGE_EDIT, Art_LMS_Admin_Orders::PAGE_VIEW ), true ) ) {
 			return Art_LMS_Admin_Orders::PAGE_LIST;
+		}
+
+		if ( Art_LMS_Admin_Settings::PAGE_PAYMENTS === $page ) {
+			return Art_LMS_Admin_Settings::PAGE_PAYMENTS;
 		}
 
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
@@ -536,13 +560,14 @@ class Art_LMS_Admin_Menu {
 
 			|| false !== strpos( $hook, Art_LMS_Admin_Settings::PAGE_SETTINGS )
 
+			|| false !== strpos( $hook, Art_LMS_Admin_Settings::PAGE_PAYMENTS )
+
 		) {
 
 			$admin_settings_deps = array( 'jquery' );
 
 			if (
-				false !== strpos( $hook, Art_LMS_Admin_Settings::PAGE_SETTINGS )
-				&& Art_LMS_Admin_Settings::TAB_PAYMENTS === ( isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '' )
+				false !== strpos( $hook, Art_LMS_Admin_Settings::PAGE_PAYMENTS )
 				&& empty( $_GET['gateway'] )
 			) {
 				$admin_settings_deps[] = 'jquery-ui-sortable';
@@ -715,6 +740,33 @@ class Art_LMS_Admin_Menu {
 					);
 				}
 
+			}
+
+			if ( false !== strpos( $hook, Art_LMS_Admin_Settings::PAGE_PAYMENTS ) ) {
+				$gateway_labels = array();
+
+				foreach ( Art_LMS_Payment_Gateway_Registry::all() as $gateway_id => $gateway_instance ) {
+					$meta                          = $gateway_instance->get_meta();
+					$gateway_labels[ $gateway_id ] = (string) ( $meta['title'] ?? $gateway_id );
+				}
+
+				wp_localize_script(
+					'art-lms-admin-settings',
+					'artLmsPaymentSettings',
+					array(
+						'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
+						'nonce'          => wp_create_nonce( 'art_lms_payment_settings' ),
+						'optionName'     => Art_LMS_Settings::OPTION_PAYMENT,
+						'gatewayLabels'  => $gateway_labels,
+						'enabledIds'     => Art_LMS_Settings::get_enabled_gateway_ids(),
+						'defaultGateway' => sanitize_key( (string) ( Art_LMS_Settings::get_payment()['default_gateway'] ?? '' ) ),
+						'strings'        => array(
+							'saved'       => __( 'Сохранено', 'art-lms' ),
+							'saveFailed'  => __( 'Не удалось сохранить', 'art-lms' ),
+							'notSelected' => __( 'Не выбран', 'art-lms' ),
+						),
+					)
+				);
 			}
 
 		}

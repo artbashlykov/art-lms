@@ -28,6 +28,14 @@ $default_gateway = $settings['default_gateway'] ?? $settings['active_gateway'] ?
 
 $ordered_ids     = Art_LMS_Settings::get_ordered_gateway_ids();
 
+$enabled_ids = Art_LMS_Settings::get_enabled_gateway_ids();
+
+if ( ! in_array( $default_gateway, $enabled_ids, true ) ) {
+
+	$default_gateway = '';
+
+}
+
 ?>
 
 <form method="post" action="options.php" class="art-lms-payment-settings-form">
@@ -74,7 +82,7 @@ $ordered_ids     = Art_LMS_Settings::get_ordered_gateway_ids();
 
 				?>
 
-				<li class="art-lms-payment-gateway-list__item" data-gateway-id="<?php echo esc_attr( $gateway_id ); ?>">
+				<li class="art-lms-payment-gateway-list__item" data-gateway-id="<?php echo esc_attr( $gateway_id ); ?>" data-gateway-title="<?php echo esc_attr( $meta['title'] ); ?>">
 
 					<input type="hidden" name="<?php echo esc_attr( $option ); ?>[gateway_order][]" value="<?php echo esc_attr( $gateway_id ); ?>">
 
@@ -126,9 +134,9 @@ $ordered_ids     = Art_LMS_Settings::get_ordered_gateway_ids();
 
 		</p>
 
-		<fieldset class="art-lms-payment-default-gateway">
+		<fieldset class="art-lms-payment-default-gateway" id="art-lms-payment-default-gateway">
 
-			<label class="art-lms-payment-default-gateway__option">
+			<label class="art-lms-payment-default-gateway__option art-lms-payment-default-gateway__option--none">
 
 				<input
 
@@ -146,7 +154,7 @@ $ordered_ids     = Art_LMS_Settings::get_ordered_gateway_ids();
 
 			</label>
 
-			<?php foreach ( $ordered_ids as $gateway_id ) : ?>
+			<?php foreach ( $enabled_ids as $gateway_id ) : ?>
 
 				<?php
 
@@ -166,7 +174,7 @@ $ordered_ids     = Art_LMS_Settings::get_ordered_gateway_ids();
 
 				?>
 
-				<label class="art-lms-payment-default-gateway__option">
+				<label class="art-lms-payment-default-gateway__option" data-gateway-id="<?php echo esc_attr( $gateway_id ); ?>">
 
 					<input
 

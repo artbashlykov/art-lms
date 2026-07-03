@@ -1405,6 +1405,57 @@ class Art_LMS_Settings {
 	}
 
 	/**
+	 * Update a single gateway enabled flag without submitting the full settings form.
+	 *
+	 * @param string $gateway_id Gateway ID.
+	 * @param bool   $enabled    Whether the gateway should be enabled.
+	 * @return bool
+	 */
+	public static function set_gateway_enabled( $gateway_id, $enabled ) {
+		$gateway_id = sanitize_key( (string) $gateway_id );
+		$gateway    = Art_LMS_Payment_Gateway_Registry::get( $gateway_id );
+
+		if ( ! $gateway ) {
+			return false;
+		}
+
+		$payment  = self::get_payment();
+		$existing = $payment['gateways'][ $gateway_id ] ?? $gateway->get_default_settings();
+		$raw      = array(
+			'save_gateway' => '1',
+			'enabled'      => $enabled ? '1' : '0',
+		);
+
+		$payment['gateways'][ $gateway_id ] = $gateway->sanitize_settings( $raw, $existing );
+
+		if ( ! $enabled && sanitize_key( (string) ( $payment['default_gateway'] ?? '' ) ) === $gateway_id ) {
+			$payment['default_gateway'] = '';
+			$payment['active_gateway']  = '';
+		}
+
+		self::update_option( self::OPTION_PAYMENT, $payment );
+
+		return true;
+	}
+
+	/**
+	 * Enabled gateway IDs in configured checkout order.
+	 *
+	 * @return string[]
+	 */
+	public static function get_enabled_gateway_ids() {
+		$enabled = array();
+
+		foreach ( self::get_ordered_gateway_ids() as $gateway_id ) {
+			if ( self::is_checkout_gateway_available( $gateway_id ) ) {
+				$enabled[] = $gateway_id;
+			}
+		}
+
+		return $enabled;
+	}
+
+	/**
 	 * Save checkout settings.
 	 *
 	 * @param array $input Raw input.
@@ -1749,6 +1800,14 @@ class Art_LMS_Settings {
 				: array();
 
 			$gateway_settings[ $gateway_id ] = $gateway->sanitize_settings( $raw, $existing );
+		}
+
+		if ( '' !== $default ) {
+			$default_enabled = ( $gateway_settings[ $default ]['enabled'] ?? 'no' ) === 'yes';
+
+			if ( ! $default_enabled ) {
+				$default = '';
+			}
 		}
 
 		return array(

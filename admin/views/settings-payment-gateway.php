@@ -32,7 +32,7 @@ $meta             = $gateway->get_meta();
 
 $gateway_settings = $settings['gateways'][ $gateway_id ] ?? $gateway->get_default_settings();
 
-$back_url = Art_LMS_Admin_Settings::get_tab_url( Art_LMS_Admin_Settings::PAGE_SETTINGS, Art_LMS_Admin_Settings::TAB_PAYMENTS );
+$back_url = Art_LMS_Admin_Settings::get_payments_page_url();
 
 ?>
 
@@ -42,7 +42,7 @@ $back_url = Art_LMS_Admin_Settings::get_tab_url( Art_LMS_Admin_Settings::PAGE_SE
 
 </p>
 
-<form method="post" action="options.php" class="art-lms-payment-gateway-settings-form">
+<form method="post" action="options.php" class="art-lms-payment-gateway-settings-form" data-gateway-id="<?php echo esc_attr( $gateway_id ); ?>">
 
 	<?php settings_fields( 'art_lms_payment_group' ); ?>
 

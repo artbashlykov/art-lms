@@ -638,7 +638,7 @@ class Art_LMS_Gateway_Prodamus extends Art_LMS_Payment_Gateway {
 				<th scope="row"><label for="prodamus_payform_url"><?php esc_html_e( 'URL платёжной формы', 'art-lms' ); ?></label></th>
 				<td>
 					<input
-						type="url"
+						type="text"
 						id="prodamus_payform_url"
 						name="<?php echo esc_attr( $option_name ); ?>[gateways][<?php echo esc_attr( self::ID ); ?>][payform_url]"
 						value="<?php echo esc_attr( $settings['payform_url'] ?? '' ); ?>"

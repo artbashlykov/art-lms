@@ -14,8 +14,9 @@ defined( 'ABSPATH' ) || exit;
  */
 class Art_LMS_Admin_Settings {
 
-	const PAGE_TECH     = 'art-lms-tech';
-	const PAGE_SETTINGS = 'art-lms-settings';
+	const PAGE_TECH      = 'art-lms-tech';
+	const PAGE_SETTINGS  = 'art-lms-settings';
+	const PAGE_PAYMENTS  = 'art-lms-payments';
 
 	const TAB_CHECKOUT      = 'checkout';
 	const TAB_DESIGN        = 'design';
@@ -33,6 +34,7 @@ class Art_LMS_Admin_Settings {
 		add_action( 'wp_ajax_art_lms_preview_purchase_email', array( __CLASS__, 'ajax_preview_purchase_email' ) );
 		add_action( 'wp_ajax_art_lms_send_test_purchase_email', array( __CLASS__, 'ajax_send_test_purchase_email' ) );
 		add_action( 'wp_ajax_art_lms_create_settings_page', array( __CLASS__, 'ajax_create_settings_page' ) );
+		add_action( 'wp_ajax_art_lms_toggle_payment_gateway', array( __CLASS__, 'ajax_toggle_payment_gateway' ) );
 	}
 
 	/**
@@ -119,12 +121,34 @@ class Art_LMS_Admin_Settings {
 			exit;
 		}
 
+		if ( isset( $_GET['tab'] ) && self::TAB_PAYMENTS === sanitize_key( wp_unslash( $_GET['tab'] ) ) ) {
+			$redirect_args = array( 'page' => self::PAGE_PAYMENTS );
+
+			if ( ! empty( $_GET['gateway'] ) ) {
+				$redirect_args['gateway'] = sanitize_key( wp_unslash( $_GET['gateway'] ) );
+			}
+
+			wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+			exit;
+		}
+
 		$active_tab = self::get_current_tab(
-			array( self::TAB_GENERAL, self::TAB_LOGIN, self::TAB_PAYMENTS ),
+			array( self::TAB_GENERAL, self::TAB_LOGIN ),
 			self::TAB_GENERAL
 		);
 
 		include ART_LMS_PLUGIN_DIR . 'admin/views/page-settings.php';
+	}
+
+	/**
+	 * Render payment gateways page.
+	 */
+	public static function render_payments_page() {
+		if ( ! Art_LMS_Security::can_manage() ) {
+			return;
+		}
+
+		include ART_LMS_PLUGIN_DIR . 'admin/views/page-payments.php';
 	}
 
 	/**
@@ -407,14 +431,27 @@ class Art_LMS_Admin_Settings {
 	 * @return string
 	 */
 	public static function get_gateway_settings_url( $gateway_id ) {
-		return add_query_arg(
-			array(
-				'page'    => self::PAGE_SETTINGS,
-				'tab'     => self::TAB_PAYMENTS,
-				'gateway' => sanitize_key( (string) $gateway_id ),
-			),
-			admin_url( 'admin.php' )
+		return self::get_payments_page_url( $gateway_id );
+	}
+
+	/**
+	 * Build admin URL for the payment gateways page.
+	 *
+	 * @param string $gateway_id Optional gateway ID for a single gateway screen.
+	 * @return string
+	 */
+	public static function get_payments_page_url( $gateway_id = '' ) {
+		$args = array(
+			'page' => self::PAGE_PAYMENTS,
 		);
+
+		$gateway_id = sanitize_key( (string) $gateway_id );
+
+		if ( '' !== $gateway_id ) {
+			$args['gateway'] = $gateway_id;
+		}
+
+		return add_query_arg( $args, admin_url( 'admin.php' ) );
 	}
 
 	/**
@@ -518,6 +555,57 @@ class Art_LMS_Admin_Settings {
 				array(
 					'message' => $message,
 				)
+			)
+		);
+	}
+
+	/**
+	 * AJAX: save payment gateway enabled/disabled state immediately.
+	 */
+	public static function ajax_toggle_payment_gateway() {
+		if ( ! Art_LMS_Security::can_manage() ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Недостаточно прав.', 'art-lms' ) ),
+				403
+			);
+		}
+
+		check_ajax_referer( 'art_lms_payment_settings', 'nonce' );
+
+		$gateway_id = isset( $_POST['gateway_id'] ) ? sanitize_key( wp_unslash( $_POST['gateway_id'] ) ) : '';
+		$enabled    = ! empty( $_POST['enabled'] );
+
+		if ( '' === $gateway_id || ! Art_LMS_Payment_Gateway_Registry::get( $gateway_id ) ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Неизвестный платёжный шлюз.', 'art-lms' ) ),
+				400
+			);
+		}
+
+		if ( ! Art_LMS_Settings::set_gateway_enabled( $gateway_id, $enabled ) ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Не удалось сохранить статус шлюза.', 'art-lms' ) ),
+				500
+			);
+		}
+
+		$enabled_ids = Art_LMS_Settings::get_enabled_gateway_ids();
+		$labels      = array();
+
+		foreach ( $enabled_ids as $enabled_id ) {
+			$labels[ $enabled_id ] = Art_LMS_Settings::get_gateway_display_name( $enabled_id );
+		}
+
+		$payment         = Art_LMS_Settings::get_payment();
+		$default_gateway = sanitize_key( (string) ( $payment['default_gateway'] ?? '' ) );
+
+		wp_send_json_success(
+			array(
+				'gateway_id'      => $gateway_id,
+				'enabled'         => $enabled,
+				'enabled_ids'     => $enabled_ids,
+				'gateway_labels'  => $labels,
+				'default_gateway' => $default_gateway,
 			)
 		);
 	}

@@ -48,7 +48,7 @@ abstract class Art_LMS_Payment_Gateway {
 	public function sanitize_settings( array $input, array $existing ) {
 		$settings = wp_parse_args( $existing, $this->get_default_settings() );
 
-		if ( ! empty( $input['_save_gateway'] ) ) {
+		if ( ! empty( $input['save_gateway'] ) || array_key_exists( 'enabled', $input ) ) {
 			$settings['enabled'] = ! empty( $input['enabled'] ) ? 'yes' : 'no';
 		}
 
@@ -344,7 +344,7 @@ abstract class Art_LMS_Payment_Gateway {
 
 		ob_start();
 		?>
-		<input type="hidden" name="<?php echo esc_attr( $field_name ); ?>[_save_gateway]" value="1">
+		<input type="hidden" name="<?php echo esc_attr( $field_name ); ?>[save_gateway]" value="1">
 		<div
 			class="art-lms-gateway-status-control <?php echo esc_attr( $state_class ); ?>"
 			data-enabled-label="<?php echo esc_attr__( 'Включен', 'art-lms' ); ?>"

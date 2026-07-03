@@ -854,6 +854,142 @@
 		$control.find('.screen-reader-text').text(label);
 	}
 
+	function resolvePaymentGatewayId($input) {
+		var $scope = $input.closest('[data-gateway-id]');
+
+		if ($scope.length) {
+			return String($scope.data('gateway-id') || '');
+		}
+
+		var name = $input.attr('name') || '';
+		var match = name.match(/\[gateways\]\[([^\]]+)\]/);
+
+		return match ? match[1] : '';
+	}
+
+	function showGatewaySaveFeedback($control, message, isError) {
+		var $feedback = $control.find('.art-lms-gateway-status-control__feedback');
+
+		if (!$feedback.length) {
+			$feedback = $('<span class="art-lms-gateway-status-control__feedback" aria-live="polite" />');
+			$control.append($feedback);
+		}
+
+		$feedback
+			.toggleClass('is-error', !!isError)
+			.text(message || '');
+
+		if (!message) {
+			return;
+		}
+
+		window.clearTimeout($control.data('feedbackTimer'));
+		$control.data(
+			'feedbackTimer',
+			window.setTimeout(function () {
+				$feedback.text('');
+			}, 2200)
+		);
+	}
+
+	function updateDefaultGatewayOptions(data) {
+		var $fieldset = $('#art-lms-payment-default-gateway');
+
+		if (!$fieldset.length || !data) {
+			return;
+		}
+
+		var config = window.artLmsPaymentSettings || {};
+		var enabledIds = data.enabled_ids || [];
+		var labels = data.gateway_labels || {};
+		var defaultGateway = data.default_gateway || '';
+		var optionName = config.optionName || 'art_lms_settings_payment';
+
+		$fieldset.find('.art-lms-payment-default-gateway__option').not('.art-lms-payment-default-gateway__option--none').remove();
+
+		enabledIds.forEach(function (gatewayId) {
+			var $label = $('<label class="art-lms-payment-default-gateway__option" />').attr('data-gateway-id', gatewayId);
+			var $input = $('<input type="radio" />')
+				.attr('name', optionName + '[default_gateway]')
+				.attr('value', gatewayId);
+
+			if (defaultGateway === gatewayId) {
+				$input.prop('checked', true);
+			}
+
+			$label.append($input).append(document.createTextNode(' ' + (labels[gatewayId] || gatewayId)));
+			$fieldset.append($label);
+		});
+
+		if (!enabledIds.length || enabledIds.indexOf(defaultGateway) === -1) {
+			$fieldset.find('.art-lms-payment-default-gateway__option--none input').prop('checked', true);
+		}
+	}
+
+	var paymentGatewayToggleRequest = null;
+
+	function initPaymentGatewayAutoSave() {
+		var config = window.artLmsPaymentSettings || {};
+
+		if (!config.ajaxUrl || !config.nonce) {
+			return;
+		}
+
+		$(document).on('change', '.art-lms-payment-settings-form .art-lms-gateway-status-switch__input, .art-lms-payment-gateway-settings-form .art-lms-gateway-status-switch__input', function () {
+			var $input = $(this);
+			var $control = $input.closest('.art-lms-gateway-status-control');
+			var gatewayId = resolvePaymentGatewayId($input);
+
+			if (!gatewayId) {
+				return;
+			}
+
+			var enabled = $input.is(':checked');
+
+			syncGatewayStatusControl($control);
+
+			if (paymentGatewayToggleRequest && paymentGatewayToggleRequest.abort) {
+				paymentGatewayToggleRequest.abort();
+			}
+
+			$control.addClass('is-saving');
+			showGatewaySaveFeedback($control, '', false);
+
+			paymentGatewayToggleRequest = $.post(config.ajaxUrl, {
+				action: 'art_lms_toggle_payment_gateway',
+				nonce: config.nonce,
+				gateway_id: gatewayId,
+				enabled: enabled ? '1' : ''
+			})
+				.done(function (response) {
+					if (!response || !response.success) {
+						var failMessage = (response && response.data && response.data.message) || config.strings.saveFailed;
+						showGatewaySaveFeedback($control, failMessage, true);
+						$input.prop('checked', !enabled);
+						syncGatewayStatusControl($control);
+						return;
+					}
+
+					showGatewaySaveFeedback($control, config.strings.saved, false);
+					updateDefaultGatewayOptions(response.data || {});
+
+					var $item = $input.closest('[data-gateway-id="' + gatewayId + '"]');
+
+					if ($item.length) {
+						$item.find('.art-lms-gateway-partner-signup').toggle(!enabled);
+					}
+				})
+				.fail(function () {
+					showGatewaySaveFeedback($control, config.strings.saveFailed, true);
+					$input.prop('checked', !enabled);
+					syncGatewayStatusControl($control);
+				})
+				.always(function () {
+					$control.removeClass('is-saving');
+				});
+		});
+	}
+
 	function initGatewayStatusControls() {
 		$(document).on('change', '.art-lms-gateway-status-switch__input', function () {
 			syncGatewayStatusControl($(this).closest('.art-lms-gateway-status-control'));
@@ -1522,6 +1658,7 @@
 		initGeneralPageSettings();
 		initLoginPageSettings();
 		initGatewayStatusControls();
+		initPaymentGatewayAutoSave();
 		initYookassaReceiptsPanel();
 		initPaymentGatewayList();
 

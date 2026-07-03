@@ -680,6 +680,20 @@
 	color: #b32d2e;
 }
 
+.art-lms-gateway-status-control.is-saving {
+	opacity: 0.75;
+}
+
+.art-lms-gateway-status-control__feedback {
+	font-size: 12px;
+	line-height: 1.4;
+	color: #007017;
+}
+
+.art-lms-gateway-status-control__feedback.is-error {
+	color: #b32d2e;
+}
+
 .art-lms-gateway-status-switch {
 	position: relative;
 	display: inline-flex;
