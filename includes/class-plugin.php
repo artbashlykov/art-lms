@@ -95,6 +95,7 @@ class Art_LMS_Plugin {
 	 * Register hooks and initialize modules.
 	 */
 	public function run() {
+		add_action( 'plugins_loaded', array( 'Art_LMS_Custom_Login', 'boot' ), 5 );
 		add_action( 'init', array( 'Art_LMS_Materials', 'register_post_type' ), 0 );
 		add_action( 'init', array( 'Art_LMS_Payment_Buttons', 'register_post_type' ), 0 );
 		add_action( 'init', array( 'Art_LMS_Payment_Buttons', 'register_meta' ), 0 );

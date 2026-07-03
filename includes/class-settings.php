@@ -135,6 +135,16 @@ class Art_LMS_Settings {
 	 * @return string
 	 */
 	public static function get_login_page_url( $redirect = '', $force_reauth = false ) {
+		if ( self::is_custom_login_enabled() && class_exists( 'Art_LMS_Custom_Login' ) ) {
+			$url = Art_LMS_Custom_Login::get_url( $redirect );
+
+			if ( $force_reauth ) {
+				$url = add_query_arg( 'reauth', '1', $url );
+			}
+
+			return $url;
+		}
+
 		return wp_login_url( $redirect, $force_reauth );
 	}
 

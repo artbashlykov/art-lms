@@ -24,7 +24,21 @@ class Art_LMS_Custom_Login {
 	private static $is_serving_template = false;
 
 	/**
-	 * Register hooks.
+	 * Register hooks that must run before init (login URL filter, wp-login redirect).
+	 */
+	public static function boot() {
+		add_filter( 'login_url', array( __CLASS__, 'filter_login_url' ), 10, 3 );
+		add_filter( 'login_redirect', array( __CLASS__, 'filter_login_redirect' ), 10, 3 );
+		add_action( 'login_init', array( __CLASS__, 'maybe_redirect_wp_login' ), 1 );
+
+		if ( self::is_wp_login_request() ) {
+			self::maybe_prevent_wp_login_cache();
+			add_action( 'plugins_loaded', array( __CLASS__, 'maybe_redirect_wp_login' ), 20 );
+		}
+	}
+
+	/**
+	 * Register rewrite rules and front-end login route hooks.
 	 */
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'register_rewrite' ), 10 );
@@ -32,9 +46,6 @@ class Art_LMS_Custom_Login {
 		add_action( 'update_option_' . Art_LMS_Settings::OPTION_LOGIN, array( __CLASS__, 'on_login_settings_updated' ), 10, 2 );
 		add_filter( 'query_vars', array( __CLASS__, 'register_query_var' ) );
 		add_action( 'parse_request', array( __CLASS__, 'parse_login_request' ), 0 );
-		add_action( 'login_init', array( __CLASS__, 'maybe_redirect_wp_login' ), 1 );
-		add_filter( 'login_url', array( __CLASS__, 'filter_login_url' ), 10, 3 );
-		add_filter( 'login_redirect', array( __CLASS__, 'filter_login_redirect' ), 10, 3 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ), 20 );
 		add_action( 'template_redirect', array( __CLASS__, 'maybe_serve_login' ), 0 );
 		add_filter( 'template_include', array( __CLASS__, 'filter_template' ) );
@@ -137,11 +148,39 @@ class Art_LMS_Custom_Login {
 	}
 
 	/**
-	 * Redirect default wp-login.php GET requests to the custom login page.
+	 * Whether the current request targets wp-login.php.
+	 *
+	 * @return bool
 	 */
-	public static function maybe_redirect_wp_login() {
-		if ( ! self::is_enabled() ) {
+	public static function is_wp_login_request() {
+		if ( ! isset( $_SERVER['PHP_SELF'] ) ) {
+			return false;
+		}
+
+		$php_self = sanitize_text_field( wp_unslash( $_SERVER['PHP_SELF'] ) );
+
+		return false !== strpos( $php_self, 'wp-login.php' );
+	}
+
+	/**
+	 * Send no-cache headers for wp-login.php when custom login is enabled.
+	 */
+	public static function maybe_prevent_wp_login_cache() {
+		if ( ! self::is_enabled() || ! self::is_wp_login_request() ) {
 			return;
+		}
+
+		Art_LMS_Cache_Control::prevent_page_cache();
+	}
+
+	/**
+	 * Whether wp-login.php should redirect to the custom login page.
+	 *
+	 * @return bool
+	 */
+	private static function should_redirect_wp_login_request() {
+		if ( ! self::is_enabled() ) {
+			return false;
 		}
 
 		$request_method = isset( $_SERVER['REQUEST_METHOD'] )
@@ -149,7 +188,7 @@ class Art_LMS_Custom_Login {
 			: 'GET';
 
 		if ( 'POST' === $request_method ) {
-			return;
+			return false;
 		}
 
 		$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : 'login';
@@ -165,17 +204,33 @@ class Art_LMS_Custom_Login {
 			'confirm_admin_email',
 		);
 
-		if ( in_array( $action, $wp_login_only_actions, true ) ) {
-			return;
-		}
+		return ! in_array( $action, $wp_login_only_actions, true );
+	}
 
+	/**
+	 * Build redirect URL for wp-login.php visitors.
+	 *
+	 * @return string
+	 */
+	private static function get_wp_login_redirect_url() {
 		$url = self::get_url( self::get_sanitized_redirect_to_from_request() );
 
 		if ( ! empty( $_REQUEST['reauth'] ) ) {
 			$url = add_query_arg( 'reauth', '1', $url );
 		}
 
-		wp_safe_redirect( $url );
+		return $url;
+	}
+
+	/**
+	 * Redirect default wp-login.php GET requests to the custom login page.
+	 */
+	public static function maybe_redirect_wp_login() {
+		if ( ! self::should_redirect_wp_login_request() ) {
+			return;
+		}
+
+		wp_safe_redirect( self::get_wp_login_redirect_url() );
 		exit;
 	}
 

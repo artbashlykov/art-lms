@@ -17,6 +17,7 @@ class Art_LMS_Cache_Control {
 	 */
 	public static function init() {
 		add_action( 'template_redirect', array( __CLASS__, 'maybe_prevent_page_cache' ), -1 );
+		add_action( 'login_init', array( __CLASS__, 'maybe_prevent_wp_login_cache' ), 0 );
 	}
 
 	/**
@@ -40,6 +41,10 @@ class Art_LMS_Cache_Control {
 	 * @return bool
 	 */
 	public static function should_prevent_page_cache() {
+		if ( class_exists( 'Art_LMS_Custom_Login' ) && Art_LMS_Custom_Login::is_wp_login_request() ) {
+			return Art_LMS_Settings::is_custom_login_enabled();
+		}
+
 		if ( Art_LMS_Checkout::is_checkout_request() ) {
 			return true;
 		}
@@ -81,6 +86,21 @@ class Art_LMS_Cache_Control {
 		 * @param bool $prevent Whether to prevent page cache.
 		 */
 		return (bool) apply_filters( 'art_lms_prevent_page_cache', false );
+	}
+
+	/**
+	 * Prevent full-page cache on wp-login.php when custom login is enabled.
+	 */
+	public static function maybe_prevent_wp_login_cache() {
+		if ( ! class_exists( 'Art_LMS_Custom_Login' ) || ! Art_LMS_Custom_Login::is_wp_login_request() ) {
+			return;
+		}
+
+		if ( ! Art_LMS_Settings::is_custom_login_enabled() ) {
+			return;
+		}
+
+		self::prevent_page_cache();
 	}
 
 	/**
