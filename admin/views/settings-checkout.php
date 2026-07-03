@@ -103,7 +103,8 @@ $site_preview_url = Art_LMS_Checkout::get_design_preview_url();
 								<input type="hidden" name="<?php echo esc_attr( $option ); ?>[fields][email][enabled]" value="1">
 								<?php esc_html_e( 'Всегда', 'art-lms' ); ?>
 							<?php else : ?>
-								<input type="checkbox" name="<?php echo esc_attr( $option ); ?>[fields][<?php echo esc_attr( $field_key ); ?>][enabled]" value="1" <?php checked( $field['enabled'] ?? 'yes', 'yes' ); ?>>
+								<input type="hidden" name="<?php echo esc_attr( $option ); ?>[fields][<?php echo esc_attr( $field_key ); ?>][enabled]" value="0">
+								<input type="checkbox" class="art-lms-checkout-field-enabled" name="<?php echo esc_attr( $option ); ?>[fields][<?php echo esc_attr( $field_key ); ?>][enabled]" value="1" <?php checked( $field['enabled'] ?? 'no', 'yes' ); ?>>
 							<?php endif; ?>
 						</td>
 						<td>
@@ -111,7 +112,8 @@ $site_preview_url = Art_LMS_Checkout::get_design_preview_url();
 								<input type="hidden" name="<?php echo esc_attr( $option ); ?>[fields][email][required]" value="1">
 								<?php esc_html_e( 'Да', 'art-lms' ); ?>
 							<?php else : ?>
-								<input type="checkbox" name="<?php echo esc_attr( $option ); ?>[fields][<?php echo esc_attr( $field_key ); ?>][required]" value="1" <?php checked( $field['required'] ?? 'no', 'yes' ); ?>>
+								<input type="hidden" name="<?php echo esc_attr( $option ); ?>[fields][<?php echo esc_attr( $field_key ); ?>][required]" value="0">
+								<input type="checkbox" class="art-lms-checkout-field-required" name="<?php echo esc_attr( $option ); ?>[fields][<?php echo esc_attr( $field_key ); ?>][required]" value="1" <?php checked( $field['required'] ?? 'no', 'yes' ); ?>>
 							<?php endif; ?>
 						</td>
 						<td>
@@ -154,10 +156,12 @@ $site_preview_url = Art_LMS_Checkout::get_design_preview_url();
 							>
 						</td>
 						<td>
-							<input type="checkbox" name="<?php echo esc_attr( $option ); ?>[custom_fields][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="1" <?php checked( $custom_field['enabled'] ?? 'yes', 'yes' ); ?>>
+							<input type="hidden" name="<?php echo esc_attr( $option ); ?>[custom_fields][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="0">
+							<input type="checkbox" class="art-lms-checkout-field-enabled" name="<?php echo esc_attr( $option ); ?>[custom_fields][<?php echo esc_attr( (string) $index ); ?>][enabled]" value="1" <?php checked( $custom_field['enabled'] ?? 'no', 'yes' ); ?>>
 						</td>
 						<td>
-							<input type="checkbox" name="<?php echo esc_attr( $option ); ?>[custom_fields][<?php echo esc_attr( (string) $index ); ?>][required]" value="1" <?php checked( $custom_field['required'] ?? 'no', 'yes' ); ?>>
+							<input type="hidden" name="<?php echo esc_attr( $option ); ?>[custom_fields][<?php echo esc_attr( (string) $index ); ?>][required]" value="0">
+							<input type="checkbox" class="art-lms-checkout-field-required" name="<?php echo esc_attr( $option ); ?>[custom_fields][<?php echo esc_attr( (string) $index ); ?>][required]" value="1" <?php checked( $custom_field['required'] ?? 'no', 'yes' ); ?>>
 						</td>
 						<td>
 							<button type="button" class="button-link-delete art-lms-remove-custom-field"><?php esc_html_e( 'Удалить', 'art-lms' ); ?></button>
@@ -340,6 +344,8 @@ $site_preview_url = Art_LMS_Checkout::get_design_preview_url();
 		</div>
 	</details>
 
+		<?php submit_button(); ?>
+
 		</div>
 
 		<aside class="art-lms-checkout-settings-preview" aria-label="<?php esc_attr_e( 'Предпросмотр формы', 'art-lms' ); ?>">
@@ -365,7 +371,6 @@ $site_preview_url = Art_LMS_Checkout::get_design_preview_url();
 		</aside>
 	</div>
 
-	<?php submit_button(); ?>
 </form>
 
 <script type="text/html" id="tmpl-art-lms-custom-field-row">
@@ -375,10 +380,12 @@ $site_preview_url = Art_LMS_Checkout::get_design_preview_url();
 			<input type="text" name="{{option}}[custom_fields][{{index}}][label]" value="" class="regular-text" placeholder="<?php echo esc_attr__( 'Например: Telegram', 'art-lms' ); ?>">
 		</td>
 		<td>
-			<input type="checkbox" name="{{option}}[custom_fields][{{index}}][enabled]" value="1" checked>
+			<input type="hidden" name="{{option}}[custom_fields][{{index}}][enabled]" value="0">
+			<input type="checkbox" class="art-lms-checkout-field-enabled" name="{{option}}[custom_fields][{{index}}][enabled]" value="1" checked>
 		</td>
 		<td>
-			<input type="checkbox" name="{{option}}[custom_fields][{{index}}][required]" value="1">
+			<input type="hidden" name="{{option}}[custom_fields][{{index}}][required]" value="0">
+			<input type="checkbox" class="art-lms-checkout-field-required" name="{{option}}[custom_fields][{{index}}][required]" value="1">
 		</td>
 		<td>
 			<button type="button" class="button-link-delete art-lms-remove-custom-field"><?php echo esc_html__( 'Удалить', 'art-lms' ); ?></button>

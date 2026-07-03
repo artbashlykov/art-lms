@@ -1737,7 +1737,9 @@ class Art_LMS_Settings {
 			'auto_login_after_register'      => ! empty( $input['auto_login_after_register'] ) ? 'yes' : 'no',
 		);
 
-		self::set_delete_data_on_uninstall( ! empty( $input['delete_data_on_uninstall'] ) );
+		if ( is_array( $input ) && array_key_exists( 'delete_data_on_uninstall', $input ) ) {
+			self::set_delete_data_on_uninstall( ! empty( $input['delete_data_on_uninstall'] ) );
+		}
 
 		return $data;
 	}
@@ -2605,9 +2607,16 @@ class Art_LMS_Settings {
 		foreach ( $defaults as $key => $default ) {
 			$row = is_array( $input ) ? ( $input[ $key ] ?? array() ) : array();
 
+			$enabled  = ! empty( $row['enabled'] ) || 'email' === $key ? 'yes' : 'no';
+			$required = ! empty( $row['required'] ) || 'email' === $key ? 'yes' : 'no';
+
+			if ( 'yes' !== $enabled ) {
+				$required = 'no';
+			}
+
 			$fields[ $key ] = array(
-				'enabled'  => ! empty( $row['enabled'] ) || 'email' === $key ? 'yes' : 'no',
-				'required' => ! empty( $row['required'] ) || 'email' === $key ? 'yes' : 'no',
+				'enabled'  => $enabled,
+				'required' => $required,
 				'label'    => isset( $row['label'] ) ? sanitize_text_field( $row['label'] ) : $default['label'],
 			);
 		}
@@ -2657,11 +2666,18 @@ class Art_LMS_Settings {
 
 			$used_ids[ $id ] = true;
 
+			$enabled  = ! empty( $row['enabled'] ) ? 'yes' : 'no';
+			$required = ! empty( $row['required'] ) ? 'yes' : 'no';
+
+			if ( 'yes' !== $enabled ) {
+				$required = 'no';
+			}
+
 			$fields[] = array(
 				'id'       => $id,
 				'label'    => $label,
-				'enabled'  => ! empty( $row['enabled'] ) ? 'yes' : 'no',
-				'required' => ! empty( $row['required'] ) ? 'yes' : 'no',
+				'enabled'  => $enabled,
+				'required' => $required,
 			);
 		}
 

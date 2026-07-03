@@ -196,7 +196,7 @@
 		if (!fields.length && !consents.items.length) {
 			html += '<p class="art-lms-notice art-lms-notice--warning">' + escapeHtml(strings.empty || '') + '</p>';
 		} else {
-			html += '<form class="art-lms-checkout-form" onsubmit="return false;">';
+			html += '<div class="art-lms-checkout-form">';
 
 			fields.forEach(function (field, index) {
 				html += renderCheckoutPreviewField(field, index, idPrefix);
@@ -206,7 +206,7 @@
 
 			html += '<p class="art-lms-checkout-form__actions art-lms-checkout-form__actions--align-' + escapeHtml(settings.buttonAlign) + '"><button type="button" class="art-lms-button art-lms-button--size-' + escapeHtml(settings.buttonSize) + '" disabled style="background:' + escapeHtml(settings.buttonColor) + ';color:' + escapeHtml(settings.buttonTextColor) + '">' + escapeHtml(settings.buttonText || strings.pay || '') + '</button></p>';
 			html += '<div class="art-lms-checkout-form__feedback" hidden aria-live="polite"></div>';
-			html += '</form>';
+			html += '</div>';
 		}
 
 		html += '</div>';
@@ -301,6 +301,7 @@
 
 			$root.find('tbody').append(row);
 			$root.find('tbody tr:last input[type="text"]').trigger('focus');
+			syncCheckoutFieldRowState($root.find('tbody tr:last'));
 			updateCheckoutPreview();
 		});
 
@@ -387,6 +388,44 @@
 
 		$root.on('click', '.art-lms-remove-custom-consent', function () {
 			$(this).closest('.art-lms-custom-consent-row').remove();
+			updateCheckoutPreview();
+		});
+	}
+
+	function syncCheckoutFieldRowState($row) {
+		if (!$row || !$row.length) {
+			return;
+		}
+
+		var $enabled = $row.find('.art-lms-checkout-field-enabled').first();
+		var $required = $row.find('.art-lms-checkout-field-required').first();
+
+		if (!$enabled.length || !$required.length) {
+			return;
+		}
+
+		var isEnabled = $enabled.is(':checked');
+
+		if (!isEnabled) {
+			$required.prop('checked', false);
+		}
+
+		$required.prop('disabled', !isEnabled);
+	}
+
+	function initCheckoutFieldDependencies() {
+		var $form = $('.art-lms-checkout-settings-form');
+
+		if (!$form.length) {
+			return;
+		}
+
+		$form.find('tr').each(function () {
+			syncCheckoutFieldRowState($(this));
+		});
+
+		$form.on('change', '.art-lms-checkout-field-enabled', function () {
+			syncCheckoutFieldRowState($(this).closest('tr'));
 			updateCheckoutPreview();
 		});
 	}
@@ -1713,6 +1752,7 @@
 
 		initCheckoutCustomFields();
 		initCheckoutCustomConsents();
+		initCheckoutFieldDependencies();
 		initCheckoutPreview();
 		initCheckoutDesignPreview();
 		initPaymentStatusMessages();

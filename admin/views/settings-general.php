@@ -360,6 +360,16 @@ $page_pickers     = array(
 
 						<input
 
+							type="hidden"
+
+							name="<?php echo esc_attr( $general_option ); ?>[delete_data_on_uninstall]"
+
+							value="0"
+
+						>
+
+						<input
+
 							type="checkbox"
 
 							name="<?php echo esc_attr( $general_option ); ?>[delete_data_on_uninstall]"
