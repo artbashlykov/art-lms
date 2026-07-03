@@ -928,6 +928,50 @@
 
 	var paymentGatewayToggleRequest = null;
 
+	function syncGatewaySettingsFieldsState($form) {
+		if (!$form || !$form.length) {
+			return;
+		}
+
+		var $switch = $form.find('.art-lms-gateway-status-switch__input').first();
+
+		if (!$switch.length) {
+			return;
+		}
+
+		var isEnabled = $switch.is(':checked');
+		var gatewayId = resolvePaymentGatewayId($switch);
+		var fieldSelector = gatewayId
+			? '[name*="[gateways][' + gatewayId + ']"]'
+			: '[name*="[gateways]"]';
+
+		$form.find(fieldSelector).each(function () {
+			var $field = $(this);
+			var type = String($field.attr('type') || '').toLowerCase();
+			var name = String($field.attr('name') || '');
+
+			if (type === 'hidden' || type === 'button' || type === 'submit') {
+				return;
+			}
+
+			if (name.indexOf('[enabled]') !== -1 || name.indexOf('[save_gateway]') !== -1) {
+				return;
+			}
+
+			$field.prop('disabled', !isEnabled);
+		});
+	}
+
+	function initPaymentGatewaySettingsForms() {
+		$('.art-lms-payment-gateway-settings-form').each(function () {
+			syncGatewaySettingsFieldsState($(this));
+		});
+
+		$(document).on('change', '.art-lms-payment-gateway-settings-form .art-lms-gateway-status-switch__input', function () {
+			syncGatewaySettingsFieldsState($(this).closest('form'));
+		});
+	}
+
 	function initPaymentGatewayAutoSave() {
 		var config = window.artLmsPaymentSettings || {};
 
@@ -945,8 +989,10 @@
 			}
 
 			var enabled = $input.is(':checked');
+			var $form = $input.closest('form');
 
 			syncGatewayStatusControl($control);
+			syncGatewaySettingsFieldsState($form);
 
 			if (paymentGatewayToggleRequest && paymentGatewayToggleRequest.abort) {
 				paymentGatewayToggleRequest.abort();
@@ -967,6 +1013,7 @@
 						showGatewaySaveFeedback($control, failMessage, true);
 						$input.prop('checked', !enabled);
 						syncGatewayStatusControl($control);
+						syncGatewaySettingsFieldsState($form);
 						return;
 					}
 
@@ -983,6 +1030,7 @@
 					showGatewaySaveFeedback($control, config.strings.saveFailed, true);
 					$input.prop('checked', !enabled);
 					syncGatewayStatusControl($control);
+					syncGatewaySettingsFieldsState($form);
 				})
 				.always(function () {
 					$control.removeClass('is-saving');
@@ -1658,6 +1706,7 @@
 		initGeneralPageSettings();
 		initLoginPageSettings();
 		initGatewayStatusControls();
+		initPaymentGatewaySettingsForms();
 		initPaymentGatewayAutoSave();
 		initYookassaReceiptsPanel();
 		initPaymentGatewayList();

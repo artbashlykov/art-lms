@@ -322,6 +322,9 @@ abstract class Art_LMS_Payment_Gateway {
 	/**
 	 * Render gateway settings panel in admin.
 	 *
+	 * URL-like values must use input type="text" (not "url") so a disabled gateway
+	 * can be saved without browser HTML5 validation blocking the form.
+	 *
 	 * @param string $option_name Option key prefix.
 	 * @param array  $settings    Stored gateway settings.
 	 */
