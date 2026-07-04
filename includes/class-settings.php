@@ -489,13 +489,13 @@ class Art_LMS_Settings {
 		}
 
 		return array(
-			'title_enabled'         => ! empty( $input['title_enabled'] ) ? 'yes' : 'no',
+			'title_enabled'         => self::parse_yes_no_setting( $input['title_enabled'] ?? $defaults['title_enabled'] ?? 'yes' ),
 			'title_text'            => self::sanitize_login_form_text(
 				$input['title_text'] ?? $defaults['title_text'],
 				$defaults['title_text'],
 				100
 			),
-			'subtitle_enabled'      => ! empty( $input['subtitle_enabled'] ) ? 'yes' : 'no',
+			'subtitle_enabled'      => self::parse_yes_no_setting( $input['subtitle_enabled'] ?? $defaults['subtitle_enabled'] ?? 'no' ),
 			'subtitle_text'         => self::sanitize_login_form_text(
 				$input['subtitle_text'] ?? $defaults['subtitle_text'],
 				$defaults['subtitle_text'],
@@ -511,13 +511,13 @@ class Art_LMS_Settings {
 				$defaults['password_label'],
 				80
 			),
-			'remember_enabled'      => ! empty( $input['remember_enabled'] ) ? 'yes' : 'no',
+			'remember_enabled'      => self::parse_yes_no_setting( $input['remember_enabled'] ?? $defaults['remember_enabled'] ?? 'yes' ),
 			'remember_label'        => self::sanitize_login_form_text(
 				$input['remember_label'] ?? $defaults['remember_label'],
 				$defaults['remember_label'],
 				80
 			),
-			'lost_password_enabled' => ! empty( $input['lost_password_enabled'] ) ? 'yes' : 'no',
+			'lost_password_enabled' => self::parse_yes_no_setting( $input['lost_password_enabled'] ?? $defaults['lost_password_enabled'] ?? 'yes' ),
 			'lost_password_text'    => self::sanitize_login_form_text(
 				$input['lost_password_text'] ?? $defaults['lost_password_text'],
 				$defaults['lost_password_text'],
@@ -1221,8 +1221,8 @@ class Art_LMS_Settings {
 			$def = $defaults[ $key ];
 
 			$consents[ $key ] = array(
-				'enabled'   => ! empty( $row['enabled'] ) ? 'yes' : 'no',
-				'required'  => ! empty( $row['required'] ) ? 'yes' : 'no',
+				'enabled'   => self::parse_yes_no_setting( $row['enabled'] ?? $def['enabled'] ?? 'no' ),
+				'required'  => self::parse_yes_no_setting( $row['required'] ?? $def['required'] ?? 'no' ),
 				'text'      => self::normalize_checkout_consent_text(
 					isset( $row['text'] ) ? sanitize_text_field( $row['text'] ) : $def['text']
 				),
@@ -1280,8 +1280,8 @@ class Art_LMS_Settings {
 			$consents[] = array(
 				'id'        => $id,
 				'label'     => isset( $row['label'] ) ? sanitize_text_field( $row['label'] ) : '',
-				'enabled'   => ! empty( $row['enabled'] ) ? 'yes' : 'no',
-				'required'  => ! empty( $row['required'] ) ? 'yes' : 'no',
+				'enabled'   => self::parse_yes_no_setting( $row['enabled'] ?? 'yes' ),
+				'required'  => self::parse_yes_no_setting( $row['required'] ?? 'yes' ),
 				'text'      => $text,
 				'link_text' => $link_text,
 				'page_id'   => isset( $row['page_id'] ) ? absint( $row['page_id'] ) : 0,
@@ -1377,7 +1377,7 @@ class Art_LMS_Settings {
 			: self::get_login_slug();
 
 		return array(
-			'enabled' => ! empty( $input['enabled'] ) ? 'yes' : 'no',
+			'enabled' => self::parse_yes_no_setting( $input['enabled'] ?? 'no' ),
 			'slug'    => $slug,
 			'form'    => isset( $input['form'] )
 				? self::sanitize_login_form( $input['form'] )
@@ -1650,7 +1650,7 @@ class Art_LMS_Settings {
 	 */
 	private static function sanitize_email_template_block( $input, $current, $default_block, $recipient = '' ) {
 		$block = array(
-			'enabled' => ! empty( $input['enabled'] ) ? 'yes' : 'no',
+			'enabled' => self::parse_yes_no_setting( $input['enabled'] ?? $current['enabled'] ?? $default_block['enabled'] ?? 'yes' ),
 			'subject' => isset( $input['subject'] )
 				? sanitize_text_field( $input['subject'] )
 				: $current['subject'],
@@ -1724,7 +1724,7 @@ class Art_LMS_Settings {
 	 */
 	public static function sanitize_general( $input ) {
 		$account_page_id = isset( $input['account_page_id'] ) ? absint( $input['account_page_id'] ) : 0;
-		$create_user     = ! empty( $input['create_user_before_payment'] );
+		$create_user     = 'yes' === self::parse_yes_no_setting( $input['create_user_before_payment'] ?? 'no' );
 
 		$data = array(
 			'account_page_id'                => $account_page_id,
@@ -1733,11 +1733,11 @@ class Art_LMS_Settings {
 			'currency'                       => 'RUB',
 			'create_user_before_payment'     => $create_user ? 'yes' : 'no',
 			'user_registration_verification' => $create_user ? self::sanitize_user_registration_verification( $input ) : 'none',
-			'auto_login_after_register'      => ! empty( $input['auto_login_after_register'] ) ? 'yes' : 'no',
+			'auto_login_after_register'      => self::parse_yes_no_setting( $input['auto_login_after_register'] ?? 'yes' ),
 		);
 
 		if ( is_array( $input ) && array_key_exists( 'delete_data_on_uninstall', $input ) ) {
-			self::set_delete_data_on_uninstall( ! empty( $input['delete_data_on_uninstall'] ) );
+			self::set_delete_data_on_uninstall( 'yes' === self::parse_yes_no_setting( $input['delete_data_on_uninstall'] ) );
 		}
 
 		return $data;
@@ -2243,7 +2243,7 @@ class Art_LMS_Settings {
 
 		foreach ( array_keys( $defaults ) as $key ) {
 			if ( 'paid_show_account_button' === $key ) {
-				$messages[ $key ] = ! empty( $input[ $key ] ) ? 'yes' : 'no';
+				$messages[ $key ] = self::parse_yes_no_setting( $input[ $key ] ?? $defaults[ $key ] ?? 'yes' );
 				continue;
 			}
 
@@ -2594,6 +2594,22 @@ class Art_LMS_Settings {
 	}
 
 	/**
+	 * Normalize yes/no flag from a checkbox (0/1) or stored yes/no string.
+	 *
+	 * WordPress may run sanitize callbacks twice; stored "no" must not pass !empty().
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string "yes" or "no".
+	 */
+	public static function parse_yes_no_setting( $value ) {
+		if ( is_string( $value ) && in_array( $value, array( 'yes', 'no' ), true ) ) {
+			return $value;
+		}
+
+		return ! empty( $value ) ? 'yes' : 'no';
+	}
+
+	/**
 	 * Sanitize checkout field settings.
 	 *
 	 * @param array $input Raw fields input.
@@ -2606,8 +2622,8 @@ class Art_LMS_Settings {
 		foreach ( $defaults as $key => $default ) {
 			$row = is_array( $input ) ? ( $input[ $key ] ?? array() ) : array();
 
-			$enabled  = ! empty( $row['enabled'] ) || 'email' === $key ? 'yes' : 'no';
-			$required = ! empty( $row['required'] ) || 'email' === $key ? 'yes' : 'no';
+			$enabled  = 'email' === $key ? 'yes' : self::parse_yes_no_setting( $row['enabled'] ?? 'no' );
+			$required = 'email' === $key ? 'yes' : self::parse_yes_no_setting( $row['required'] ?? 'no' );
 
 			if ( 'yes' !== $enabled ) {
 				$required = 'no';
@@ -2665,8 +2681,8 @@ class Art_LMS_Settings {
 
 			$used_ids[ $id ] = true;
 
-			$enabled  = ! empty( $row['enabled'] ) ? 'yes' : 'no';
-			$required = ! empty( $row['required'] ) ? 'yes' : 'no';
+			$enabled  = self::parse_yes_no_setting( $row['enabled'] ?? 'no' );
+			$required = self::parse_yes_no_setting( $row['required'] ?? 'no' );
 
 			if ( 'yes' !== $enabled ) {
 				$required = 'no';

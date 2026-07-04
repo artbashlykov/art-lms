@@ -420,8 +420,8 @@
 			return;
 		}
 
-		$form.find('tr').each(function () {
-			syncCheckoutFieldRowState($(this));
+		$form.find('.art-lms-checkout-field-enabled').each(function () {
+			syncCheckoutFieldRowState($(this).closest('tr'));
 		});
 
 		$form.on('change', '.art-lms-checkout-field-enabled', function () {

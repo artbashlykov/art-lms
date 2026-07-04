@@ -69,11 +69,7 @@ abstract class Art_LMS_Payment_Gateway {
 	 * @return string "yes" or "no".
 	 */
 	protected function parse_enabled_setting( $value ) {
-		if ( is_string( $value ) && in_array( $value, array( 'yes', 'no' ), true ) ) {
-			return $value;
-		}
-
-		return ! empty( $value ) ? 'yes' : 'no';
+		return Art_LMS_Settings::parse_yes_no_setting( $value );
 	}
 
 	/**

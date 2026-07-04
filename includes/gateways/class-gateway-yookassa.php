@@ -81,7 +81,7 @@ class Art_LMS_Gateway_Yookassa extends Art_LMS_Payment_Gateway {
 		unset( $settings['test_mode'] );
 
 		if ( isset( $input['shop_id'] ) || isset( $input['secret_key'] ) || isset( $input['receipt_vat_code'] ) || array_key_exists( 'receipts_enabled', $input ) ) {
-			$settings['receipts_enabled'] = ! empty( $input['receipts_enabled'] ) ? 'yes' : 'no';
+			$settings['receipts_enabled'] = Art_LMS_Settings::parse_yes_no_setting( $input['receipts_enabled'] ?? $settings['receipts_enabled'] ?? 'no' );
 		}
 
 		if ( isset( $input['receipt_vat_code'] ) ) {

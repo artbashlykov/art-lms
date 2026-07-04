@@ -73,7 +73,7 @@ class Art_LMS_Gateway_Prodamus extends Art_LMS_Payment_Gateway {
 		$settings['secret_key']  = $secret;
 
 		if ( isset( $input['payform_url'] ) ) {
-			$settings['test_mode'] = ! empty( $input['test_mode'] ) ? 'yes' : 'no';
+			$settings['test_mode'] = Art_LMS_Settings::parse_yes_no_setting( $input['test_mode'] ?? $settings['test_mode'] ?? 'no' );
 		}
 
 		unset( $settings['payment_methods'], $settings['sys'] );
