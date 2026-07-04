@@ -80,8 +80,8 @@ class Art_LMS_Gateway_Yookassa extends Art_LMS_Payment_Gateway {
 		$settings['secret_key'] = $secret;
 		unset( $settings['test_mode'] );
 
-		if ( isset( $input['shop_id'] ) || isset( $input['secret_key'] ) || isset( $input['receipt_vat_code'] ) || array_key_exists( 'receipts_enabled', $input ) ) {
-			$settings['receipts_enabled'] = Art_LMS_Settings::parse_yes_no_setting( $input['receipts_enabled'] ?? $settings['receipts_enabled'] ?? 'no' );
+		if ( array_key_exists( 'receipts_enabled', $input ) ) {
+			$settings['receipts_enabled'] = Art_LMS_Settings::parse_yes_no_setting( $input['receipts_enabled'] );
 		}
 
 		if ( isset( $input['receipt_vat_code'] ) ) {
@@ -690,6 +690,7 @@ class Art_LMS_Gateway_Yookassa extends Art_LMS_Payment_Gateway {
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Отправка чеков', 'art-lms' ); ?></th>
 						<td>
+							<input type="hidden" name="<?php echo esc_attr( $field_name ); ?>[receipts_enabled]" value="0">
 							<label for="yookassa_receipts_enabled">
 								<input
 									type="checkbox"

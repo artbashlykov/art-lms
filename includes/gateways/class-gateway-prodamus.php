@@ -72,8 +72,8 @@ class Art_LMS_Gateway_Prodamus extends Art_LMS_Payment_Gateway {
 		$settings['payform_url'] = $payform_url;
 		$settings['secret_key']  = $secret;
 
-		if ( isset( $input['payform_url'] ) ) {
-			$settings['test_mode'] = Art_LMS_Settings::parse_yes_no_setting( $input['test_mode'] ?? $settings['test_mode'] ?? 'no' );
+		if ( array_key_exists( 'test_mode', $input ) ) {
+			$settings['test_mode'] = Art_LMS_Settings::parse_yes_no_setting( $input['test_mode'] );
 		}
 
 		unset( $settings['payment_methods'], $settings['sys'] );
@@ -666,6 +666,7 @@ class Art_LMS_Gateway_Prodamus extends Art_LMS_Payment_Gateway {
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Тестовый режим', 'art-lms' ); ?></th>
 				<td>
+					<input type="hidden" name="<?php echo esc_attr( $field_name ); ?>[test_mode]" value="0">
 					<label for="prodamus_test_mode">
 						<input
 							type="checkbox"
