@@ -3,6 +3,7 @@
 
 	var cfg = window.artLmsPaymentButtonMetaBox || {};
 	var metaKeys = cfg.metaKeys || {};
+	var REQUIRED_NOTICE_ID = 'art-lms-payment-button-required';
 	var savedState = '';
 	var allowNavigation = false;
 	var isSubmittingSave = false;
@@ -147,15 +148,46 @@
 	function bindSaveButtons() {
 		var saveButtonSelector = [
 			'.editor-post-publish-button',
+			'.editor-post-publish-button__button',
 			'.editor-post-save-draft',
 			'.editor-post-switch-to-draft',
+			'.editor-post-publish-panel__toggle',
+			'.entities-saved-states .components-button.is-primary',
 			'#publish',
 			'#save-post',
 			'input[name="save"]',
 		].join(', ');
 
-		$(document).on('click', saveButtonSelector, function () {
-			markSaveInProgress();
+		document.addEventListener(
+			'click',
+			function (event) {
+				var target = event.target;
+
+				if (!target || !target.closest || !target.closest(saveButtonSelector)) {
+					return;
+				}
+
+				if (!shouldBlockPaymentButtonSave()) {
+					return;
+				}
+
+				event.preventDefault();
+				event.stopPropagation();
+				event.stopImmediatePropagation();
+				showRequiredFieldsFeedback();
+			},
+			true
+		);
+
+		$(document).on('click', saveButtonSelector, function (event) {
+			if (!shouldBlockPaymentButtonSave()) {
+				markSaveInProgress();
+				return;
+			}
+
+			event.preventDefault();
+			showRequiredFieldsFeedback();
+			return false;
 		});
 	}
 
@@ -284,7 +316,258 @@
 				}
 			});
 
+		if (ids.length) {
+			return ids;
+		}
+
+		if (!window.wp || !wp.data || !metaKeys.materialIds) {
+			return ids;
+		}
+
+		var editor = wp.data.select('core/editor');
+
+		if (!editor || !editor.getEditedPostAttribute) {
+			return ids;
+		}
+
+		var meta = editor.getEditedPostAttribute('meta') || {};
+		var raw = meta[metaKeys.materialIds];
+
+		if (!Array.isArray(raw)) {
+			return ids;
+		}
+
+		raw.forEach(function (value) {
+			var id = parseInt(value, 10) || 0;
+
+			if (id) {
+				ids.push(id);
+			}
+		});
+
 		return ids;
+	}
+
+	function materialsRequiredForSave() {
+		return !!cfg.requireMaterials;
+	}
+
+	function getRequiredFieldMessages() {
+		return {
+			title: (cfg.strings && cfg.strings.titleRequired) || 'Укажите заголовок платёжной кнопки.',
+			productName: (cfg.strings && cfg.strings.productNameRequired) || 'Укажите название продукта.',
+			price: (cfg.strings && cfg.strings.priceRequired) || 'Укажите цену.',
+			materials: (cfg.strings && cfg.strings.materialsRequired) || 'Добавьте хотя бы один материал, прежде чем сохранять платёжную кнопку.',
+		};
+	}
+
+	function getRequiredFieldState() {
+		pushMetaToEditor();
+
+		var $root = getVisibleMetaBox();
+
+		return {
+			title: getEditedTitle(),
+			productName: $.trim($root.find('#art_lms_product_name').val() || ''),
+			price: $.trim($root.find('#art_lms_price').val() || ''),
+			materialIds: getSelectedMaterialIds(),
+		};
+	}
+
+	function getMissingRequiredFields(state) {
+		var messages = getRequiredFieldMessages();
+		var current = state || getRequiredFieldState();
+		var missing = [];
+
+		if (!current.title) {
+			missing.push({ id: 'title', message: messages.title });
+		}
+
+		if (!current.productName) {
+			missing.push({ id: 'productName', message: messages.productName });
+		}
+
+		if (!current.price) {
+			missing.push({ id: 'price', message: messages.price });
+		}
+
+		if (materialsRequiredForSave() && !current.materialIds.length) {
+			missing.push({ id: 'materials', message: messages.materials });
+		}
+
+		return missing;
+	}
+
+	function getRequiredFieldsMessage(missing) {
+		missing = missing || getMissingRequiredFields();
+
+		if (!missing.length) {
+			return '';
+		}
+
+		if (missing.length === 1) {
+			return missing[0].message;
+		}
+
+		return (cfg.strings && cfg.strings.requiredFieldsSummary) || 'Заполните обязательные поля перед сохранением платёжной кнопки.';
+	}
+
+	function shouldBlockPaymentButtonSave() {
+		return getMissingRequiredFields().length > 0;
+	}
+
+	function showEditorErrorNotice(message) {
+		var noticesDispatch = window.wp && wp.data && wp.data.dispatch ? wp.data.dispatch('core/notices') : null;
+
+		if (noticesDispatch && noticesDispatch.createErrorNotice) {
+			noticesDispatch.createErrorNotice(message, {
+				id: REQUIRED_NOTICE_ID,
+				type: 'snackbar',
+			});
+			return;
+		}
+
+		window.alert(message);
+	}
+
+	function ensureTitleRequiredNotice() {
+		var $titleWrap = $('.edit-post-visual-editor__post-title-wrapper, .editor-post-title').first();
+
+		if (!$titleWrap.length) {
+			return $();
+		}
+
+		var $notice = $('#art_lms_title_required_notice');
+
+		if (!$notice.length) {
+			$notice = $('<p>', {
+				id: 'art_lms_title_required_notice',
+				class: 'art-lms-field-required-notice art-lms-title-required-notice',
+				role: 'alert',
+				text: getRequiredFieldMessages().title,
+			});
+			$titleWrap.after($notice);
+		}
+
+		return $notice;
+	}
+
+	function toggleFieldRequiredNotice($notice, isRequired) {
+		if (!$notice || !$notice.length) {
+			return;
+		}
+
+		if (isRequired) {
+			$notice.removeAttr('hidden');
+			return;
+		}
+
+		$notice.attr('hidden', 'hidden');
+	}
+
+	function toggleFieldRequiredState($fieldWrap, isRequired) {
+		if (!$fieldWrap || !$fieldWrap.length) {
+			return;
+		}
+
+		$fieldWrap.toggleClass('is-field-required', !!isRequired);
+	}
+
+	function updateRequiredFieldsUi() {
+		var state = getRequiredFieldState();
+		var missing = getMissingRequiredFields(state);
+		var missingMap = {};
+
+		missing.forEach(function (item) {
+			missingMap[item.id] = true;
+		});
+
+		var $root = getVisibleMetaBox();
+		var $titleWrap = $('.edit-post-visual-editor__post-title-wrapper, .editor-post-title').first();
+		var $titleInput = $('.editor-post-title__input, #title').first();
+		var $titleNotice = ensureTitleRequiredNotice();
+
+		toggleFieldRequiredNotice($titleNotice, !!missingMap.title);
+		toggleFieldRequiredState($titleWrap.length ? $titleWrap : $titleInput, !!missingMap.title);
+
+		toggleFieldRequiredNotice($root.find('#art_lms_product_name_required_notice'), !!missingMap.productName);
+		toggleFieldRequiredState($root.find('#art_lms_product_name').closest('td'), !!missingMap.productName);
+
+		toggleFieldRequiredNotice($root.find('#art_lms_price_required_notice'), !!missingMap.price);
+		toggleFieldRequiredState($root.find('#art_lms_price').closest('td'), !!missingMap.price);
+
+		toggleFieldRequiredNotice($root.find('#art_lms_materials_required_notice'), !!missingMap.materials);
+		$root.find('.art-lms-material-picker').toggleClass('is-materials-required', !!missingMap.materials);
+	}
+
+	function scrollToFirstMissingField(missing) {
+		missing = missing || getMissingRequiredFields();
+
+		if (!missing.length) {
+			return;
+		}
+
+		var target = null;
+		var firstId = missing[0].id;
+		var $root = getVisibleMetaBox();
+
+		if (firstId === 'title') {
+			target = $('.editor-post-title__input, #title').first()[0];
+		} else if (firstId === 'productName') {
+			target = $root.find('#art_lms_product_name')[0];
+		} else if (firstId === 'price') {
+			target = $root.find('#art_lms_price')[0];
+		} else if (firstId === 'materials') {
+			target = $root.find('#art_lms_materials_required_notice:visible, .art-lms-material-picker').first()[0];
+		}
+
+		if (target && target.scrollIntoView) {
+			target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		}
+	}
+
+	function showRequiredFieldsFeedback() {
+		var missing = getMissingRequiredFields();
+
+		updateRequiredFieldsUi();
+		showEditorErrorNotice(getRequiredFieldsMessage(missing));
+		scrollToFirstMissingField(missing);
+	}
+
+	function bindRequiredFieldsValidation() {
+		var attempts = 0;
+
+		updateRequiredFieldsUi();
+
+		var intervalId = window.setInterval(function () {
+			attempts += 1;
+			updateRequiredFieldsUi();
+
+			if ($('.edit-post-visual-editor__post-title-wrapper, .editor-post-title').length || attempts >= 100) {
+				window.clearInterval(intervalId);
+			}
+		}, 100);
+	}
+
+	function bindPreSavePostFilter() {
+		if (!window.wp || !wp.hooks) {
+			return;
+		}
+
+		wp.hooks.addFilter('editor.preSavePost', 'art-lms/required-fields', function (edits, options) {
+			if (options && options.isAutosave) {
+				return edits;
+			}
+
+			var missing = getMissingRequiredFields();
+
+			if (!missing.length) {
+				return edits;
+			}
+
+			showRequiredFieldsFeedback();
+			throw new Error(getRequiredFieldsMessage(missing));
+		});
 	}
 
 	function refreshMaterialSelectOptions() {
@@ -378,6 +661,7 @@
 		renderSelectedEmptyState();
 		markUserChanged();
 		pushMetaToEditor();
+		updateRequiredFieldsUi();
 	}
 
 	function removeMaterial($item) {
@@ -386,6 +670,7 @@
 		renderSelectedEmptyState();
 		markUserChanged();
 		pushMetaToEditor();
+		updateRequiredFieldsUi();
 	}
 
 	function collectMeta() {
@@ -655,6 +940,8 @@
 		getSavedState();
 		toggleAccessCustomField();
 		bindMaterialPicker();
+		bindRequiredFieldsValidation();
+		bindPreSavePostFilter();
 		bindSaveButtons();
 		bindUnsavedGuards();
 		bindSaveStateReset();
@@ -664,8 +951,17 @@
 			.on('change.artLmsAccessMode', '.art-lms-access-mode', function () {
 				toggleAccessCustomField();
 				pushMetaToEditor();
+				updateRequiredFieldsUi();
 			});
-		$('.art-lms-payment-button-meta-box').on('input change', 'input, select', pushMetaToEditor);
+		$('.art-lms-payment-button-meta-box').on('input change', 'input, select', function () {
+			pushMetaToEditor();
+			updateRequiredFieldsUi();
+		});
+		$(document).on(
+			'input.artLmsRequiredFields change.artLmsRequiredFields',
+			'.editor-post-title__input, #title, #art_lms_product_name, #art_lms_price',
+			updateRequiredFieldsUi
+		);
 		$(document).on('change.artLmsButtonStatus', '.art-lms-payment-button-status input', pushMetaToEditor);
 		bindEditorSync();
 		pushMetaToEditor();

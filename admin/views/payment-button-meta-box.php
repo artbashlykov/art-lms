@@ -19,6 +19,8 @@ defined( 'ABSPATH' ) || exit;
 $selected_material_ids = $meta['material_ids'] ?? array();
 $selected_materials    = Art_LMS_Admin_Payment_Button_Editor::get_selected_materials( $selected_material_ids );
 $materials_catalog     = $materials_catalog ?? array();
+$product_name_value    = trim( (string) ( $meta['product_name'] ?? '' ) );
+$price_value           = trim( (string) ( $meta['price'] ?? '' ) );
 ?>
 <div class="art-lms-payment-button-meta-box">
 	<p class="description">
@@ -39,6 +41,14 @@ $materials_catalog     = $materials_catalog ?? array();
 						name="art_lms_product_name"
 						value="<?php echo esc_attr( $meta['product_name'] ?? '' ); ?>"
 					>
+					<p
+						class="art-lms-field-required-notice"
+						id="art_lms_product_name_required_notice"
+						role="alert"
+						<?php echo '' === $product_name_value ? '' : ' hidden'; ?>
+					>
+						<?php esc_html_e( 'Укажите название продукта.', 'art-lms' ); ?>
+					</p>
 					<p class="description"><?php esc_html_e( 'Показывается на странице сайта и на checkout.', 'art-lms' ); ?></p>
 				</td>
 			</tr>
@@ -72,6 +82,14 @@ $materials_catalog     = $materials_catalog ?? array();
 						min="0"
 						step="0.01"
 					>
+					<p
+						class="art-lms-field-required-notice"
+						id="art_lms_price_required_notice"
+						role="alert"
+						<?php echo '' === $price_value ? '' : ' hidden'; ?>
+					>
+						<?php esc_html_e( 'Укажите цену.', 'art-lms' ); ?>
+					</p>
 				</td>
 			</tr>
 			<tr>
@@ -109,8 +127,16 @@ $materials_catalog     = $materials_catalog ?? array();
 	<?php if ( empty( $materials_catalog ) ) : ?>
 		<p><?php esc_html_e( 'Сначала создайте материалы в разделе «Материалы».', 'art-lms' ); ?></p>
 	<?php else : ?>
+		<p
+			class="art-lms-field-required-notice art-lms-material-picker__required-notice"
+			id="art_lms_materials_required_notice"
+			role="alert"
+			<?php echo empty( $selected_material_ids ) ? '' : ' hidden'; ?>
+		>
+			<?php esc_html_e( 'Добавьте хотя бы один материал, прежде чем сохранять платёжную кнопку.', 'art-lms' ); ?>
+		</p>
 		<div
-			class="art-lms-material-picker"
+			class="art-lms-material-picker<?php echo empty( $selected_material_ids ) ? ' is-materials-required' : ''; ?>"
 			data-empty-label="<?php echo esc_attr__( 'Материалы не добавлены.', 'art-lms' ); ?>"
 		>
 			<div class="art-lms-material-picker__controls">

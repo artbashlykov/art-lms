@@ -521,7 +521,7 @@ class Art_LMS_Admin_Menu {
 			wp_enqueue_script(
 				'art-lms-admin-payment-button-meta-box',
 				ART_LMS_PLUGIN_URL . 'assets/js/admin-payment-button-meta-box.js',
-				array( 'jquery', 'wp-data' ),
+				array( 'jquery', 'wp-data', 'wp-hooks', 'wp-notices' ),
 				ART_LMS_VERSION,
 				true
 			);
@@ -530,16 +530,22 @@ class Art_LMS_Admin_Menu {
 				'art-lms-admin-payment-button-meta-box',
 				'artLmsPaymentButtonMetaBox',
 				array(
-					'metaKeys' => Art_LMS_Payment_Buttons::get_payment_button_editor_config()['metaKeys'],
-					'strings'  => array(
-						'remove'          => __( 'Удалить', 'art-lms' ),
-						'unsavedChanges'  => __( 'Есть несохранённые изменения. Выйти без сохранения?', 'art-lms' ),
-						'unsavedWarning'  => __( 'Изменения могут быть потеряны.', 'art-lms' ),
-						'copy'            => __( 'Скопировать', 'art-lms' ),
-						'copied'          => __( 'Скопировано!', 'art-lms' ),
-						'copyFailed'      => __( 'Не удалось скопировать.', 'art-lms' ),
+					'metaKeys'          => Art_LMS_Payment_Buttons::get_payment_button_editor_config()['metaKeys'],
+					'requireMaterials'  => Art_LMS_Payment_Buttons::has_available_materials(),
+					'strings'           => array(
+						'remove'                => __( 'Удалить', 'art-lms' ),
+						'unsavedChanges'        => __( 'Есть несохранённые изменения. Выйти без сохранения?', 'art-lms' ),
+						'unsavedWarning'        => __( 'Изменения могут быть потеряны.', 'art-lms' ),
+						'titleRequired'         => __( 'Укажите заголовок платёжной кнопки.', 'art-lms' ),
+						'productNameRequired'   => __( 'Укажите название продукта.', 'art-lms' ),
+						'priceRequired'         => __( 'Укажите цену.', 'art-lms' ),
+						'materialsRequired'     => __( 'Добавьте хотя бы один материал, прежде чем сохранять платёжную кнопку.', 'art-lms' ),
+						'requiredFieldsSummary' => __( 'Заполните обязательные поля перед сохранением платёжной кнопки.', 'art-lms' ),
+						'copy'                  => __( 'Скопировать', 'art-lms' ),
+						'copied'                => __( 'Скопировано!', 'art-lms' ),
+						'copyFailed'            => __( 'Не удалось скопировать.', 'art-lms' ),
 					),
-					'listUrl'  => Art_LMS_Admin_Payment_Button_Editor::get_list_url(),
+					'listUrl'           => Art_LMS_Admin_Payment_Button_Editor::get_list_url(),
 				)
 			);
 		}

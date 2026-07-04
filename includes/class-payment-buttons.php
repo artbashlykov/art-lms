@@ -41,6 +41,7 @@ class Art_LMS_Payment_Buttons {
 		add_filter( 'posts_join', array( __CLASS__, 'filter_admin_list_search_join' ), 10, 2 );
 		add_filter( 'posts_search', array( __CLASS__, 'filter_admin_list_search_where' ), 10, 2 );
 		add_filter( 'posts_groupby', array( __CLASS__, 'filter_admin_list_search_groupby' ), 10, 2 );
+		add_filter( 'rest_pre_insert_' . self::POST_TYPE, array( __CLASS__, 'validate_payment_button_rest_save' ), 10, 2 );
 	}
 
 	/**
@@ -162,7 +163,7 @@ class Art_LMS_Payment_Buttons {
 			self::POST_TYPE,
 			self::META_MATERIAL_IDS,
 			array(
-				'show_in_rest'  => array(
+				'show_in_rest'      => array(
 					'schema' => array(
 						'type'  => 'array',
 						'items' => array(
@@ -170,10 +171,11 @@ class Art_LMS_Payment_Buttons {
 						),
 					),
 				),
-				'single'        => true,
-				'type'          => 'array',
-				'default'       => array(),
-				'auth_callback' => array( __CLASS__, 'meta_auth_callback' ),
+				'single'            => true,
+				'type'              => 'array',
+				'default'           => array(),
+				'auth_callback'     => array( __CLASS__, 'meta_auth_callback' ),
+				'validate_callback' => array( __CLASS__, 'validate_material_ids_meta' ),
 			)
 		);
 
@@ -197,6 +199,238 @@ class Art_LMS_Payment_Buttons {
 	 */
 	public static function meta_auth_callback() {
 		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Whether at least one material exists and can be attached to a payment button.
+	 *
+	 * @return bool
+	 */
+	public static function has_available_materials() {
+		$material_ids = get_posts(
+			array(
+				'post_type'              => Art_LMS_Materials::POST_TYPE,
+				'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
+				'posts_per_page'         => 1,
+				'fields'                 => 'ids',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			)
+		);
+
+		return ! empty( $material_ids );
+	}
+
+	/**
+	 * REST validate callback for payment button material IDs.
+	 *
+	 * @param mixed           $value   Meta value.
+	 * @param WP_REST_Request $request Request object.
+	 * @return true|WP_Error
+	 */
+	public static function validate_material_ids_meta( $value, $request ) {
+		unset( $request );
+
+		return self::validate_material_ids_value( $value );
+	}
+
+	/**
+	 * Validate payment button save via REST before post is inserted/updated.
+	 *
+	 * @param stdClass|WP_Post $prepared_post Prepared post object.
+	 * @param WP_REST_Request  $request       Request object.
+	 * @return stdClass|WP_Post|WP_Error
+	 */
+	public static function validate_payment_button_rest_save( $prepared_post, $request ) {
+		$error = self::get_required_fields_validation_error( $prepared_post, $request );
+
+		if ( is_wp_error( $error ) ) {
+			return $error;
+		}
+
+		return $prepared_post;
+	}
+
+	/**
+	 * Validate required payment button fields for REST save.
+	 *
+	 * @param stdClass|WP_Post|null $prepared_post Prepared post object.
+	 * @param WP_REST_Request|null  $request       Request object.
+	 * @return true|WP_Error
+	 */
+	public static function get_required_fields_validation_error( $prepared_post, $request ) {
+		$title        = self::get_title_from_rest_request( $prepared_post, $request );
+		$product_name = self::get_meta_string_from_rest_request( $request, self::META_PRODUCT_NAME );
+		$price        = self::get_meta_string_from_rest_request( $request, self::META_PRICE );
+		$material_ids = self::get_material_ids_from_rest_request( $request );
+
+		return self::validate_required_field_values( $title, $product_name, $price, $material_ids );
+	}
+
+	/**
+	 * Validate required payment button field values.
+	 *
+	 * @param string $title        Post title.
+	 * @param string $product_name Product name meta.
+	 * @param string $price        Price meta.
+	 * @param int[]  $material_ids Material IDs.
+	 * @return true|WP_Error
+	 */
+	public static function validate_required_field_values( $title, $product_name, $price, $material_ids ) {
+		if ( '' === trim( (string) $title ) ) {
+			return new WP_Error(
+				'art_lms_title_required',
+				__( 'Укажите заголовок платёжной кнопки.', 'art-lms' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( '' === trim( (string) $product_name ) ) {
+			return new WP_Error(
+				'art_lms_product_name_required',
+				__( 'Укажите название продукта.', 'art-lms' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( '' === trim( (string) $price ) ) {
+			return new WP_Error(
+				'art_lms_price_required',
+				__( 'Укажите цену.', 'art-lms' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( self::has_available_materials() && empty( self::normalize_material_ids( $material_ids ) ) ) {
+			return new WP_Error(
+				'art_lms_materials_required',
+				__( 'Добавьте хотя бы один материал к платёжной кнопке.', 'art-lms' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Resolve post title from REST request.
+	 *
+	 * @param stdClass|WP_Post|null $prepared_post Prepared post object.
+	 * @param WP_REST_Request|null  $request       Request object.
+	 * @return string
+	 */
+	public static function get_title_from_rest_request( $prepared_post, $request ) {
+		if ( is_object( $prepared_post ) && isset( $prepared_post->post_title ) ) {
+			return trim( (string) $prepared_post->post_title );
+		}
+
+		if ( $request instanceof WP_REST_Request ) {
+			$title = $request->get_param( 'title' );
+
+			if ( null !== $title ) {
+				return trim( (string) $title );
+			}
+
+			$post_id = absint( $request->get_param( 'id' ) );
+
+			if ( $post_id > 0 ) {
+				return trim( (string) get_the_title( $post_id ) );
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Resolve string meta from REST request or stored post meta.
+	 *
+	 * @param WP_REST_Request|null $request  Request object.
+	 * @param string               $meta_key Meta key.
+	 * @return string
+	 */
+	public static function get_meta_string_from_rest_request( $request, $meta_key ) {
+		if ( ! $request instanceof WP_REST_Request ) {
+			return '';
+		}
+
+		$meta = $request->get_param( 'meta' );
+
+		if ( is_array( $meta ) && array_key_exists( $meta_key, $meta ) ) {
+			return (string) $meta[ $meta_key ];
+		}
+
+		$post_id = absint( $request->get_param( 'id' ) );
+
+		if ( $post_id > 0 ) {
+			return (string) get_post_meta( $post_id, $meta_key, true );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Resolve material IDs from a REST request (meta payload or stored post meta).
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return int[]
+	 */
+	public static function get_material_ids_from_rest_request( $request ) {
+		$meta = $request->get_param( 'meta' );
+
+		if ( is_array( $meta ) && array_key_exists( self::META_MATERIAL_IDS, $meta ) ) {
+			return self::normalize_material_ids( $meta[ self::META_MATERIAL_IDS ] );
+		}
+
+		$post_id = absint( $request->get_param( 'id' ) );
+
+		if ( $post_id > 0 ) {
+			$stored = get_post_meta( $post_id, self::META_MATERIAL_IDS, true );
+
+			return self::normalize_material_ids( $stored );
+		}
+
+		return array();
+	}
+
+	/**
+	 * Normalize material IDs list.
+	 *
+	 * @param mixed $value Raw material IDs.
+	 * @return int[]
+	 */
+	public static function normalize_material_ids( $value ) {
+		if ( ! is_array( $value ) ) {
+			return array();
+		}
+
+		return array_values(
+			array_filter(
+				array_map( 'absint', $value )
+			)
+		);
+	}
+
+	/**
+	 * Validate material IDs value.
+	 *
+	 * @param mixed $value Raw material IDs.
+	 * @return true|WP_Error
+	 */
+	public static function validate_material_ids_value( $value ) {
+		if ( ! self::has_available_materials() ) {
+			return true;
+		}
+
+		if ( empty( self::normalize_material_ids( $value ) ) ) {
+			return new WP_Error(
+				'rest_invalid_param',
+				__( 'Добавьте хотя бы один материал к платёжной кнопке.', 'art-lms' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return true;
 	}
 
 	/**

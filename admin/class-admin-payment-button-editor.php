@@ -171,6 +171,20 @@ class Art_LMS_Admin_Payment_Button_Editor {
 		if ( ! empty( $_GET['unarchived'] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Платежная кнопка возвращена из архива.', 'art-lms' ) . '</p></div>';
 		}
+
+		$materials_notice_post_id = get_transient( 'art_lms_payment_button_materials_required_' . get_current_user_id() );
+
+		if ( $materials_notice_post_id ) {
+			delete_transient( 'art_lms_payment_button_materials_required_' . get_current_user_id() );
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Добавьте хотя бы один материал к платёжной кнопке.', 'art-lms' ) . '</p></div>';
+		}
+
+		$save_error_message = get_transient( 'art_lms_payment_button_save_error_' . get_current_user_id() );
+
+		if ( is_string( $save_error_message ) && '' !== $save_error_message ) {
+			delete_transient( 'art_lms_payment_button_save_error_' . get_current_user_id() );
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $save_error_message ) . '</p></div>';
+		}
 	}
 
 	/**
@@ -277,11 +291,18 @@ class Art_LMS_Admin_Payment_Button_Editor {
 		if ( isset( $_POST['art_lms_material_ids'] ) && is_array( $_POST['art_lms_material_ids'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Material IDs are normalized with absint().
 			$raw_material_ids = wp_unslash( $_POST['art_lms_material_ids'] );
-			$material_ids     = array_values(
-				array_filter(
-					array_map( 'absint', $raw_material_ids )
-				)
-			);
+			$material_ids     = Art_LMS_Payment_Buttons::normalize_material_ids( $raw_material_ids );
+		}
+
+		$title = get_the_title( $post_id );
+		if ( isset( $_POST['post_title'] ) ) {
+			$title = sanitize_text_field( wp_unslash( $_POST['post_title'] ) );
+		}
+
+		$validation = Art_LMS_Payment_Buttons::validate_required_field_values( $title, $product_name, $price, $material_ids );
+		if ( is_wp_error( $validation ) ) {
+			set_transient( 'art_lms_payment_button_save_error_' . get_current_user_id(), $validation->get_error_message(), MINUTE_IN_SECONDS );
+			return;
 		}
 
 		if ( 'custom' === $access_mode ) {
