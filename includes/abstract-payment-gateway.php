@@ -49,7 +49,7 @@ abstract class Art_LMS_Payment_Gateway {
 		$settings = wp_parse_args( $existing, $this->get_default_settings() );
 
 		if ( array_key_exists( 'enabled', $input ) ) {
-			$settings['enabled'] = ! empty( $input['enabled'] ) ? 'yes' : 'no';
+			$settings['enabled'] = $this->parse_enabled_setting( $input['enabled'] );
 		}
 
 		if ( array_key_exists( 'display_name', $input ) ) {
@@ -57,6 +57,23 @@ abstract class Art_LMS_Payment_Gateway {
 		}
 
 		return $settings;
+	}
+
+	/**
+	 * Normalize enabled flag from a form checkbox or stored yes/no value.
+	 *
+	 * WordPress may run sanitize callbacks twice; on the second pass the input
+	 * already contains stored "yes"/"no" strings, which must not pass through !empty().
+	 *
+	 * @param mixed $value Raw enabled value.
+	 * @return string "yes" or "no".
+	 */
+	protected function parse_enabled_setting( $value ) {
+		if ( is_string( $value ) && in_array( $value, array( 'yes', 'no' ), true ) ) {
+			return $value;
+		}
+
+		return ! empty( $value ) ? 'yes' : 'no';
 	}
 
 	/**
