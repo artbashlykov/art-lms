@@ -290,6 +290,7 @@ class Art_LMS_Materials {
 				'exclude_from_search' => true,
 				'show_ui'             => true,
 				'show_in_menu'        => false,
+				'show_in_admin_bar'   => true,
 				'query_var'           => true,
 				'rewrite'             => array( 'slug' => 'materials' ),
 				'capability_type'     => 'post',
