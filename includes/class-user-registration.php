@@ -791,58 +791,47 @@ class Art_LMS_User_Registration {
 
 		$identity = trim( (string) $identity );
 
-
-
 		if ( '' === $identity ) {
-
 			return false;
-
 		}
 
-
-
 		if ( is_email( $identity ) ) {
-
 			$user = get_user_by( 'email', $identity );
 
 			if ( $user ) {
-
 				return $user;
-
 			}
-
 		}
 
+		$user = get_user_by( 'login', $identity );
 
+		if ( $user ) {
+			return $user;
+		}
 
-		$login = sanitize_user( $identity, true );
+		$login = sanitize_user( $identity, false );
 
-
-
-		if ( $login ) {
-
+		if ( $login && $login !== $identity ) {
 			$user = get_user_by( 'login', $login );
 
 			if ( $user ) {
-
 				return $user;
-
 			}
-
 		}
 
+		$users = get_users(
+			array(
+				'search'         => $identity,
+				'search_columns' => array( 'user_login', 'user_email', 'display_name' ),
+				'number'         => 1,
+			)
+		);
 
-
-		if ( ! is_email( $identity ) ) {
-
-			return get_user_by( 'email', $identity );
-
+		if ( ! empty( $users ) ) {
+			return $users[0];
 		}
-
-
 
 		return false;
-
 	}
 
 

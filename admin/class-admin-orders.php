@@ -33,7 +33,6 @@ class Art_LMS_Admin_Orders {
 		add_action( 'admin_post_art_lms_delete_order', array( __CLASS__, 'handle_delete_order' ) );
 		add_action( 'admin_post_art_lms_update_order_status', array( __CLASS__, 'handle_update_order_status' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'render_notices' ) );
-		add_action( 'rest_api_init', array( __CLASS__, 'register_rest_routes' ) );
 	}
 
 	/**

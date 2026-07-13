@@ -130,6 +130,7 @@ class Art_LMS_Plugin {
 		Art_LMS_Shortcodes::init();
 		Art_LMS_Blocks::init();
 		Art_LMS_Public::init();
+		add_action( 'rest_api_init', array( 'Art_LMS_Admin_Orders', 'register_rest_routes' ) );
 	}
 
 	/**
