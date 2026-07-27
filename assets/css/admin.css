@@ -1181,7 +1181,9 @@ body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start.wp-has-curre
 .post-type-art_lms_pay_button .art-lms-field-required-notice[hidden],
 .post-type-art_lms_pay_button .art-lms-material-picker__required-notice[hidden],
 .post-type-art_lms_pay_button .art-lms-field-required-notice.is-required-notice-hidden,
-.post-type-art_lms_pay_button .art-lms-material-picker__required-notice.is-required-notice-hidden {
+.post-type-art_lms_pay_button .art-lms-material-picker__required-notice.is-required-notice-hidden,
+.art-lms-field-required-notice.is-required-notice-hidden,
+.art-lms-material-picker__required-notice.is-required-notice-hidden {
 	display: none !important;
 }
 
@@ -1197,6 +1199,9 @@ body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start.wp-has-curre
 }
 
 .post-type-art_lms_pay_button .editor-post-title.is-field-required .editor-post-title__input,
+.post-type-art_lms_pay_button .edit-post-visual-editor__post-title-wrapper.is-field-required .editor-post-title__input,
+.post-type-art_lms_pay_button .editor-visual-editor__post-title-wrapper.is-field-required .editor-post-title__input,
+.post-type-art_lms_pay_button .editor-post-title__input.is-field-required,
 .post-type-art_lms_pay_button #title.is-field-required {
 	border-color: #d63638;
 	box-shadow: 0 0 0 1px #d63638;

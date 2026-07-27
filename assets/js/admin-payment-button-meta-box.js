@@ -185,9 +185,60 @@
 		$('#art_lms_payment_button_initial_state').text(current);
 	}
 
+	function getTitleFromDom(doc) {
+		doc = doc || document;
+
+		var titleInput = doc.querySelector('.editor-post-title__input, #title, #post-title-0');
+
+		if (!titleInput) {
+			return '';
+		}
+
+		if (typeof titleInput.value === 'string' && titleInput.value !== '') {
+			return $.trim(titleInput.value);
+		}
+
+		return $.trim(titleInput.textContent || titleInput.innerText || '');
+	}
+
 	function getEditedTitle() {
+		var title = '';
+
 		if (window.wp && wp.data && wp.data.select('core/editor')) {
-			return $.trim(wp.data.select('core/editor').getEditedPostAttribute('title') || '');
+			try {
+				title = $.trim(wp.data.select('core/editor').getEditedPostAttribute('title') || '');
+			} catch (error) {
+				title = '';
+			}
+		}
+
+		if (title) {
+			return title;
+		}
+
+		title = getTitleFromDom(document);
+
+		if (title) {
+			return title;
+		}
+
+		// Block editor may keep the title inside the canvas iframe.
+		$('iframe').each(function () {
+			if (title) {
+				return false;
+			}
+
+			try {
+				if (this.contentDocument) {
+					title = getTitleFromDom(this.contentDocument);
+				}
+			} catch (error) {
+				// Cross-origin iframe — ignore.
+			}
+		});
+
+		if (title) {
+			return title;
 		}
 
 		return $.trim($('#title').val() || '');
@@ -401,13 +452,35 @@
 		var ids = [];
 		var seen = {};
 
-		$('input[name="art_lms_material_ids[]"]').each(function () {
-			var id = parseInt($(this).val(), 10) || 0;
+		function pushId(raw) {
+			var id = parseInt(raw, 10) || 0;
 
 			if (id && !seen[id]) {
 				seen[id] = true;
 				ids.push(id);
 			}
+		}
+
+		// Prefer visible list items — more reliable than name="…[]" across jQuery/DOM quirks.
+		document.querySelectorAll('.art-lms-material-picker__item[data-material-id]').forEach(function (item) {
+			pushId(item.getAttribute('data-material-id'));
+		});
+
+		if (ids.length) {
+			return ids;
+		}
+
+		document.querySelectorAll('input[name="art_lms_material_ids[]"]').forEach(function (input) {
+			pushId(input.value);
+		});
+
+		if (ids.length) {
+			return ids;
+		}
+
+		// jQuery fallback with escaped brackets.
+		$('input[name="art_lms_material_ids\\[\\]"], input[name="art_lms_material_ids[]"]').each(function () {
+			pushId($(this).val());
 		});
 
 		if (ids.length) {
@@ -431,14 +504,7 @@
 			return ids;
 		}
 
-		raw.forEach(function (value) {
-			var id = parseInt(value, 10) || 0;
-
-			if (id && !seen[id]) {
-				seen[id] = true;
-				ids.push(id);
-			}
-		});
+		raw.forEach(pushId);
 
 		return ids;
 	}
@@ -552,15 +618,19 @@
 			var $el = $(this);
 
 			if (isRequired) {
+				$el.prop('hidden', false);
 				$el.removeAttr('hidden');
 				$el.removeClass('is-required-notice-hidden');
 				$el.addClass('is-required-notice-visible');
+				$el.css('display', '');
 				return;
 			}
 
+			$el.prop('hidden', true);
 			$el.attr('hidden', 'hidden');
 			$el.removeClass('is-required-notice-visible');
 			$el.addClass('is-required-notice-hidden');
+			$el.css('display', 'none');
 		});
 	}
 
@@ -581,35 +651,40 @@
 			missingMap[item.id] = true;
 		});
 
-		var $titleWrap = $('.edit-post-visual-editor__post-title-wrapper, .editor-post-title').first();
-		var $titleInput = $('.editor-post-title__input, #title').first();
+		var $titleWrap = $('.edit-post-visual-editor__post-title-wrapper, .editor-post-title, .editor-visual-editor__post-title-wrapper').first();
+		var $titleInput = $('.editor-post-title__input, #title, #post-title-0').first();
 		var $titleNotice = ensureTitleRequiredNotice();
 
 		toggleFieldRequiredNotice($titleNotice, !!missingMap.title);
 		toggleFieldRequiredState($titleWrap.length ? $titleWrap : $titleInput, !!missingMap.title);
+		toggleFieldRequiredState($titleInput, !!missingMap.title);
 
-		// Update every meta-box copy — block editor may keep a hidden duplicate in the DOM.
-		getAllMetaBoxes().each(function () {
-			var $root = $(this);
+		// Also update title highlight inside the editor canvas iframe when present.
+		$('iframe').each(function () {
+			try {
+				if (!this.contentDocument) {
+					return;
+				}
 
-			toggleFieldRequiredNotice(
-				$root.find('.art-lms-product-name-required-notice, #art_lms_product_name_required_notice'),
-				!!missingMap.productName
-			);
-			toggleFieldRequiredState($root.find('input[name="art_lms_product_name"]').closest('td'), !!missingMap.productName);
+				var $iframeTitle = $(this.contentDocument).find(
+					'.edit-post-visual-editor__post-title-wrapper, .editor-post-title, .editor-post-title__input'
+				);
 
-			toggleFieldRequiredNotice(
-				$root.find('.art-lms-price-required-notice, #art_lms_price_required_notice'),
-				!!missingMap.price
-			);
-			toggleFieldRequiredState($root.find('input[name="art_lms_price"]').closest('td'), !!missingMap.price);
-
-			toggleFieldRequiredNotice(
-				$root.find('.art-lms-materials-required-notice, #art_lms_materials_required_notice'),
-				!!missingMap.materials
-			);
-			$root.find('.art-lms-material-picker').toggleClass('is-materials-required', !!missingMap.materials);
+				toggleFieldRequiredState($iframeTitle, !!missingMap.title);
+			} catch (error) {
+				// Ignore cross-origin frames.
+			}
 		});
+
+		// Update notices globally by class (avoid #id lookups with duplicate IDs).
+		toggleFieldRequiredNotice($('.art-lms-product-name-required-notice'), !!missingMap.productName);
+		toggleFieldRequiredState($('input[name="art_lms_product_name"]').closest('td'), !!missingMap.productName);
+
+		toggleFieldRequiredNotice($('.art-lms-price-required-notice'), !!missingMap.price);
+		toggleFieldRequiredState($('input[name="art_lms_price"]').closest('td'), !!missingMap.price);
+
+		toggleFieldRequiredNotice($('.art-lms-materials-required-notice'), !!missingMap.materials);
+		$('.art-lms-material-picker').toggleClass('is-materials-required', !!missingMap.materials);
 	}
 
 	function scrollToFirstMissingField(missing) {
@@ -655,10 +730,36 @@
 			attempts += 1;
 			updateRequiredFieldsUi();
 
-			if ($('.edit-post-visual-editor__post-title-wrapper, .editor-post-title').length || attempts >= 100) {
+			if ($('.edit-post-visual-editor__post-title-wrapper, .editor-post-title, .editor-post-title__input').length || attempts >= 100) {
 				window.clearInterval(intervalId);
 			}
 		}, 100);
+
+		if (window.wp && wp.data && wp.data.subscribe) {
+			var lastTitle = null;
+			var lastMaterials = null;
+
+			wp.data.subscribe(function () {
+				var title = getEditedTitle();
+				var materialsKey = getSelectedMaterialIds().join(',');
+
+				if (title === lastTitle && materialsKey === lastMaterials) {
+					return;
+				}
+
+				lastTitle = title;
+				lastMaterials = materialsKey;
+				updateRequiredFieldsUi();
+			});
+		}
+
+		$(document).on(
+			'input.artLmsTitleRequired keyup.artLmsTitleRequired',
+			'.editor-post-title__input, #title, #post-title-0',
+			function () {
+				window.setTimeout(updateRequiredFieldsUi, 0);
+			}
+		);
 	}
 
 	function bindPreSavePostFilter() {
@@ -744,36 +845,51 @@
 	function addMaterial(materialId, $box) {
 		var catalog = getMaterialCatalog();
 		var id = parseInt(materialId, 10) || 0;
-		var $root = $box && $box.length ? $box : getVisibleMetaBox();
-		var $list = $root.find('.art-lms-material-picker__selected');
 
-		if (!id || !catalog[id] || $list.find('[data-material-id="' + id + '"]').length) {
+		if (!id || !(catalog[id] || catalog[String(id)])) {
 			return;
 		}
 
-		$list.find('.art-lms-material-picker__empty').remove();
+		var label = catalog[id] || catalog[String(id)];
 
-		$list.append(
-			$('<li>', {
-				class: 'art-lms-material-picker__item',
-				'data-material-id': String(id),
-			})
-				.append($('<span>', { class: 'art-lms-material-picker__title', text: catalog[id] }))
-				.append(
-					$('<button>', {
-						type: 'button',
-						class: 'button-link-delete art-lms-material-picker__remove',
-						text: cfg.strings && cfg.strings.remove ? cfg.strings.remove : 'Remove',
-					})
-				)
-				.append(
-					$('<input>', {
-						type: 'hidden',
-						name: 'art_lms_material_ids[]',
-						value: String(id),
-					})
-				)
-		);
+		// Already selected anywhere in the editor.
+		if (getSelectedMaterialIds().indexOf(id) !== -1) {
+			updateRequiredFieldsUi();
+			return;
+		}
+
+		getAllMetaBoxes().each(function () {
+			var $root = $(this);
+			var $list = $root.find('.art-lms-material-picker__selected');
+
+			if (!$list.length || $list.find('[data-material-id="' + id + '"]').length) {
+				return;
+			}
+
+			$list.find('.art-lms-material-picker__empty').remove();
+
+			$list.append(
+				$('<li>', {
+					class: 'art-lms-material-picker__item',
+					'data-material-id': String(id),
+				})
+					.append($('<span>', { class: 'art-lms-material-picker__title', text: label }))
+					.append(
+						$('<button>', {
+							type: 'button',
+							class: 'button-link-delete art-lms-material-picker__remove',
+							text: cfg.strings && cfg.strings.remove ? cfg.strings.remove : 'Remove',
+						})
+					)
+					.append(
+						$('<input>', {
+							type: 'hidden',
+							name: 'art_lms_material_ids[]',
+							value: String(id),
+						})
+					)
+			);
+		});
 
 		refreshMaterialSelectOptions();
 		renderSelectedEmptyState();
