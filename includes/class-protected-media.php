@@ -22,16 +22,20 @@ class Art_LMS_Protected_Media {
 
 	/**
 	 * Register hooks.
+	 *
+	 * Called from Art_LMS_Plugin::init() during the `init` action — register the rewrite
+	 * rule immediately instead of nesting another `init` callback.
 	 */
 	public static function init() {
-		add_action( 'init', array( __CLASS__, 'register_rewrite' ), 10 );
+		self::register_rewrite();
 		add_action( 'init', array( __CLASS__, 'maybe_flush_rewrites' ), 99 );
 		add_filter( 'query_vars', array( __CLASS__, 'register_query_var' ) );
+		add_action( 'parse_request', array( __CLASS__, 'parse_media_request' ), 0 );
 		add_action( 'save_post_' . Art_LMS_Materials::POST_TYPE, array( __CLASS__, 'sync_material_attachments' ), 20, 2 );
 		add_action( 'before_delete_post', array( __CLASS__, 'cleanup_deleted_material' ) );
 		add_action( 'template_redirect', array( __CLASS__, 'maybe_serve_protected_media' ), 0 );
 		add_action( 'template_redirect', array( __CLASS__, 'maybe_protect_attachment_page' ), 1 );
-		add_action( 'init', array( __CLASS__, 'maybe_block_direct_upload_request' ), 0 );
+		add_action( 'template_redirect', array( __CLASS__, 'maybe_block_direct_upload_request' ), 0 );
 		add_filter( 'the_content', array( __CLASS__, 'filter_material_content_urls' ), 20 );
 		add_filter( 'rest_pre_dispatch', array( __CLASS__, 'rest_guard_attachment' ), 10, 3 );
 	}
@@ -55,6 +59,7 @@ class Art_LMS_Protected_Media {
 			return;
 		}
 
+		self::register_rewrite();
 		flush_rewrite_rules( false );
 		update_option( self::REWRITE_VERSION_OPTION, ART_LMS_VERSION, false );
 	}
@@ -69,6 +74,99 @@ class Art_LMS_Protected_Media {
 		$vars[] = self::QUERY_VAR;
 
 		return $vars;
+	}
+
+	/**
+	 * Mark protected-media requests even when rewrite rules are stale.
+	 *
+	 * @param WP $wp Current WordPress environment instance.
+	 */
+	public static function parse_media_request( $wp ) {
+		$attachment_id = self::get_attachment_id_from_path( self::get_request_path_from_wp( $wp ) );
+
+		if ( ! $attachment_id ) {
+			return;
+		}
+
+		$wp->query_vars[ self::QUERY_VAR ] = $attachment_id;
+		unset( $wp->query_vars['pagename'], $wp->query_vars['page'], $wp->query_vars['name'], $wp->query_vars['error'] );
+	}
+
+	/**
+	 * Extract attachment ID from an art-lms-media path.
+	 *
+	 * @param string $path Relative request path.
+	 * @return int
+	 */
+	public static function get_attachment_id_from_path( $path ) {
+		$path = trim( (string) $path, '/' );
+
+		if ( ! preg_match( '#^art-lms-media/([0-9]+)/?$#', $path, $matches ) ) {
+			return 0;
+		}
+
+		return absint( $matches[1] );
+	}
+
+	/**
+	 * Get request path from WP environment.
+	 *
+	 * @param WP $wp Current WordPress environment instance.
+	 * @return string
+	 */
+	public static function get_request_path_from_wp( $wp ) {
+		if ( isset( $wp->request ) ) {
+			return trim( (string) $wp->request, '/' );
+		}
+
+		return self::normalize_relative_path( self::get_raw_request_path() );
+	}
+
+	/**
+	 * Read current request path from server vars.
+	 *
+	 * @return string
+	 */
+	private static function get_raw_request_path() {
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+
+		return trim( (string) wp_parse_url( $request_uri, PHP_URL_PATH ), '/' );
+	}
+
+	/**
+	 * Strip subdirectory home path from request path.
+	 *
+	 * @param string $path Raw request path.
+	 * @return string
+	 */
+	private static function normalize_relative_path( $path ) {
+		$path      = trim( (string) $path, '/' );
+		$home_path = trim( (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH ), '/' );
+
+		if ( $home_path && 0 === strpos( $path, $home_path ) ) {
+			$path = trim( substr( $path, strlen( $home_path ) ), '/' );
+		}
+
+		return $path;
+	}
+
+	/**
+	 * Resolve attachment ID from query var or request path.
+	 *
+	 * @return int
+	 */
+	public static function get_requested_attachment_id() {
+		$attachment_id = absint( get_query_var( self::QUERY_VAR ) );
+
+		if ( $attachment_id ) {
+			return $attachment_id;
+		}
+
+		if ( ! empty( $_GET[ self::QUERY_VAR ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public download route.
+			return absint( wp_unslash( $_GET[ self::QUERY_VAR ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		}
+
+		return self::get_attachment_id_from_path( self::normalize_relative_path( self::get_raw_request_path() ) );
 	}
 
 	/**
@@ -221,7 +319,7 @@ class Art_LMS_Protected_Media {
 	 * Serve protected media through WordPress.
 	 */
 	public static function maybe_serve_protected_media() {
-		$attachment_id = absint( get_query_var( self::QUERY_VAR ) );
+		$attachment_id = self::get_requested_attachment_id();
 
 		if ( ! $attachment_id ) {
 			return;
@@ -240,6 +338,7 @@ class Art_LMS_Protected_Media {
 			exit;
 		}
 
+		status_header( 200 );
 		self::serve_attachment_file( $attachment_id );
 	}
 
@@ -269,7 +368,7 @@ class Art_LMS_Protected_Media {
 			return;
 		}
 
-		if ( ! empty( get_query_var( self::QUERY_VAR ) ) || is_attachment() ) {
+		if ( self::get_requested_attachment_id() || is_attachment() ) {
 			return;
 		}
 

@@ -123,8 +123,10 @@ class Art_LMS_Activator {
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-settings.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-checkout.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-custom-login.php';
+		require_once ART_LMS_PLUGIN_DIR . 'includes/class-protected-media.php';
 		Art_LMS_Settings::ensure_defaults();
 		Art_LMS_Checkout::register_rewrite();
 		Art_LMS_Custom_Login::register_rewrite();
+		Art_LMS_Protected_Media::register_rewrite();
 	}
 }
