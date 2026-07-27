@@ -17,7 +17,7 @@
 	function getVisibleMetaBox() {
 		var $activeBox = $(document.activeElement).closest('.art-lms-payment-button-meta-box');
 
-		if ($activeBox.length) {
+		if ($activeBox.length && $activeBox.is(':visible')) {
 			return $activeBox.first();
 		}
 
@@ -33,38 +33,70 @@
 	}
 
 	/**
-	 * Read a field across duplicate meta-box copies (block editor may render two).
-	 * Prefer the focused/visible box, otherwise any non-empty value.
+	 * Read a named field across duplicate meta-box copies.
+	 * Never use #id selectors here — duplicate IDs break jQuery/DOM lookups.
+	 *
+	 * @param {string} fieldName Input/select name attribute.
+	 * @return {string}
+	 */
+	function getNamedFieldValue(fieldName) {
+		var active = document.activeElement;
+
+		if (active && active.getAttribute && active.getAttribute('name') === fieldName) {
+			return $.trim(active.value || '');
+		}
+
+		var best = '';
+		var bestVisible = '';
+
+		$('[name="' + fieldName + '"]').each(function () {
+			var $field = $(this);
+			var val = $.trim($field.val() || '');
+
+			if (!val) {
+				return;
+			}
+
+			best = val;
+
+			if ($field.is(':visible')) {
+				bestVisible = val;
+			}
+		});
+
+		return bestVisible || best;
+	}
+
+	/**
+	 * @deprecated Use getNamedFieldValue — kept as thin wrapper for call sites.
+	 * @param {string} fieldSelector Legacy "#id" or ".class" selector.
+	 * @return {string}
 	 */
 	function getMetaBoxFieldValue(fieldSelector) {
-		var $activeBox = $(document.activeElement).closest('.art-lms-payment-button-meta-box');
-		var value = '';
+		var nameMap = {
+			'#art_lms_product_name': 'art_lms_product_name',
+			'#art_lms_compare_price': 'art_lms_compare_price',
+			'#art_lms_price': 'art_lms_price',
+			'#art_lms_access_days_custom': 'art_lms_access_days_custom',
+			'.art-lms-access-mode': 'art_lms_access_mode',
+		};
 
-		if ($activeBox.length) {
-			value = $.trim($activeBox.find(fieldSelector).val() || '');
-
-			if (value) {
-				return value;
-			}
+		if (nameMap[fieldSelector]) {
+			return getNamedFieldValue(nameMap[fieldSelector]);
 		}
 
-		var $visible = getVisibleMetaBox();
-		value = $.trim($visible.find(fieldSelector).val() || '');
-
-		if (value) {
-			return value;
-		}
+		var best = '';
 
 		getAllMetaBoxes().each(function () {
-			var candidate = $.trim($(this).find(fieldSelector).val() || '');
+			var candidate = $.trim($(this).find(fieldSelector).first().val() || '');
 
 			if (candidate) {
-				value = candidate;
+				best = candidate;
 				return false;
 			}
 		});
 
-		return value;
+		return best;
 	}
 
 	function syncMetaFieldAcrossBoxes($source) {
@@ -76,8 +108,7 @@
 
 		var val = $source.val();
 
-		getAllMetaBoxes()
-			.find('[name="' + name + '"]')
+		$('[name="' + name + '"]')
 			.not($source)
 			.each(function () {
 				if ($(this).val() !== val) {
@@ -163,15 +194,13 @@
 	}
 
 	function collectFormState() {
-		var $root = getVisibleMetaBox();
-
 		return JSON.stringify({
 			title: getEditedTitle(),
-			productName: getMetaBoxFieldValue('#art_lms_product_name'),
-			comparePrice: getMetaBoxFieldValue('#art_lms_compare_price'),
-			price: getMetaBoxFieldValue('#art_lms_price'),
-			accessMode: String($root.find('.art-lms-access-mode').val() || getMetaBoxFieldValue('.art-lms-access-mode') || '0'),
-			accessDaysCustom: String(getMetaBoxFieldValue('#art_lms_access_days_custom') || '30'),
+			productName: getNamedFieldValue('art_lms_product_name'),
+			comparePrice: getNamedFieldValue('art_lms_compare_price'),
+			price: getNamedFieldValue('art_lms_price'),
+			accessMode: String(getNamedFieldValue('art_lms_access_mode') || '0'),
+			accessDaysCustom: String(getNamedFieldValue('art_lms_access_days_custom') || '30'),
 			materialIds: getSelectedMaterialIds(),
 			enabled: getButtonEnabledState(),
 		});
@@ -341,20 +370,20 @@
 	}
 
 	function resolveAccessDays() {
-		var mode = getMetaBoxFieldValue('.art-lms-access-mode') || getVisibleMetaBox().find('.art-lms-access-mode').val();
+		var mode = getNamedFieldValue('art_lms_access_mode');
 
 		if (mode === 'custom') {
-			return parseInt(getMetaBoxFieldValue('#art_lms_access_days_custom'), 10) || 1;
+			return parseInt(getNamedFieldValue('art_lms_access_days_custom'), 10) || 1;
 		}
 
 		return parseInt(mode, 10) || 0;
 	}
 
 	function getMaterialCatalog() {
-		var $json = getVisibleMetaBox().find('#art_lms_material_catalog');
+		var $json = getVisibleMetaBox().find('.art-lms-material-catalog, #art_lms_material_catalog');
 
 		if (!$json.length) {
-			$json = $('#art_lms_material_catalog').first();
+			$json = $('.art-lms-material-catalog, #art_lms_material_catalog').first();
 		}
 
 		if (!$json.length) {
@@ -370,28 +399,19 @@
 
 	function getSelectedMaterialIds() {
 		var ids = [];
-		var best = [];
+		var seen = {};
 
-		getAllMetaBoxes().each(function () {
-			var boxIds = [];
+		$('input[name="art_lms_material_ids[]"]').each(function () {
+			var id = parseInt($(this).val(), 10) || 0;
 
-			$(this)
-				.find('#art_lms_material_selected_list input[name="art_lms_material_ids[]"]')
-				.each(function () {
-					var id = parseInt($(this).val(), 10) || 0;
-
-					if (id) {
-						boxIds.push(id);
-					}
-				});
-
-			if (boxIds.length > best.length) {
-				best = boxIds;
+			if (id && !seen[id]) {
+				seen[id] = true;
+				ids.push(id);
 			}
 		});
 
-		if (best.length) {
-			return best;
+		if (ids.length) {
+			return ids;
 		}
 
 		if (!window.wp || !wp.data || !metaKeys.materialIds) {
@@ -414,7 +434,8 @@
 		raw.forEach(function (value) {
 			var id = parseInt(value, 10) || 0;
 
-			if (id) {
+			if (id && !seen[id]) {
+				seen[id] = true;
 				ids.push(id);
 			}
 		});
@@ -436,12 +457,10 @@
 	}
 
 	function getRequiredFieldState() {
-		pushMetaToEditor();
-
 		return {
 			title: getEditedTitle(),
-			productName: getMetaBoxFieldValue('#art_lms_product_name'),
-			price: getMetaBoxFieldValue('#art_lms_price'),
+			productName: getNamedFieldValue('art_lms_product_name'),
+			price: getNamedFieldValue('art_lms_price'),
 			materialIds: getSelectedMaterialIds(),
 		};
 	}
@@ -573,13 +592,22 @@
 		getAllMetaBoxes().each(function () {
 			var $root = $(this);
 
-			toggleFieldRequiredNotice($root.find('#art_lms_product_name_required_notice'), !!missingMap.productName);
-			toggleFieldRequiredState($root.find('#art_lms_product_name').closest('td'), !!missingMap.productName);
+			toggleFieldRequiredNotice(
+				$root.find('.art-lms-product-name-required-notice, #art_lms_product_name_required_notice'),
+				!!missingMap.productName
+			);
+			toggleFieldRequiredState($root.find('input[name="art_lms_product_name"]').closest('td'), !!missingMap.productName);
 
-			toggleFieldRequiredNotice($root.find('#art_lms_price_required_notice'), !!missingMap.price);
-			toggleFieldRequiredState($root.find('#art_lms_price').closest('td'), !!missingMap.price);
+			toggleFieldRequiredNotice(
+				$root.find('.art-lms-price-required-notice, #art_lms_price_required_notice'),
+				!!missingMap.price
+			);
+			toggleFieldRequiredState($root.find('input[name="art_lms_price"]').closest('td'), !!missingMap.price);
 
-			toggleFieldRequiredNotice($root.find('#art_lms_materials_required_notice'), !!missingMap.materials);
+			toggleFieldRequiredNotice(
+				$root.find('.art-lms-materials-required-notice, #art_lms_materials_required_notice'),
+				!!missingMap.materials
+			);
 			$root.find('.art-lms-material-picker').toggleClass('is-materials-required', !!missingMap.materials);
 		});
 	}
@@ -598,11 +626,11 @@
 		if (firstId === 'title') {
 			target = $('.editor-post-title__input, #title').first()[0];
 		} else if (firstId === 'productName') {
-			target = $root.find('#art_lms_product_name')[0];
+			target = $('input[name="art_lms_product_name"]:visible').first()[0] || $root.find('input[name="art_lms_product_name"]')[0];
 		} else if (firstId === 'price') {
-			target = $root.find('#art_lms_price')[0];
+			target = $('input[name="art_lms_price"]:visible').first()[0] || $root.find('input[name="art_lms_price"]')[0];
 		} else if (firstId === 'materials') {
-			target = $root.find('#art_lms_materials_required_notice:visible, .art-lms-material-picker').first()[0];
+			target = $root.find('.art-lms-materials-required-notice:visible, .art-lms-material-picker').first()[0];
 		}
 
 		if (target && target.scrollIntoView) {
@@ -654,64 +682,70 @@
 		});
 	}
 
-	function refreshMaterialSelectOptions() {
-		var $root = getVisibleMetaBox();
-		var $select = $root.find('#art_lms_material_picker_select');
+	function refreshMaterialSelectOptions($box) {
+		var $roots = $box && $box.length ? $box : getAllMetaBoxes();
 		var catalog = getMaterialCatalog();
 		var selectedIds = getSelectedMaterialIds();
-		var currentValue = $select.val();
 
-		$select.find('option:not(:first)').remove();
+		$roots.each(function () {
+			var $select = $(this).find('.art-lms-material-picker__select');
+			var currentValue = $select.val();
 
-		Object.keys(catalog).forEach(function (key) {
-			var id = parseInt(key, 10) || 0;
+			$select.find('option:not(:first)').remove();
 
-			if (!id || selectedIds.indexOf(id) !== -1) {
+			Object.keys(catalog).forEach(function (key) {
+				var id = parseInt(key, 10) || 0;
+
+				if (!id || selectedIds.indexOf(id) !== -1) {
+					return;
+				}
+
+				$select.append(
+					$('<option>', {
+						value: String(id),
+						text: catalog[key],
+					})
+				);
+			});
+
+			if (currentValue && selectedIds.indexOf(parseInt(currentValue, 10)) === -1) {
+				$select.val(currentValue);
+			} else {
+				$select.val('');
+			}
+		});
+	}
+
+	function renderSelectedEmptyState($picker) {
+		var $pickers = $picker && $picker.length ? $picker : $('.art-lms-material-picker');
+
+		$pickers.each(function () {
+			var $currentPicker = $(this);
+			var $list = $currentPicker.find('.art-lms-material-picker__selected');
+			var emptyLabel = $currentPicker.data('emptyLabel') || '';
+			var $empty = $list.find('.art-lms-material-picker__empty');
+
+			if ($list.find('.art-lms-material-picker__item').length) {
+				$empty.remove();
 				return;
 			}
 
-			$select.append(
-				$('<option>', {
-					value: String(id),
-					text: catalog[key],
-				})
-			);
+			if (!$empty.length && emptyLabel) {
+				$list.append(
+					$('<li>', {
+						class: 'art-lms-material-picker__empty',
+						text: emptyLabel,
+					})
+				);
+			}
 		});
-
-		if (currentValue && selectedIds.indexOf(parseInt(currentValue, 10)) === -1) {
-			$select.val(currentValue);
-		} else {
-			$select.val('');
-		}
 	}
 
-	function renderSelectedEmptyState() {
-		var $root = getVisibleMetaBox();
-		var $list = $root.find('#art_lms_material_selected_list');
-		var $picker = $root.find('.art-lms-material-picker');
-		var emptyLabel = $picker.data('emptyLabel') || '';
-		var $empty = $list.find('.art-lms-material-picker__empty');
-
-		if ($list.find('.art-lms-material-picker__item').length) {
-			$empty.remove();
-			return;
-		}
-
-		if (!$empty.length && emptyLabel) {
-			$list.append(
-				$('<li>', {
-					class: 'art-lms-material-picker__empty',
-					text: emptyLabel,
-				})
-			);
-		}
-	}
-
-	function addMaterial(materialId) {
+	function addMaterial(materialId, $box) {
 		var catalog = getMaterialCatalog();
 		var id = parseInt(materialId, 10) || 0;
-		var $root = getVisibleMetaBox();
-		var $list = $root.find('#art_lms_material_selected_list');
+		var $root = $box && $box.length ? $box : getVisibleMetaBox();
+		var $list = $root.find('.art-lms-material-picker__selected');
 
 		if (!id || !catalog[id] || $list.find('[data-material-id="' + id + '"]').length) {
 			return;
@@ -761,15 +795,15 @@
 		var meta = {};
 
 		if (metaKeys.productName) {
-			meta[metaKeys.productName] = getMetaBoxFieldValue('#art_lms_product_name');
+			meta[metaKeys.productName] = getNamedFieldValue('art_lms_product_name');
 		}
 
 		if (metaKeys.comparePrice) {
-			meta[metaKeys.comparePrice] = getMetaBoxFieldValue('#art_lms_compare_price');
+			meta[metaKeys.comparePrice] = getNamedFieldValue('art_lms_compare_price');
 		}
 
 		if (metaKeys.price) {
-			meta[metaKeys.price] = getMetaBoxFieldValue('#art_lms_price');
+			meta[metaKeys.price] = getNamedFieldValue('art_lms_price');
 		}
 
 		if (metaKeys.accessDays) {
@@ -825,21 +859,27 @@
 	}
 
 	function bindMaterialPicker() {
-		var $picker = getVisibleMetaBox().find('.art-lms-material-picker');
-
-		if (!$picker.length) {
-			return;
-		}
-
-		renderSelectedEmptyState();
-
-		$picker.on('click', '.art-lms-material-picker__add', function () {
-			addMaterial(getVisibleMetaBox().find('#art_lms_material_picker_select').val());
+		getAllMetaBoxes().each(function () {
+			renderSelectedEmptyState($(this).find('.art-lms-material-picker'));
 		});
 
-		$picker.on('click', '.art-lms-material-picker__remove', function () {
-			removeMaterial($(this).closest('.art-lms-material-picker__item'));
-		});
+		$(document)
+			.off('click.artLmsMaterialAdd', '.art-lms-material-picker__add')
+			.on('click.artLmsMaterialAdd', '.art-lms-material-picker__add', function (event) {
+				event.preventDefault();
+
+				var $box = $(this).closest('.art-lms-payment-button-meta-box');
+				var materialId = $box.find('.art-lms-material-picker__select').val();
+
+				addMaterial(materialId, $box);
+			});
+
+		$(document)
+			.off('click.artLmsMaterialRemove', '.art-lms-material-picker__remove')
+			.on('click.artLmsMaterialRemove', '.art-lms-material-picker__remove', function (event) {
+				event.preventDefault();
+				removeMaterial($(this).closest('.art-lms-material-picker__item'));
+			});
 	}
 
 	function bindUserChangeTracking() {
@@ -1036,18 +1076,20 @@
 				pushMetaToEditor();
 				updateRequiredFieldsUi();
 			});
-		$('.art-lms-payment-button-meta-box').on('input change', 'input, select', function () {
-			syncMetaFieldAcrossBoxes($(this));
-			pushMetaToEditor();
-			updateRequiredFieldsUi();
-		});
+		$(document)
+			.off('input.artLmsMetaBox change.artLmsMetaBox', '.art-lms-payment-button-meta-box input, .art-lms-payment-button-meta-box select')
+			.on('input.artLmsMetaBox change.artLmsMetaBox', '.art-lms-payment-button-meta-box input, .art-lms-payment-button-meta-box select', function () {
+				syncMetaFieldAcrossBoxes($(this));
+				pushMetaToEditor();
+				updateRequiredFieldsUi();
+			});
 		$(document).on(
 			'input.artLmsRequiredFields change.artLmsRequiredFields',
-			'.editor-post-title__input, #title, #art_lms_product_name, #art_lms_price',
+			'.editor-post-title__input, #title, input[name="art_lms_product_name"], input[name="art_lms_price"]',
 			function () {
 				var $field = $(this);
 
-				if ($field.is('#art_lms_product_name, #art_lms_price')) {
+				if ($field.is('input[name="art_lms_product_name"], input[name="art_lms_price"]')) {
 					syncMetaFieldAcrossBoxes($field);
 				}
 
