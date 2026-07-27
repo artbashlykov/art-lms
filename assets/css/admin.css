@@ -1179,8 +1179,10 @@ body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start.wp-has-curre
 }
 
 .post-type-art_lms_pay_button .art-lms-field-required-notice[hidden],
-.post-type-art_lms_pay_button .art-lms-material-picker__required-notice[hidden] {
-	display: none;
+.post-type-art_lms_pay_button .art-lms-material-picker__required-notice[hidden],
+.post-type-art_lms_pay_button .art-lms-field-required-notice.is-required-notice-hidden,
+.post-type-art_lms_pay_button .art-lms-material-picker__required-notice.is-required-notice-hidden {
+	display: none !important;
 }
 
 .post-type-art_lms_pay_button .art-lms-title-required-notice {

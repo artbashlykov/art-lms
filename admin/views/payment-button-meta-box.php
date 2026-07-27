@@ -42,7 +42,7 @@ $price_value           = trim( (string) ( $meta['price'] ?? '' ) );
 						value="<?php echo esc_attr( $meta['product_name'] ?? '' ); ?>"
 					>
 					<p
-						class="art-lms-field-required-notice"
+						class="art-lms-field-required-notice<?php echo '' === $product_name_value ? ' is-required-notice-visible' : ' is-required-notice-hidden'; ?>"
 						id="art_lms_product_name_required_notice"
 						role="alert"
 						<?php echo '' === $product_name_value ? '' : ' hidden'; ?>
@@ -83,7 +83,7 @@ $price_value           = trim( (string) ( $meta['price'] ?? '' ) );
 						step="0.01"
 					>
 					<p
-						class="art-lms-field-required-notice"
+						class="art-lms-field-required-notice<?php echo '' === $price_value ? ' is-required-notice-visible' : ' is-required-notice-hidden'; ?>"
 						id="art_lms_price_required_notice"
 						role="alert"
 						<?php echo '' === $price_value ? '' : ' hidden'; ?>
@@ -128,7 +128,7 @@ $price_value           = trim( (string) ( $meta['price'] ?? '' ) );
 		<p><?php esc_html_e( 'Сначала создайте материалы в разделе «Материалы».', 'art-lms' ); ?></p>
 	<?php else : ?>
 		<p
-			class="art-lms-field-required-notice art-lms-material-picker__required-notice"
+			class="art-lms-field-required-notice art-lms-material-picker__required-notice<?php echo empty( $selected_material_ids ) ? ' is-required-notice-visible' : ' is-required-notice-hidden'; ?>"
 			id="art_lms_materials_required_notice"
 			role="alert"
 			<?php echo empty( $selected_material_ids ) ? '' : ' hidden'; ?>

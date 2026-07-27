@@ -10,8 +10,18 @@
 	var userMadeChanges = false;
 	var paymentButtonEditorInitialized = false;
 
+	function getAllMetaBoxes() {
+		return $('.art-lms-payment-button-meta-box');
+	}
+
 	function getVisibleMetaBox() {
-		var $visible = $('.art-lms-payment-button-meta-box').filter(function () {
+		var $activeBox = $(document.activeElement).closest('.art-lms-payment-button-meta-box');
+
+		if ($activeBox.length) {
+			return $activeBox.first();
+		}
+
+		var $visible = getAllMetaBoxes().filter(function () {
 			return $(this).is(':visible') && $(this).width() > 0;
 		});
 
@@ -19,7 +29,61 @@
 			return $visible.first();
 		}
 
-		return $('.art-lms-payment-button-meta-box').first();
+		return getAllMetaBoxes().first();
+	}
+
+	/**
+	 * Read a field across duplicate meta-box copies (block editor may render two).
+	 * Prefer the focused/visible box, otherwise any non-empty value.
+	 */
+	function getMetaBoxFieldValue(fieldSelector) {
+		var $activeBox = $(document.activeElement).closest('.art-lms-payment-button-meta-box');
+		var value = '';
+
+		if ($activeBox.length) {
+			value = $.trim($activeBox.find(fieldSelector).val() || '');
+
+			if (value) {
+				return value;
+			}
+		}
+
+		var $visible = getVisibleMetaBox();
+		value = $.trim($visible.find(fieldSelector).val() || '');
+
+		if (value) {
+			return value;
+		}
+
+		getAllMetaBoxes().each(function () {
+			var candidate = $.trim($(this).find(fieldSelector).val() || '');
+
+			if (candidate) {
+				value = candidate;
+				return false;
+			}
+		});
+
+		return value;
+	}
+
+	function syncMetaFieldAcrossBoxes($source) {
+		var name = $source.attr('name');
+
+		if (!name) {
+			return;
+		}
+
+		var val = $source.val();
+
+		getAllMetaBoxes()
+			.find('[name="' + name + '"]')
+			.not($source)
+			.each(function () {
+				if ($(this).val() !== val) {
+					$(this).val(val);
+				}
+			});
 	}
 
 	function getVisibleStatusMetaBox() {
@@ -103,11 +167,11 @@
 
 		return JSON.stringify({
 			title: getEditedTitle(),
-			productName: $.trim($root.find('#art_lms_product_name').val() || ''),
-			comparePrice: $.trim($root.find('#art_lms_compare_price').val() || ''),
-			price: $.trim($root.find('#art_lms_price').val() || ''),
-			accessMode: String($root.find('.art-lms-access-mode').val() || '0'),
-			accessDaysCustom: String($root.find('#art_lms_access_days_custom').val() || '30'),
+			productName: getMetaBoxFieldValue('#art_lms_product_name'),
+			comparePrice: getMetaBoxFieldValue('#art_lms_compare_price'),
+			price: getMetaBoxFieldValue('#art_lms_price'),
+			accessMode: String($root.find('.art-lms-access-mode').val() || getMetaBoxFieldValue('.art-lms-access-mode') || '0'),
+			accessDaysCustom: String(getMetaBoxFieldValue('#art_lms_access_days_custom') || '30'),
 			materialIds: getSelectedMaterialIds(),
 			enabled: getButtonEnabledState(),
 		});
@@ -268,18 +332,19 @@
 	}
 
 	function toggleAccessCustomField() {
-		var $root = getVisibleMetaBox();
-		var isCustom = $root.find('.art-lms-access-mode').val() === 'custom';
+		getAllMetaBoxes().each(function () {
+			var $root = $(this);
+			var isCustom = $root.find('.art-lms-access-mode').val() === 'custom';
 
-		$root.find('.art-lms-access-days-custom-wrap').toggle(isCustom);
+			$root.find('.art-lms-access-days-custom-wrap').toggle(isCustom);
+		});
 	}
 
 	function resolveAccessDays() {
-		var $root = getVisibleMetaBox();
-		var mode = $root.find('.art-lms-access-mode').val();
+		var mode = getMetaBoxFieldValue('.art-lms-access-mode') || getVisibleMetaBox().find('.art-lms-access-mode').val();
 
 		if (mode === 'custom') {
-			return parseInt($root.find('#art_lms_access_days_custom').val(), 10) || 1;
+			return parseInt(getMetaBoxFieldValue('#art_lms_access_days_custom'), 10) || 1;
 		}
 
 		return parseInt(mode, 10) || 0;
@@ -305,19 +370,28 @@
 
 	function getSelectedMaterialIds() {
 		var ids = [];
+		var best = [];
 
-		getVisibleMetaBox()
-			.find('#art_lms_material_selected_list input[name="art_lms_material_ids[]"]')
-			.each(function () {
-				var id = parseInt($(this).val(), 10) || 0;
+		getAllMetaBoxes().each(function () {
+			var boxIds = [];
 
-				if (id) {
-					ids.push(id);
-				}
-			});
+			$(this)
+				.find('#art_lms_material_selected_list input[name="art_lms_material_ids[]"]')
+				.each(function () {
+					var id = parseInt($(this).val(), 10) || 0;
 
-		if (ids.length) {
-			return ids;
+					if (id) {
+						boxIds.push(id);
+					}
+				});
+
+			if (boxIds.length > best.length) {
+				best = boxIds;
+			}
+		});
+
+		if (best.length) {
+			return best;
 		}
 
 		if (!window.wp || !wp.data || !metaKeys.materialIds) {
@@ -364,12 +438,10 @@
 	function getRequiredFieldState() {
 		pushMetaToEditor();
 
-		var $root = getVisibleMetaBox();
-
 		return {
 			title: getEditedTitle(),
-			productName: $.trim($root.find('#art_lms_product_name').val() || ''),
-			price: $.trim($root.find('#art_lms_price').val() || ''),
+			productName: getMetaBoxFieldValue('#art_lms_product_name'),
+			price: getMetaBoxFieldValue('#art_lms_price'),
 			materialIds: getSelectedMaterialIds(),
 		};
 	}
@@ -457,12 +529,20 @@
 			return;
 		}
 
-		if (isRequired) {
-			$notice.removeAttr('hidden');
-			return;
-		}
+		$notice.each(function () {
+			var $el = $(this);
 
-		$notice.attr('hidden', 'hidden');
+			if (isRequired) {
+				$el.removeAttr('hidden');
+				$el.removeClass('is-required-notice-hidden');
+				$el.addClass('is-required-notice-visible');
+				return;
+			}
+
+			$el.attr('hidden', 'hidden');
+			$el.removeClass('is-required-notice-visible');
+			$el.addClass('is-required-notice-hidden');
+		});
 	}
 
 	function toggleFieldRequiredState($fieldWrap, isRequired) {
@@ -482,7 +562,6 @@
 			missingMap[item.id] = true;
 		});
 
-		var $root = getVisibleMetaBox();
 		var $titleWrap = $('.edit-post-visual-editor__post-title-wrapper, .editor-post-title').first();
 		var $titleInput = $('.editor-post-title__input, #title').first();
 		var $titleNotice = ensureTitleRequiredNotice();
@@ -490,14 +569,19 @@
 		toggleFieldRequiredNotice($titleNotice, !!missingMap.title);
 		toggleFieldRequiredState($titleWrap.length ? $titleWrap : $titleInput, !!missingMap.title);
 
-		toggleFieldRequiredNotice($root.find('#art_lms_product_name_required_notice'), !!missingMap.productName);
-		toggleFieldRequiredState($root.find('#art_lms_product_name').closest('td'), !!missingMap.productName);
+		// Update every meta-box copy — block editor may keep a hidden duplicate in the DOM.
+		getAllMetaBoxes().each(function () {
+			var $root = $(this);
 
-		toggleFieldRequiredNotice($root.find('#art_lms_price_required_notice'), !!missingMap.price);
-		toggleFieldRequiredState($root.find('#art_lms_price').closest('td'), !!missingMap.price);
+			toggleFieldRequiredNotice($root.find('#art_lms_product_name_required_notice'), !!missingMap.productName);
+			toggleFieldRequiredState($root.find('#art_lms_product_name').closest('td'), !!missingMap.productName);
 
-		toggleFieldRequiredNotice($root.find('#art_lms_materials_required_notice'), !!missingMap.materials);
-		$root.find('.art-lms-material-picker').toggleClass('is-materials-required', !!missingMap.materials);
+			toggleFieldRequiredNotice($root.find('#art_lms_price_required_notice'), !!missingMap.price);
+			toggleFieldRequiredState($root.find('#art_lms_price').closest('td'), !!missingMap.price);
+
+			toggleFieldRequiredNotice($root.find('#art_lms_materials_required_notice'), !!missingMap.materials);
+			$root.find('.art-lms-material-picker').toggleClass('is-materials-required', !!missingMap.materials);
+		});
 	}
 
 	function scrollToFirstMissingField(missing) {
@@ -674,19 +758,18 @@
 	}
 
 	function collectMeta() {
-		var $root = getVisibleMetaBox();
 		var meta = {};
 
 		if (metaKeys.productName) {
-			meta[metaKeys.productName] = $.trim($root.find('#art_lms_product_name').val() || '');
+			meta[metaKeys.productName] = getMetaBoxFieldValue('#art_lms_product_name');
 		}
 
 		if (metaKeys.comparePrice) {
-			meta[metaKeys.comparePrice] = $.trim($root.find('#art_lms_compare_price').val() || '');
+			meta[metaKeys.comparePrice] = getMetaBoxFieldValue('#art_lms_compare_price');
 		}
 
 		if (metaKeys.price) {
-			meta[metaKeys.price] = $.trim($root.find('#art_lms_price').val() || '');
+			meta[metaKeys.price] = getMetaBoxFieldValue('#art_lms_price');
 		}
 
 		if (metaKeys.accessDays) {
@@ -954,13 +1037,22 @@
 				updateRequiredFieldsUi();
 			});
 		$('.art-lms-payment-button-meta-box').on('input change', 'input, select', function () {
+			syncMetaFieldAcrossBoxes($(this));
 			pushMetaToEditor();
 			updateRequiredFieldsUi();
 		});
 		$(document).on(
 			'input.artLmsRequiredFields change.artLmsRequiredFields',
 			'.editor-post-title__input, #title, #art_lms_product_name, #art_lms_price',
-			updateRequiredFieldsUi
+			function () {
+				var $field = $(this);
+
+				if ($field.is('#art_lms_product_name, #art_lms_price')) {
+					syncMetaFieldAcrossBoxes($field);
+				}
+
+				updateRequiredFieldsUi();
+			}
 		);
 		$(document).on('change.artLmsButtonStatus', '.art-lms-payment-button-status input', pushMetaToEditor);
 		bindEditorSync();
