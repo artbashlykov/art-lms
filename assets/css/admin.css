@@ -1165,6 +1165,20 @@ body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start.wp-has-curre
 	border-radius: 4px;
 }
 
+.post-type-art_lms_pay_button .art-lms-payment-button-meta-box input[type="number"]::-webkit-outer-spin-button,
+.post-type-art_lms_pay_button .art-lms-payment-button-meta-box input[type="number"]::-webkit-inner-spin-button,
+.art-lms-admin input[type="number"].art-lms-price-input::-webkit-outer-spin-button,
+.art-lms-admin input[type="number"].art-lms-price-input::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.post-type-art_lms_pay_button .art-lms-payment-button-meta-box input[type="number"],
+.art-lms-admin input[type="number"].art-lms-price-input {
+	-moz-appearance: textfield;
+	appearance: textfield;
+}
+
 .post-type-art_lms_pay_button .art-lms-field-required-notice,
 .post-type-art_lms_pay_button .art-lms-material-picker__required-notice {
 	margin: 8px 0 0;

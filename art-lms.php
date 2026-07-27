@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       ART LMS
  * Description:       Простая LMS с автовыдачей цифровых продуктов, приемом платежей для физлиц, ИП и самозанятых.
- * Version:           2.17.19
+ * Version:           2.17.20
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Арт Башлыков
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'ART_LMS_VERSION', '2.17.19' );
+define( 'ART_LMS_VERSION', '2.17.20' );
 define( 'ART_LMS_ADMIN_MENU_SLUG', 'art-lms' );
 define( 'ART_LMS_AUTHOR_URL', 'https://forge.artbashlykov.ru' );
 define( 'ART_LMS_PLUGIN_FILE', __FILE__ );

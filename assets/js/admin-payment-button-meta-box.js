@@ -461,24 +461,43 @@
 			}
 		}
 
-		// Prefer visible list items — more reliable than name="…[]" across jQuery/DOM quirks.
-		document.querySelectorAll('.art-lms-material-picker__item[data-material-id]').forEach(function (item) {
-			pushId(item.getAttribute('data-material-id'));
+		// Any selected row (jQuery may store data-material-id only in .data(), not as HTML attr).
+		$('.art-lms-material-picker__selected li').each(function () {
+			var $item = $(this);
+
+			if ($item.hasClass('art-lms-material-picker__empty')) {
+				return;
+			}
+
+			pushId(
+				$item.attr('data-material-id') ||
+					$item.data('material-id') ||
+					$item.find('input[type="hidden"]').first().val()
+			);
 		});
 
 		if (ids.length) {
 			return ids;
 		}
 
-		document.querySelectorAll('input[name="art_lms_material_ids[]"]').forEach(function (input) {
+		document.querySelectorAll('.art-lms-material-picker__item').forEach(function (item) {
+			pushId(item.getAttribute('data-material-id'));
+			var hidden = item.querySelector('input[type="hidden"]');
+
+			if (hidden) {
+				pushId(hidden.value);
+			}
+		});
+
+		if (ids.length) {
+			return ids;
+		}
+
+		// Native + jQuery name selectors (brackets need care in CSS selectors).
+		document.querySelectorAll('.art-lms-material-picker__selected input[type="hidden"]').forEach(function (input) {
 			pushId(input.value);
 		});
 
-		if (ids.length) {
-			return ids;
-		}
-
-		// jQuery fallback with escaped brackets.
 		$('input[name="art_lms_material_ids\\[\\]"], input[name="art_lms_material_ids[]"]').each(function () {
 			pushId($(this).val());
 		});
@@ -509,6 +528,21 @@
 		return ids;
 	}
 
+	function hasSelectedMaterials() {
+		if (getSelectedMaterialIds().length > 0) {
+			return true;
+		}
+
+		// Last-resort visual check: list has a real item row.
+		return (
+			$('.art-lms-material-picker__selected li')
+				.not('.art-lms-material-picker__empty')
+				.filter(function () {
+					return $.trim($(this).text() || '') !== '';
+				}).length > 0
+		);
+	}
+
 	function materialsRequiredForSave() {
 		return !!cfg.requireMaterials;
 	}
@@ -528,6 +562,7 @@
 			productName: getNamedFieldValue('art_lms_product_name'),
 			price: getNamedFieldValue('art_lms_price'),
 			materialIds: getSelectedMaterialIds(),
+			hasMaterials: hasSelectedMaterials(),
 		};
 	}
 
@@ -548,7 +583,7 @@
 			missing.push({ id: 'price', message: messages.price });
 		}
 
-		if (materialsRequiredForSave() && !current.materialIds.length) {
+		if (materialsRequiredForSave() && !current.hasMaterials && !(current.materialIds && current.materialIds.length)) {
 			missing.push({ id: 'materials', message: messages.materials });
 		}
 
@@ -683,7 +718,10 @@
 		toggleFieldRequiredNotice($('.art-lms-price-required-notice'), !!missingMap.price);
 		toggleFieldRequiredState($('input[name="art_lms_price"]').closest('td'), !!missingMap.price);
 
-		toggleFieldRequiredNotice($('.art-lms-materials-required-notice'), !!missingMap.materials);
+		toggleFieldRequiredNotice(
+			$('.art-lms-materials-required-notice, .art-lms-material-picker__required-notice'),
+			!!missingMap.materials
+		);
 		$('.art-lms-material-picker').toggleClass('is-materials-required', !!missingMap.materials);
 	}
 
@@ -869,10 +907,8 @@
 			$list.find('.art-lms-material-picker__empty').remove();
 
 			$list.append(
-				$('<li>', {
-					class: 'art-lms-material-picker__item',
-					'data-material-id': String(id),
-				})
+				$('<li class="art-lms-material-picker__item"></li>')
+					.attr('data-material-id', String(id))
 					.append($('<span>', { class: 'art-lms-material-picker__title', text: label }))
 					.append(
 						$('<button>', {

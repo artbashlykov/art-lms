@@ -128,7 +128,7 @@ $can_change_product = $is_new || Art_LMS_Orders::STATUS_PAID !== $order['status'
 				<tr>
 					<th scope="row"><label for="art_lms_order_amount"><?php esc_html_e( 'Сумма (₽)', 'art-lms' ); ?></label></th>
 					<td>
-						<input type="number" step="0.01" min="0.01" name="amount" id="art_lms_order_amount" class="small-text" value="<?php echo esc_attr( $order['amount'] ); ?>" required>
+						<input type="text" inputmode="decimal" name="amount" id="art_lms_order_amount" class="small-text" value="<?php echo esc_attr( $order['amount'] ); ?>" required autocomplete="off">
 					</td>
 				</tr>
 				<tr>

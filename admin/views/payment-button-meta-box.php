@@ -74,13 +74,13 @@ $price_value           = trim( (string) ( $meta['price'] ?? '' ) );
 				</th>
 				<td>
 					<input
-						type="number"
+						type="text"
 						class="regular-text"
 						id="art_lms_price"
 						name="art_lms_price"
 						value="<?php echo esc_attr( $meta['price'] ?? '' ); ?>"
-						min="0"
-						step="0.01"
+						inputmode="decimal"
+						autocomplete="off"
 					>
 					<p
 						class="art-lms-field-required-notice art-lms-price-required-notice<?php echo '' === $price_value ? ' is-required-notice-visible' : ' is-required-notice-hidden'; ?>"

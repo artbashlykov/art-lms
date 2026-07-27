@@ -4,7 +4,7 @@ Tags: lms, elearning, payments, digital products, checkout
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.17.19
+Stable tag: 2.17.20
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -89,6 +89,10 @@ When a customer completes checkout with a live payment gateway enabled, the plug
 By default, no. If you enable **Delete all plugin data when uninstalling ART LMS** in the general plugin settings and then delete the plugin from the Plugins screen, the plugin removes its custom database tables, settings, materials, payment buttons, order/access records, plugin-specific user meta, and the `art_lms_customer` role. WordPress pages you selected in the settings are not deleted.
 
 == Changelog ==
+
+= 2.17.20 =
+* Payment buttons: fix materials validation still showing after a material is added (jQuery data-attr quirk; detect list rows + hidden inputs).
+* Payment buttons / orders: price fields are plain text inputs (no number spinners).
 
 = 2.17.19 =
 * Payment buttons: fix stuck title/materials validation (read title from DOM/iframe, detect materials via data-material-id, force-hide notices with inline display).
