@@ -616,7 +616,7 @@ class Art_LMS_Email {
 			return esc_html( $label );
 		}
 
-		return '<a href="' . $url . '">' . esc_html( $label ) . '</a>';
+		return '<a href="' . $url . '" target="_blank" rel="noopener noreferrer">' . esc_html( $label ) . '</a>';
 	}
 
 	/**
@@ -626,11 +626,61 @@ class Art_LMS_Email {
 	 * @return string
 	 */
 	private static function wrap_html_email( $body ) {
-		$body = (string) $body;
+		$body = self::force_email_links_new_tab( (string) $body );
 
 		return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;line-height:1.6;color:#1d2327;">'
 			. nl2br( $body, false )
 			. '</body></html>';
+	}
+
+	/**
+	 * Ensure every anchor in an HTML email opens in a new tab.
+	 *
+	 * @param string $html HTML fragment.
+	 * @return string
+	 */
+	private static function force_email_links_new_tab( $html ) {
+		if ( '' === $html || false === stripos( $html, '<a' ) ) {
+			return $html;
+		}
+
+		$updated = preg_replace_callback(
+			'/<a\b([^>]*)>/i',
+			static function ( $matches ) {
+				$attrs = isset( $matches[1] ) ? (string) $matches[1] : '';
+
+				if ( preg_match( '/\btarget\s*=/i', $attrs ) ) {
+					$attrs = preg_replace( '/\btarget\s*=\s*(["\']).*?\1/i', ' target="_blank"', $attrs );
+					$attrs = preg_replace( '/\btarget\s*=\s*[^\s>]+/i', ' target="_blank"', $attrs );
+				} else {
+					$attrs .= ' target="_blank"';
+				}
+
+				if ( preg_match( '/\brel\s*=/i', $attrs ) ) {
+					if ( ! preg_match( '/\brel\s*=\s*(["\'][^"\']*noopener[^"\']*["\'])/i', $attrs ) ) {
+						$attrs = preg_replace_callback(
+							'/\brel\s*=\s*(["\'])(.*?)\1/i',
+							static function ( $rel_match ) {
+								$quote   = $rel_match[1];
+								$rel_val = trim( $rel_match[2] . ' noopener noreferrer' );
+								$rel_val = preg_replace( '/\s+/', ' ', $rel_val );
+
+								return 'rel=' . $quote . $rel_val . $quote;
+							},
+							$attrs,
+							1
+						);
+					}
+				} else {
+					$attrs .= ' rel="noopener noreferrer"';
+				}
+
+				return '<a' . $attrs . '>';
+			},
+			$html
+		);
+
+		return is_string( $updated ) ? $updated : $html;
 	}
 
 	/**

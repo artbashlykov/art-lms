@@ -23,6 +23,7 @@ class Art_LMS_Settings {
 	const GATEWAY_ORDER_VERSION           = 'builtin-v1';
 	const PASSWORD_RESET_EMAIL_BODY_VERSION = 'no-login-line-v1';
 	const PASSWORD_PAGE_TEXTS_VERSION       = 'email-only-v1';
+	const PURCHASE_EMAIL_BODY_VERSION       = 'login-blank-line-v1';
 
 	/**
 	 * In-request cache.
@@ -39,6 +40,7 @@ class Art_LMS_Settings {
 		add_action( 'init', array( __CLASS__, 'maybe_migrate_gateway_order' ), 6 );
 		add_action( 'init', array( __CLASS__, 'maybe_migrate_password_reset_email_body' ), 7 );
 		add_action( 'init', array( __CLASS__, 'maybe_migrate_password_page_texts' ), 8 );
+		add_action( 'init', array( __CLASS__, 'maybe_migrate_purchase_email_body' ), 9 );
 	}
 
 	/**
@@ -1758,6 +1760,7 @@ class Art_LMS_Settings {
 				'',
 				__( 'ДАННЫЕ ДЛЯ ВХОДА В АККАУНТ:', 'art-lms' ),
 				__( 'Личный кабинет: {войти}', 'art-lms' ),
+				'',
 				__( 'Логин: {логин}', 'art-lms' ),
 				__( 'Пароль: {установить_пароль}', 'art-lms' ),
 				'',
@@ -3219,6 +3222,50 @@ class Art_LMS_Settings {
 		}
 
 		update_option( 'art_lms_password_page_texts_version', self::PASSWORD_PAGE_TEXTS_VERSION, false );
+	}
+
+	/**
+	 * Add a blank line between account link and login/password in purchase email body.
+	 */
+	public static function maybe_migrate_purchase_email_body() {
+		if ( get_option( 'art_lms_purchase_email_body_version', '' ) === self::PURCHASE_EMAIL_BODY_VERSION ) {
+			return;
+		}
+
+		$emails = get_option( self::OPTION_EMAIL, false );
+
+		if ( false !== $emails && is_array( $emails ) ) {
+			$body = (string) ( $emails['purchase']['body'] ?? '' );
+
+			if ( '' !== $body ) {
+				$updated = self::ensure_purchase_email_login_blank_line( $body );
+
+				if ( $updated !== $body ) {
+					$emails['purchase']['body'] = $updated;
+					update_option( self::OPTION_EMAIL, $emails, false );
+					unset( self::$cache[ self::OPTION_EMAIL ] );
+				}
+			}
+		}
+
+		update_option( 'art_lms_purchase_email_body_version', self::PURCHASE_EMAIL_BODY_VERSION, false );
+	}
+
+	/**
+	 * Insert a blank line after “Личный кабинет: …” when login follows immediately.
+	 *
+	 * @param string $body Purchase email body.
+	 * @return string
+	 */
+	private static function ensure_purchase_email_login_blank_line( $body ) {
+		$replaced = preg_replace(
+			'/^(Личный кабинет:[^\r\n]*)\R(Логин:[^\r\n]*)$/mu',
+			"$1\n\n$2",
+			(string) $body,
+			1
+		);
+
+		return is_string( $replaced ) ? $replaced : (string) $body;
 	}
 
 	/**
