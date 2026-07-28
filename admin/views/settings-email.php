@@ -16,13 +16,15 @@ $defaults      = Art_LMS_Settings::get_default_emails();
 $purchase      = $settings['purchase'] ?? $defaults['purchase'];
 $admin_payment = $settings['admin_payment'] ?? $defaults['admin_payment'];
 $email_verification = $settings['email_verification'] ?? $defaults['email_verification'];
+$password_reset = $settings['password_reset'] ?? $defaults['password_reset'];
 $placeholders  = Art_LMS_Settings::get_purchase_email_placeholder_catalog();
 $admin_placeholders = Art_LMS_Settings::get_admin_payment_email_placeholder_catalog();
 $verification_placeholders = Art_LMS_Settings::get_email_verification_placeholder_catalog();
+$password_reset_placeholders = Art_LMS_Settings::get_password_reset_email_placeholder_catalog();
 $current_user  = wp_get_current_user();
 $test_email    = $current_user->user_email ? $current_user->user_email : get_option( 'admin_email' );
 ?>
-<p class="description"><?php esc_html_e( 'Настройте отправителя, письмо покупателю и уведомление о новой оплате на вашу почту.', 'art-lms' ); ?></p>
+<p class="description"><?php esc_html_e( 'Настройте отправителя, письма покупателю после оплаты, уведомление о новой оплате, подтверждение email и сброс пароля.', 'art-lms' ); ?></p>
 
 <form method="post" action="options.php" class="art-lms-email-settings-form">
 	<?php settings_fields( 'art_lms_email_group' ); ?>
@@ -367,6 +369,119 @@ $test_email    = $current_user->user_email ? $current_user->user_email : get_opt
 							</li>
 						<?php endforeach; ?>
 					</ul>
+				</td>
+			</tr>
+		</table>
+		</div>
+	</details>
+
+	<details class="art-lms-panel art-lms-collapsible-panel">
+		<summary class="art-lms-collapsible-panel__summary"><?php esc_html_e( 'Письмо о сбросе пароля', 'art-lms' ); ?></summary>
+		<div class="art-lms-collapsible-panel__content">
+		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Отправка', 'art-lms' ); ?></th>
+				<td>
+					<input type="hidden" name="<?php echo esc_attr( $option ); ?>[password_reset][enabled]" value="0">
+					<label>
+						<input
+							type="checkbox"
+							name="<?php echo esc_attr( $option ); ?>[password_reset][enabled]"
+							value="1"
+							<?php checked( $password_reset['enabled'], 'yes' ); ?>
+						>
+						<?php esc_html_e( 'Заменять стандартное письмо WordPress о сбросе пароля', 'art-lms' ); ?>
+					</label>
+					<p class="description">
+						<?php esc_html_e( 'Только для пользователей с ролью «Покупатель ART LMS». Администраторы и другие роли получают стандартное письмо WordPress.', 'art-lms' ); ?>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">
+					<label for="art_lms_password_reset_email_subject"><?php esc_html_e( 'Тема письма', 'art-lms' ); ?></label>
+				</th>
+				<td>
+					<input
+						type="text"
+						class="large-text"
+						id="art_lms_password_reset_email_subject"
+						name="<?php echo esc_attr( $option ); ?>[password_reset][subject]"
+						value="<?php echo esc_attr( $password_reset['subject'] ); ?>"
+					>
+					<p>
+						<button
+							type="button"
+							class="button art-lms-email-reset"
+							data-target="art_lms_password_reset_email_subject"
+							data-defaults-group="password_reset"
+							data-reset-key="subject"
+						>
+							<?php esc_html_e( 'Сбросить', 'art-lms' ); ?>
+						</button>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">
+					<label for="art_lms_password_reset_email_body"><?php esc_html_e( 'Текст письма', 'art-lms' ); ?></label>
+				</th>
+				<td>
+					<textarea
+						class="large-text code"
+						id="art_lms_password_reset_email_body"
+						name="<?php echo esc_attr( $option ); ?>[password_reset][body]"
+						rows="14"
+					><?php echo esc_textarea( $password_reset['body'] ); ?></textarea>
+					<p>
+						<button
+							type="button"
+							class="button art-lms-email-reset"
+							data-target="art_lms_password_reset_email_body"
+							data-defaults-group="password_reset"
+							data-reset-key="body"
+						>
+							<?php esc_html_e( 'Сбросить', 'art-lms' ); ?>
+						</button>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Подстановки', 'art-lms' ); ?></th>
+				<td>
+					<ul class="art-lms-email-placeholders">
+						<?php foreach ( $password_reset_placeholders as $token => $description ) : ?>
+							<li>
+								<code><?php echo esc_html( $token ); ?></code>
+								<?php echo esc_html( $description ); ?>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Проверка', 'art-lms' ); ?></th>
+				<td>
+					<p class="art-lms-email-actions">
+						<button type="button" class="button art-lms-email-preview-button" data-email-type="password_reset">
+							<?php esc_html_e( 'Предпросмотр', 'art-lms' ); ?>
+						</button>
+						<button type="button" class="button art-lms-email-test-button" data-email-type="password_reset">
+							<?php
+							printf(
+								/* translators: %s: email address */
+								esc_html__( 'Отправить тест на %s', 'art-lms' ),
+								esc_html( $test_email )
+							);
+							?>
+						</button>
+					</p>
+					<div class="art-lms-email-preview" id="art-lms-password-reset-email-preview" hidden>
+						<h3><?php esc_html_e( 'Предпросмотр', 'art-lms' ); ?></h3>
+						<p><strong><?php esc_html_e( 'Тема:', 'art-lms' ); ?></strong> <span class="art-lms-email-preview-subject"></span></p>
+						<pre class="art-lms-email-preview-body"></pre>
+					</div>
+					<p class="art-lms-email-feedback" id="art-lms-password-reset-email-feedback" aria-live="polite"></p>
 				</td>
 			</tr>
 		</table>

@@ -14,12 +14,15 @@ class Art_LMS_Settings {
 
 	const OPTION_GENERAL  = 'art_lms_settings_general';
 	const OPTION_LOGIN    = 'art_lms_settings_login';
+	const OPTION_PASSWORD = 'art_lms_settings_password';
 	const OPTION_PAYMENT  = 'art_lms_settings_payment';
 	const OPTION_CHECKOUT = 'art_lms_settings_checkout';
 	const OPTION_EMAIL    = 'art_lms_settings_email';
 	const OPTION_MIGRATED              = 'art_lms_settings_migrated';
 	const OPTION_DELETE_DATA_ON_UNINSTALL = 'art_lms_delete_data_on_uninstall';
 	const GATEWAY_ORDER_VERSION           = 'builtin-v1';
+	const PASSWORD_RESET_EMAIL_BODY_VERSION = 'no-login-line-v1';
+	const PASSWORD_PAGE_TEXTS_VERSION       = 'email-only-v1';
 
 	/**
 	 * In-request cache.
@@ -34,6 +37,8 @@ class Art_LMS_Settings {
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'bootstrap_settings' ), 5 );
 		add_action( 'init', array( __CLASS__, 'maybe_migrate_gateway_order' ), 6 );
+		add_action( 'init', array( __CLASS__, 'maybe_migrate_password_reset_email_body' ), 7 );
+		add_action( 'init', array( __CLASS__, 'maybe_migrate_password_page_texts' ), 8 );
 	}
 
 	/**
@@ -62,6 +67,10 @@ class Art_LMS_Settings {
 
 		if ( false === get_option( self::OPTION_LOGIN, false ) ) {
 			self::save_login( self::get_default_login() );
+		}
+
+		if ( false === get_option( self::OPTION_PASSWORD, false ) ) {
+			self::save_password( self::get_default_password() );
 		}
 
 		if ( false === get_option( self::OPTION_CHECKOUT, false ) ) {
@@ -120,7 +129,21 @@ class Art_LMS_Settings {
 			$slug = self::get_default_login()['slug'];
 		}
 
-		if ( $slug === self::get_checkout_slug() ) {
+		$checkout_slug = self::get_raw_option_slug(
+			self::OPTION_CHECKOUT,
+			self::get_default_checkout()['slug']
+		);
+
+		if ( $slug === $checkout_slug ) {
+			$slug .= '-login';
+		}
+
+		$password_slug = self::get_raw_option_slug(
+			self::OPTION_PASSWORD,
+			self::get_default_password()['slug']
+		);
+
+		if ( $slug === $password_slug ) {
 			$slug .= '-login';
 		}
 
@@ -146,6 +169,134 @@ class Art_LMS_Settings {
 		}
 
 		return wp_login_url( $redirect, $force_reauth );
+	}
+
+	/**
+	 * Get password page settings.
+	 *
+	 * @return array
+	 */
+	public static function get_password() {
+		return self::get_option( self::OPTION_PASSWORD, self::get_default_password() );
+	}
+
+	/**
+	 * Get configured custom password page slug.
+	 *
+	 * @return string
+	 */
+	public static function get_password_slug() {
+		$password = self::get_password();
+		$slug     = sanitize_title( (string) ( $password['slug'] ?? '' ) );
+
+		if ( '' === $slug ) {
+			$slug = self::get_default_password()['slug'];
+		}
+
+		return $slug;
+	}
+
+	/**
+	 * Sanitize custom password page slug.
+	 *
+	 * @param string $slug Raw slug.
+	 * @return string
+	 */
+	public static function sanitize_password_slug( $slug ) {
+		$slug = sanitize_title( (string) $slug );
+
+		if ( '' === $slug ) {
+			$slug = self::get_default_password()['slug'];
+		}
+
+		$checkout_slug = self::get_raw_option_slug(
+			self::OPTION_CHECKOUT,
+			self::get_default_checkout()['slug']
+		);
+
+		if ( $slug === $checkout_slug ) {
+			$slug .= '-password';
+		}
+
+		$login_slug = self::get_raw_option_slug(
+			self::OPTION_LOGIN,
+			self::get_default_login()['slug']
+		);
+
+		if ( $slug === $login_slug ) {
+			$slug .= '-password';
+		}
+
+		return $slug;
+	}
+
+	/**
+	 * Read a stored option slug without running nested get_option sanitizers.
+	 *
+	 * Avoids recursion when login/password/checkout slug sanitizers compare against each other.
+	 *
+	 * @param string $option       Option name.
+	 * @param string $default_slug Fallback slug.
+	 * @return string
+	 */
+	private static function get_raw_option_slug( $option, $default_slug ) {
+		if ( isset( self::$cache[ $option ] ) && is_array( self::$cache[ $option ] ) ) {
+			$cached = sanitize_title( (string) ( self::$cache[ $option ]['slug'] ?? '' ) );
+
+			if ( '' !== $cached ) {
+				return $cached;
+			}
+		}
+
+		$raw = get_option( $option, false );
+
+		if ( is_array( $raw ) ) {
+			$slug = sanitize_title( (string) ( $raw['slug'] ?? '' ) );
+
+			if ( '' !== $slug ) {
+				return $slug;
+			}
+		}
+
+		$slug = sanitize_title( (string) $default_slug );
+
+		return '' !== $slug ? $slug : sanitize_title( (string) $default_slug );
+	}
+
+	/**
+	 * Lost-password form texts.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_password_lost_form() {
+		$password = self::get_password();
+		$defaults = self::get_default_password()['lost'];
+
+		return wp_parse_args( is_array( $password['lost'] ?? null ) ? $password['lost'] : array(), $defaults );
+	}
+
+	/**
+	 * Reset-password form texts.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_password_reset_form() {
+		$password = self::get_password();
+		$defaults = self::get_default_password()['reset'];
+
+		return wp_parse_args( is_array( $password['reset'] ?? null ) ? $password['reset'] : array(), $defaults );
+	}
+
+	/**
+	 * Status messages for the password page.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_password_messages() {
+		$password = self::get_password();
+		$defaults = self::get_default_password()['messages'];
+
+		return wp_parse_args( is_array( $password['messages'] ?? null ) ? $password['messages'] : array(), $defaults );
 	}
 
 	/**
@@ -1392,6 +1543,106 @@ class Art_LMS_Settings {
 	}
 
 	/**
+	 * Save password page settings.
+	 *
+	 * @param array $input Raw input.
+	 * @return array
+	 */
+	public static function save_password( $input ) {
+		$data = self::sanitize_password( $input );
+		self::update_option( self::OPTION_PASSWORD, $data );
+
+		return $data;
+	}
+
+	/**
+	 * Sanitize password page settings.
+	 *
+	 * @param array $input Raw input.
+	 * @return array
+	 */
+	public static function sanitize_password( $input ) {
+		if ( ! is_array( $input ) ) {
+			$input = array();
+		}
+
+		$current = self::get_password();
+
+		$slug = isset( $input['slug'] )
+			? self::sanitize_password_slug( wp_unslash( $input['slug'] ) )
+			: self::get_password_slug();
+
+		return array(
+			'slug'     => $slug,
+			'lost'     => self::sanitize_password_lost_form(
+				is_array( $input['lost'] ?? null ) ? $input['lost'] : ( $current['lost'] ?? array() )
+			),
+			'reset'    => self::sanitize_password_reset_form(
+				is_array( $input['reset'] ?? null ) ? $input['reset'] : ( $current['reset'] ?? array() )
+			),
+			'messages' => self::sanitize_password_messages(
+				is_array( $input['messages'] ?? null ) ? $input['messages'] : ( $current['messages'] ?? array() )
+			),
+		);
+	}
+
+	/**
+	 * Sanitize lost-password form texts.
+	 *
+	 * @param array $input Raw form input.
+	 * @return array
+	 */
+	private static function sanitize_password_lost_form( $input ) {
+		$defaults = self::get_default_password()['lost'];
+
+		return array(
+			'title_enabled'    => self::parse_yes_no_setting( $input['title_enabled'] ?? $defaults['title_enabled'] ),
+			'title_text'       => self::sanitize_login_form_text( $input['title_text'] ?? $defaults['title_text'], $defaults['title_text'], 120 ),
+			'subtitle_enabled' => self::parse_yes_no_setting( $input['subtitle_enabled'] ?? $defaults['subtitle_enabled'] ),
+			'subtitle_text'    => self::sanitize_login_form_text( $input['subtitle_text'] ?? $defaults['subtitle_text'], $defaults['subtitle_text'], 240 ),
+			'email_label'      => self::sanitize_login_form_text( $input['email_label'] ?? $defaults['email_label'], $defaults['email_label'], 80 ),
+			'button_text'      => self::sanitize_login_form_text( $input['button_text'] ?? $defaults['button_text'], $defaults['button_text'], 80 ),
+			'login_link_text'  => self::sanitize_login_form_text( $input['login_link_text'] ?? $defaults['login_link_text'], $defaults['login_link_text'], 80 ),
+		);
+	}
+
+	/**
+	 * Sanitize reset-password form texts.
+	 *
+	 * @param array $input Raw form input.
+	 * @return array
+	 */
+	private static function sanitize_password_reset_form( $input ) {
+		$defaults = self::get_default_password()['reset'];
+
+		return array(
+			'title_enabled'           => self::parse_yes_no_setting( $input['title_enabled'] ?? $defaults['title_enabled'] ),
+			'title_text'              => self::sanitize_login_form_text( $input['title_text'] ?? $defaults['title_text'], $defaults['title_text'], 120 ),
+			'subtitle_enabled'        => self::parse_yes_no_setting( $input['subtitle_enabled'] ?? $defaults['subtitle_enabled'] ),
+			'subtitle_text'           => self::sanitize_login_form_text( $input['subtitle_text'] ?? $defaults['subtitle_text'], $defaults['subtitle_text'], 240 ),
+			'password_label'          => self::sanitize_login_form_text( $input['password_label'] ?? $defaults['password_label'], $defaults['password_label'], 80 ),
+			'password_confirm_label'  => self::sanitize_login_form_text( $input['password_confirm_label'] ?? $defaults['password_confirm_label'], $defaults['password_confirm_label'], 80 ),
+			'button_text'             => self::sanitize_login_form_text( $input['button_text'] ?? $defaults['button_text'], $defaults['button_text'], 80 ),
+		);
+	}
+
+	/**
+	 * Sanitize password page status messages.
+	 *
+	 * @param array $input Raw messages.
+	 * @return array
+	 */
+	private static function sanitize_password_messages( $input ) {
+		$defaults = self::get_default_password()['messages'];
+
+		return array(
+			'checkemail'        => self::sanitize_login_form_text( $input['checkemail'] ?? $defaults['checkemail'], $defaults['checkemail'], 400 ),
+			'password_changed'  => self::sanitize_login_form_text( $input['password_changed'] ?? $defaults['password_changed'], $defaults['password_changed'], 400 ),
+			'invalid_key'       => self::sanitize_login_form_text( $input['invalid_key'] ?? $defaults['invalid_key'], $defaults['invalid_key'], 400 ),
+		);
+	}
+
+	/**
 	 * Save payment settings.
 	 *
 	 * @param array $input Raw input.
@@ -1546,6 +1797,57 @@ class Art_LMS_Settings {
 				__( 'С уважением,', 'art-lms' ),
 				'{сайт}',
 			)
+		);
+	}
+
+	/**
+	 * Default password-reset email subject.
+	 *
+	 * @return string
+	 */
+	public static function get_default_password_reset_email_subject() {
+		return __( 'Сброс пароля — {сайт}', 'art-lms' );
+	}
+
+	/**
+	 * Default password-reset email body.
+	 *
+	 * @return string
+	 */
+	public static function get_default_password_reset_email_body() {
+		return implode(
+			"\n",
+			array(
+				__( 'Здравствуйте, {имя}!', 'art-lms' ),
+				'',
+				__( 'Кто-то запросил сброс пароля для вашего аккаунта на сайте «{сайт}».', 'art-lms' ),
+				'',
+				__( 'Email: {email}', 'art-lms' ),
+				'',
+				__( 'Если это были вы — нажмите ссылку ниже, чтобы задать новый пароль:', 'art-lms' ),
+				'{ссылка}',
+				'',
+				__( 'Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо — пароль не изменится.', 'art-lms' ),
+				'',
+				__( 'С уважением,', 'art-lms' ),
+				'{сайт}',
+			)
+		);
+	}
+
+	/**
+	 * Password-reset email placeholder catalog for admin UI.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function get_password_reset_email_placeholder_catalog() {
+		return array(
+			'{имя}'     => __( 'Имя покупателя (или email, если имени нет)', 'art-lms' ),
+			'{email}'   => __( 'Email покупателя', 'art-lms' ),
+			'{ссылка}'  => __( 'Ссылка «Сбросить пароль»', 'art-lms' ),
+			'{кабинет}' => __( 'URL личного кабинета (текстом)', 'art-lms' ),
+			'{войти}'   => __( 'Ссылка «Войти» на личный кабинет', 'art-lms' ),
+			'{сайт}'    => __( 'Название сайта', 'art-lms' ),
 		);
 	}
 
@@ -1712,6 +2014,11 @@ class Art_LMS_Settings {
 				is_array( $input['email_verification'] ?? null ) ? $input['email_verification'] : array(),
 				$current['email_verification'],
 				$defaults['email_verification']
+			),
+			'password_reset'     => self::sanitize_email_template_block(
+				is_array( $input['password_reset'] ?? null ) ? $input['password_reset'] : array(),
+				$current['password_reset'] ?? $defaults['password_reset'],
+				$defaults['password_reset']
 			),
 		);
 	}
@@ -2764,6 +3071,40 @@ class Art_LMS_Settings {
 	}
 
 	/**
+	 * Default password page settings.
+	 *
+	 * @return array
+	 */
+	public static function get_default_password() {
+		return array(
+			'slug'     => 'artpassword',
+			'lost'     => array(
+				'title_enabled'    => 'yes',
+				'title_text'       => __( 'Сброс пароля', 'art-lms' ),
+				'subtitle_enabled' => 'yes',
+				'subtitle_text'    => __( 'Укажите email — мы пришлём ссылку для нового пароля.', 'art-lms' ),
+				'email_label'      => __( 'Email', 'art-lms' ),
+				'button_text'      => __( 'Получить ссылку', 'art-lms' ),
+				'login_link_text'  => __( 'Вернуться ко входу', 'art-lms' ),
+			),
+			'reset'    => array(
+				'title_enabled'          => 'yes',
+				'title_text'             => __( 'Новый пароль', 'art-lms' ),
+				'subtitle_enabled'       => 'yes',
+				'subtitle_text'          => __( 'Придумайте новый пароль для входа в аккаунт.', 'art-lms' ),
+				'password_label'         => __( 'Новый пароль', 'art-lms' ),
+				'password_confirm_label' => __( 'Повторите пароль', 'art-lms' ),
+				'button_text'            => __( 'Сохранить пароль', 'art-lms' ),
+			),
+			'messages' => array(
+				'checkemail'       => __( 'Если аккаунт с такими данными есть, мы отправили письмо со ссылкой для сброса пароля. Проверьте почту, включая папку «Спам».', 'art-lms' ),
+				'password_changed' => __( 'Пароль успешно изменён. Теперь вы можете войти с новым паролем.', 'art-lms' ),
+				'invalid_key'      => __( 'Ссылка для сброса пароля недействительна или устарела. Запросите новую.', 'art-lms' ),
+			),
+		);
+	}
+
+	/**
 	 * Default payment settings.
 	 *
 	 * @return array
@@ -2802,6 +3143,123 @@ class Art_LMS_Settings {
 		}
 
 		update_option( 'art_lms_gateway_order_version', self::GATEWAY_ORDER_VERSION, false );
+	}
+
+	/**
+	 * Remove the login line from the stored password-reset email body once.
+	 */
+	public static function maybe_migrate_password_reset_email_body() {
+		if ( get_option( 'art_lms_password_reset_email_body_version', '' ) === self::PASSWORD_RESET_EMAIL_BODY_VERSION ) {
+			return;
+		}
+
+		$emails = get_option( self::OPTION_EMAIL, false );
+
+		if ( false !== $emails && is_array( $emails ) ) {
+			$body = (string) ( $emails['password_reset']['body'] ?? '' );
+
+			if ( '' !== $body ) {
+				$cleaned = self::strip_password_reset_login_line( $body );
+
+				if ( $cleaned !== $body ) {
+					$emails['password_reset']['body'] = $cleaned;
+					update_option( self::OPTION_EMAIL, $emails, false );
+					unset( self::$cache[ self::OPTION_EMAIL ] );
+				}
+			}
+		}
+
+		update_option( 'art_lms_password_reset_email_body_version', self::PASSWORD_RESET_EMAIL_BODY_VERSION, false );
+	}
+
+	/**
+	 * Update stored password-page copy that still mentions login.
+	 */
+	public static function maybe_migrate_password_page_texts() {
+		if ( get_option( 'art_lms_password_page_texts_version', '' ) === self::PASSWORD_PAGE_TEXTS_VERSION ) {
+			return;
+		}
+
+		$password = get_option( self::OPTION_PASSWORD, false );
+
+		if ( false !== $password && is_array( $password ) ) {
+			$defaults = self::get_default_password()['lost'];
+			$lost     = is_array( $password['lost'] ?? null ) ? $password['lost'] : array();
+			$changed  = false;
+
+			$old_subtitles = array(
+				'Укажите email или логин — мы пришлём ссылку для нового пароля.',
+				__( 'Укажите email или логин — мы пришлём ссылку для нового пароля.', 'art-lms' ),
+			);
+
+			$old_labels = array(
+				'Email или логин',
+				__( 'Email или логин', 'art-lms' ),
+			);
+
+			$subtitle = (string) ( $lost['subtitle_text'] ?? '' );
+
+			if ( in_array( $subtitle, $old_subtitles, true ) ) {
+				$lost['subtitle_text'] = $defaults['subtitle_text'];
+				$changed               = true;
+			}
+
+			$label = (string) ( $lost['email_label'] ?? '' );
+
+			if ( in_array( $label, $old_labels, true ) ) {
+				$lost['email_label'] = $defaults['email_label'];
+				$changed             = true;
+			}
+
+			if ( $changed ) {
+				$password['lost'] = $lost;
+				update_option( self::OPTION_PASSWORD, $password, false );
+				unset( self::$cache[ self::OPTION_PASSWORD ] );
+			}
+		}
+
+		update_option( 'art_lms_password_page_texts_version', self::PASSWORD_PAGE_TEXTS_VERSION, false );
+	}
+
+	/**
+	 * Strip "Login: {login}" lines from a password-reset email body.
+	 *
+	 * @param string $body Email body.
+	 * @return string
+	 */
+	private static function strip_password_reset_login_line( $body ) {
+		$lines_to_drop = array_unique(
+			array_filter(
+				array(
+					'Логин: {логин}',
+					__( 'Логин: {логин}', 'art-lms' ),
+					'Login: {логин}',
+				)
+			)
+		);
+
+		$lines   = preg_split( '/\r\n|\r|\n/', (string) $body );
+		$kept    = array();
+		$prev_blank = false;
+
+		foreach ( $lines as $line ) {
+			$trimmed = trim( (string) $line );
+
+			if ( in_array( $trimmed, $lines_to_drop, true ) ) {
+				continue;
+			}
+
+			$is_blank = '' === $trimmed;
+
+			if ( $is_blank && $prev_blank ) {
+				continue;
+			}
+
+			$kept[]     = (string) $line;
+			$prev_blank = $is_blank;
+		}
+
+		return implode( "\n", $kept );
 	}
 
 	/**
@@ -2893,6 +3351,11 @@ class Art_LMS_Settings {
 				'subject' => self::get_default_email_verification_subject(),
 				'body'    => self::get_default_email_verification_body(),
 			),
+			'password_reset'     => array(
+				'enabled' => 'yes',
+				'subject' => self::get_default_password_reset_email_subject(),
+				'body'    => self::get_default_password_reset_email_body(),
+			),
 		);
 	}
 
@@ -2936,6 +3399,7 @@ class Art_LMS_Settings {
 			$value['purchase'] = wp_parse_args( $value['purchase'] ?? array(), $default['purchase'] );
 			$value['admin_payment'] = wp_parse_args( $value['admin_payment'] ?? array(), $default['admin_payment'] );
 			$value['email_verification'] = wp_parse_args( $value['email_verification'] ?? array(), $default['email_verification'] );
+			$value['password_reset'] = wp_parse_args( $value['password_reset'] ?? array(), $default['password_reset'] );
 		}
 
 		if ( self::OPTION_LOGIN === $option ) {
@@ -2950,6 +3414,13 @@ class Art_LMS_Settings {
 			$value['design']  = self::sanitize_login_design(
 				wp_parse_args( $value['design'] ?? array(), $default['design'] )
 			);
+		}
+
+		if ( self::OPTION_PASSWORD === $option ) {
+			$value['slug']     = self::sanitize_password_slug( (string) ( $value['slug'] ?? $default['slug'] ) );
+			$value['lost']     = wp_parse_args( $value['lost'] ?? array(), $default['lost'] );
+			$value['reset']    = wp_parse_args( $value['reset'] ?? array(), $default['reset'] );
+			$value['messages'] = wp_parse_args( $value['messages'] ?? array(), $default['messages'] );
 		}
 
 		if ( self::OPTION_CHECKOUT === $option ) {

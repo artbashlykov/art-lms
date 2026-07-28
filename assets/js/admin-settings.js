@@ -755,6 +755,12 @@
 				preview: '#art-lms-admin-payment-email-preview',
 				feedback: '#art-lms-admin-payment-email-feedback',
 			},
+			password_reset: {
+				subject: '#art_lms_password_reset_email_subject',
+				body: '#art_lms_password_reset_email_body',
+				preview: '#art-lms-password-reset-email-preview',
+				feedback: '#art-lms-password-reset-email-feedback',
+			},
 		};
 
 		function getEmailSectionValues(type) {

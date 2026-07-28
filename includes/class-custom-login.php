@@ -193,6 +193,10 @@ class Art_LMS_Custom_Login {
 
 		$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : 'login';
 
+		if ( ! empty( $_GET['checkemail'] ) ) {
+			return false;
+		}
+
 		$wp_login_only_actions = array(
 			'logout',
 			'rp',

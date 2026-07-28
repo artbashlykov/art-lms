@@ -210,6 +210,15 @@ class Art_LMS_Account {
 
 		self::prime_password_reset_cookie( $user->user_login, $key );
 
+		if (
+			class_exists( 'Art_LMS_Custom_Password' )
+			&& Art_LMS_Custom_Password::is_enabled()
+		) {
+			$reset_url = Art_LMS_Custom_Password::get_reset_url( $key, $user->user_login, $redirect_to );
+			wp_safe_redirect( $reset_url );
+			exit;
+		}
+
 		$login_url = add_query_arg( 'action', 'rp', network_site_url( 'wp-login.php', 'login' ) );
 
 		wp_safe_redirect( add_query_arg( 'redirect_to', $redirect_to, $login_url ) );
@@ -246,6 +255,24 @@ class Art_LMS_Account {
 	 * @param string $key   Password reset key.
 	 */
 	private static function prime_password_reset_cookie( $login, $key ) {
+		$cookie_value = sprintf( '%s:%s', $login, $key );
+		$cookie_name  = 'wp-resetpass-' . COOKIEHASH;
+
+		$paths = array();
+
+		if (
+			class_exists( 'Art_LMS_Custom_Password' )
+			&& Art_LMS_Custom_Password::is_enabled()
+		) {
+			$password_url  = Art_LMS_Custom_Password::get_url();
+			$password_path = $password_url ? wp_parse_url( $password_url, PHP_URL_PATH ) : '';
+
+			if ( is_string( $password_path ) && '' !== $password_path ) {
+				$paths[] = untrailingslashit( $password_path );
+				$paths[] = trailingslashit( $password_path );
+			}
+		}
+
 		$login_url = network_site_url( 'wp-login.php', 'login' );
 		$rp_path   = wp_parse_url( $login_url, PHP_URL_PATH );
 
@@ -253,17 +280,21 @@ class Art_LMS_Account {
 			$rp_path = '/wp-login.php';
 		}
 
-		$cookie_value = sprintf( '%s:%s', $login, $key );
+		$paths[] = $rp_path;
 
-		setcookie(
-			'wp-resetpass-' . COOKIEHASH,
-			$cookie_value,
-			0,
-			$rp_path,
-			COOKIE_DOMAIN,
-			is_ssl(),
-			true
-		);
+		$paths = array_unique( array_filter( $paths ) );
+
+		foreach ( $paths as $path ) {
+			setcookie(
+				$cookie_name,
+				$cookie_value,
+				0,
+				$path,
+				COOKIE_DOMAIN,
+				is_ssl(),
+				true
+			);
+		}
 	}
 
 	/**

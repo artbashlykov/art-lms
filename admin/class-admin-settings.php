@@ -24,6 +24,7 @@ class Art_LMS_Admin_Settings {
 	const TAB_EMAIL         = 'email';
 	const TAB_GENERAL  = 'general';
 	const TAB_LOGIN    = 'login';
+	const TAB_PASSWORD = 'password';
 	const TAB_PAYMENTS = 'payments';
 
 	/**
@@ -55,6 +56,15 @@ class Art_LMS_Admin_Settings {
 			array(
 				'type'              => 'array',
 				'sanitize_callback' => array( 'Art_LMS_Settings', 'sanitize_login' ),
+			)
+		);
+
+		register_setting(
+			'art_lms_password_group',
+			Art_LMS_Settings::OPTION_PASSWORD,
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( 'Art_LMS_Settings', 'sanitize_password' ),
 			)
 		);
 
@@ -132,7 +142,7 @@ class Art_LMS_Admin_Settings {
 		}
 
 		$active_tab = self::get_current_tab(
-			array( self::TAB_GENERAL, self::TAB_LOGIN ),
+			array( self::TAB_GENERAL, self::TAB_LOGIN, self::TAB_PASSWORD ),
 			self::TAB_GENERAL
 		);
 
@@ -405,6 +415,14 @@ class Art_LMS_Admin_Settings {
 	}
 
 	/**
+	 * Load custom password page settings partial.
+	 */
+	public static function render_password_partial() {
+		$settings = Art_LMS_Settings::get_password();
+		include ART_LMS_PLUGIN_DIR . 'admin/views/settings-password.php';
+	}
+
+	/**
 	 * Load payment settings partial.
 	 */
 	public static function render_payments_partial() {
@@ -470,9 +488,13 @@ class Art_LMS_Admin_Settings {
 		$body    = isset( $_POST['body'] ) ? sanitize_textarea_field( wp_unslash( $_POST['body'] ) ) : '';
 		$email_type = isset( $_POST['email_type'] ) ? sanitize_key( wp_unslash( $_POST['email_type'] ) ) : 'purchase';
 
-		$preview = 'admin_payment' === $email_type
-			? Art_LMS_Email::get_admin_payment_email_preview( $subject, $body )
-			: Art_LMS_Email::get_order_email_preview( $subject, $body );
+		if ( 'admin_payment' === $email_type ) {
+			$preview = Art_LMS_Email::get_admin_payment_email_preview( $subject, $body );
+		} elseif ( 'password_reset' === $email_type ) {
+			$preview = Art_LMS_Email::get_password_reset_email_preview( $subject, $body );
+		} else {
+			$preview = Art_LMS_Email::get_order_email_preview( $subject, $body );
+		}
 
 		wp_send_json_success( $preview );
 	}
@@ -498,6 +520,9 @@ class Art_LMS_Admin_Settings {
 		if ( 'admin_payment' === $email_type ) {
 			$to = isset( $_POST['recipient'] ) ? sanitize_email( wp_unslash( $_POST['recipient'] ) ) : '';
 			$result = Art_LMS_Email::send_test_admin_payment_email( $to, $subject, $body );
+		} elseif ( 'password_reset' === $email_type ) {
+			$to = $user->user_email ? $user->user_email : get_option( 'admin_email' );
+			$result = Art_LMS_Email::send_test_password_reset_email( $to, $subject, $body );
 		} else {
 			$to = $user->user_email ? $user->user_email : get_option( 'admin_email' );
 			$result = Art_LMS_Email::send_test_purchase_email( $to, $subject, $body );

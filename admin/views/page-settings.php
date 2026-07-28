@@ -16,6 +16,10 @@ $wrap_class = 'wrap art-lms-admin';
 if ( Art_LMS_Admin_Settings::TAB_LOGIN === $active_tab ) {
 	$wrap_class .= ' art-lms-settings-login-page';
 }
+
+if ( Art_LMS_Admin_Settings::TAB_PASSWORD === $active_tab ) {
+	$wrap_class .= ' art-lms-settings-password-page';
+}
 ?>
 <div class="<?php echo esc_attr( $wrap_class ); ?>">
 	<h1><?php esc_html_e( 'ART LMS — Настройки', 'art-lms' ); ?></h1>
@@ -26,8 +30,9 @@ if ( Art_LMS_Admin_Settings::TAB_LOGIN === $active_tab ) {
 		Art_LMS_Admin_Settings::render_tabs(
 		Art_LMS_Admin_Settings::PAGE_SETTINGS,
 		array(
-			Art_LMS_Admin_Settings::TAB_GENERAL => __( 'Основные', 'art-lms' ),
-			Art_LMS_Admin_Settings::TAB_LOGIN   => __( 'Страница входа', 'art-lms' ),
+			Art_LMS_Admin_Settings::TAB_GENERAL  => __( 'Основные', 'art-lms' ),
+			Art_LMS_Admin_Settings::TAB_LOGIN    => __( 'Страница входа', 'art-lms' ),
+			Art_LMS_Admin_Settings::TAB_PASSWORD => __( 'Страница пароля', 'art-lms' ),
 		),
 		$active_tab
 	);
@@ -35,6 +40,8 @@ if ( Art_LMS_Admin_Settings::TAB_LOGIN === $active_tab ) {
 
 	<?php if ( Art_LMS_Admin_Settings::TAB_LOGIN === $active_tab ) : ?>
 		<?php Art_LMS_Admin_Settings::render_login_partial(); ?>
+	<?php elseif ( Art_LMS_Admin_Settings::TAB_PASSWORD === $active_tab ) : ?>
+		<?php Art_LMS_Admin_Settings::render_password_partial(); ?>
 	<?php else : ?>
 		<?php Art_LMS_Admin_Settings::render_general_partial(); ?>
 	<?php endif; ?>

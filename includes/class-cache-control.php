@@ -53,6 +53,10 @@ class Art_LMS_Cache_Control {
 			return true;
 		}
 
+		if ( class_exists( 'Art_LMS_Custom_Password' ) && Art_LMS_Custom_Password::is_password_request() ) {
+			return true;
+		}
+
 		if ( Art_LMS_Settings::is_account_page() ) {
 			return true;
 		}

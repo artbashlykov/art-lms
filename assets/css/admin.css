@@ -1843,7 +1843,8 @@ body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start.wp-has-curre
 .art-lms-settings-login-page .art-lms-login-settings-url-panel.is-disabled,
 .art-lms-settings-login-page .art-lms-login-settings-form-panel.is-disabled,
 .art-lms-settings-login-page .art-lms-login-settings-design-panel.is-disabled,
-.art-lms-settings-login-page .art-lms-login-settings-button-panel.is-disabled {
+.art-lms-settings-login-page .art-lms-login-settings-button-panel.is-disabled,
+.art-lms-settings-password-page .art-lms-panel.is-disabled {
 	opacity: 0.65;
 }
 
@@ -1907,8 +1908,17 @@ body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start.wp-has-curre
 	gap: 4px;
 }
 
+.art-lms-settings-password-page .art-lms-login-slug-field {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px;
+}
+
 .art-lms-settings-login-page .art-lms-login-slug-field__prefix,
-.art-lms-settings-login-page .art-lms-login-slug-field__suffix {
+.art-lms-settings-login-page .art-lms-login-slug-field__suffix,
+.art-lms-settings-password-page .art-lms-login-slug-field__prefix,
+.art-lms-settings-password-page .art-lms-login-slug-field__suffix {
 	color: #646970;
 }
 

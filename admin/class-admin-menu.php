@@ -686,6 +686,10 @@ class Art_LMS_Admin_Menu {
 									'subject' => Art_LMS_Settings::get_default_email_verification_subject(),
 									'body'    => Art_LMS_Settings::get_default_email_verification_body(),
 								),
+								'password_reset' => array(
+									'subject' => Art_LMS_Settings::get_default_password_reset_email_subject(),
+									'body'    => Art_LMS_Settings::get_default_password_reset_email_body(),
+								),
 							),
 							'strings' => array(
 								'previewFailed' => __( 'Не удалось построить предпросмотр.', 'art-lms' ),

@@ -954,11 +954,30 @@ a.art-lms-button.art-lms-button--size-large,
 	color: #646970;
 }
 
-.art-lms-login #art-lms-loginform > p:not(.login-remember):not(.submit) > label {
+.art-lms-login #art-lms-loginform > p:not(.login-remember):not(.submit) > label,
+.art-lms-login #art-lms-lostpasswordform > p:not(.submit) > label,
+.art-lms-login #art-lms-resetpassform > p:not(.submit) > label {
 	display: block;
 	margin-bottom: 4px;
 	font-size: var(--art-lms-login-field-label-font-size, 14px);
 	font-weight: 600;
+}
+
+.art-lms-password__errors {
+	margin: 0 0 16px;
+	padding: 12px 14px;
+	border: 1px solid #f0b7b7;
+	border-radius: 4px;
+	background: #fcf0f1;
+	color: #b32d2e;
+}
+
+.art-lms-password__errors p {
+	margin: 0;
+}
+
+.art-lms-password__errors p + p {
+	margin-top: 6px;
 }
 
 .art-lms-login .input,
@@ -1068,6 +1087,15 @@ a.art-lms-button.art-lms-button--size-large,
 	width: 100%;
 	max-width: 100%;
 	box-sizing: border-box;
+}
+
+.art-lms-password p.submit input[type="submit"],
+.art-lms-password p.submit .button.button-primary {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+	text-align: center;
 }
 
 .art-lms-login .button-primary:hover,

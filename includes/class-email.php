@@ -18,6 +18,7 @@ class Art_LMS_Email {
 	public static function init() {
 		add_action( 'art_lms_order_paid', array( __CLASS__, 'send_purchase_email' ), 10, 2 );
 		add_action( 'art_lms_order_paid', array( __CLASS__, 'send_admin_payment_email' ), 11, 2 );
+		add_filter( 'retrieve_password_message', array( __CLASS__, 'filter_retrieve_password_message' ), 10, 4 );
 	}
 
 	/**
@@ -125,6 +126,224 @@ class Art_LMS_Email {
 			'{ссылка}' => esc_url_raw( $verify_url ),
 			'{сайт}'  => get_bloginfo( 'name' ),
 		);
+	}
+
+	/**
+	 * Replace WordPress password-reset email for ART LMS customers.
+	 *
+	 * Sends the plugin HTML template with the configured From header, then
+	 * returns an empty message so core skips its default plain-text mail.
+	 *
+	 * @param string  $message    Default reset message.
+	 * @param string  $key        Password reset key.
+	 * @param string  $user_login User login.
+	 * @param WP_User $user_data  User object.
+	 * @return string
+	 */
+	public static function filter_retrieve_password_message( $message, $key, $user_login, $user_data ) {
+		unset( $user_login );
+
+		if ( ! $user_data instanceof WP_User ) {
+			return $message;
+		}
+
+		if ( ! Art_LMS_Roles::user_is_customer( (int) $user_data->ID ) ) {
+			return $message;
+		}
+
+		$settings = Art_LMS_Settings::get_emails();
+		$template = $settings['password_reset'] ?? Art_LMS_Settings::get_default_emails()['password_reset'];
+
+		if ( 'yes' !== ( $template['enabled'] ?? 'yes' ) ) {
+			return $message;
+		}
+
+		$sent = self::send_password_reset_email( $user_data, (string) $key, $template );
+
+		if ( ! $sent ) {
+			return $message;
+		}
+
+		// Empty message tells WordPress to skip its own wp_mail() call.
+		return '';
+	}
+
+	/**
+	 * Send the configured password-reset email to a customer.
+	 *
+	 * @param WP_User $user     User object.
+	 * @param string  $key      Password reset key.
+	 * @param array   $template Optional template override (enabled/subject/body).
+	 * @return bool
+	 */
+	public static function send_password_reset_email( $user, $key, array $template = array() ) {
+		if ( ! $user instanceof WP_User || ! is_email( $user->user_email ) ) {
+			return false;
+		}
+
+		if ( array() === $template ) {
+			$settings = Art_LMS_Settings::get_emails();
+			$template = $settings['password_reset'] ?? Art_LMS_Settings::get_default_emails()['password_reset'];
+		}
+
+		$subject = ! empty( $template['subject'] )
+			? (string) $template['subject']
+			: Art_LMS_Settings::get_default_password_reset_email_subject();
+		$body    = ! empty( $template['body'] )
+			? (string) $template['body']
+			: Art_LMS_Settings::get_default_password_reset_email_body();
+
+		$tokens  = self::build_password_reset_tokens( $user, $key );
+		$subject = str_replace( array_keys( $tokens ), array_values( $tokens ), $subject );
+		$message = str_replace( array_keys( $tokens ), array_values( $tokens ), $body );
+
+		$sender  = Art_LMS_Settings::get_email_sender();
+		$headers = array(
+			'Content-Type: text/html; charset=UTF-8',
+			'From: ' . $sender['email_from_name'] . ' <' . $sender['email_from'] . '>',
+		);
+
+		return (bool) wp_mail( $user->user_email, $subject, self::wrap_html_email( $message ), $headers );
+	}
+
+	/**
+	 * Build placeholder values for a password-reset email.
+	 *
+	 * @param WP_User $user User object.
+	 * @param string  $key  Password reset key (empty for previews).
+	 * @return array<string, string>
+	 */
+	public static function build_password_reset_tokens( $user, $key = '' ) {
+		$account_url = Art_LMS_Settings::get_account_url() ?: Art_LMS_Settings::get_login_page_url();
+		$name        = '';
+		$email       = '';
+		$login       = '';
+
+		if ( $user instanceof WP_User ) {
+			$name  = $user->display_name ? $user->display_name : $user->user_email;
+			$email = (string) $user->user_email;
+			$login = (string) $user->user_login;
+		}
+
+		$reset_url = ( $user instanceof WP_User && '' !== (string) $key )
+			? self::build_password_reset_url( $user, (string) $key )
+			: add_query_arg(
+				array(
+					'action' => 'rp',
+					'key'    => 'sample-reset-key',
+					'login'  => rawurlencode( $login ? $login : 'buyer' ),
+				),
+				wp_login_url()
+			);
+
+		return array(
+			'{имя}'     => esc_html( $name ),
+			'{email}'   => esc_html( $email ),
+			'{логин}'   => esc_html( $login ),
+			'{ссылка}'  => self::build_email_link( $reset_url, __( 'Сбросить пароль', 'art-lms' ) ),
+			'{кабинет}' => esc_url( $account_url ),
+			'{войти}'   => self::build_email_link( $account_url, __( 'Войти', 'art-lms' ) ),
+			'{сайт}'    => esc_html( get_bloginfo( 'name' ) ),
+		);
+	}
+
+	/**
+	 * Build the password-reset URL for a user/key pair.
+	 *
+	 * Uses the custom password page when the custom login page is enabled.
+	 *
+	 * @param WP_User $user User object.
+	 * @param string  $key  Reset key.
+	 * @return string
+	 */
+	public static function build_password_reset_url( $user, $key ) {
+		if (
+			class_exists( 'Art_LMS_Custom_Password' )
+			&& Art_LMS_Custom_Password::is_enabled()
+		) {
+			$url = Art_LMS_Custom_Password::get_reset_url(
+				(string) $key,
+				(string) $user->user_login
+			);
+		} else {
+			$url = network_site_url(
+				'wp-login.php?action=rp&key=' . rawurlencode( (string) $key ) . '&login=' . rawurlencode( (string) $user->user_login ),
+				'login'
+			);
+		}
+
+		$url = is_string( $url ) ? $url : '';
+
+		if ( '' !== $url && function_exists( 'get_user_locale' ) ) {
+			$url = add_query_arg( 'wp_lang', get_user_locale( $user ), $url );
+		}
+
+		return $url;
+	}
+
+	/**
+	 * Preview password-reset email templates.
+	 *
+	 * @param string $subject Subject template.
+	 * @param string $body    Body template.
+	 * @return array{subject: string, body: string}
+	 */
+	public static function get_password_reset_email_preview( $subject, $body ) {
+		$sample = self::get_sample_password_reset_user();
+		$tokens = self::build_password_reset_tokens( $sample, 'sample-reset-key' );
+
+		return array(
+			'subject' => str_replace( array_keys( $tokens ), array_values( $tokens ), (string) $subject ),
+			'body'    => str_replace( array_keys( $tokens ), array_values( $tokens ), (string) $body ),
+		);
+	}
+
+	/**
+	 * Send a test password-reset email to the given address.
+	 *
+	 * @param string $to      Recipient email.
+	 * @param string $subject Subject template.
+	 * @param string $body    Body template.
+	 * @return true|WP_Error
+	 */
+	public static function send_test_password_reset_email( $to, $subject, $body ) {
+		if ( ! is_email( $to ) ) {
+			return new WP_Error( 'invalid_email', __( 'Укажите корректный email.', 'art-lms' ) );
+		}
+
+		$sample             = self::get_sample_password_reset_user();
+		$sample->user_email = $to;
+		$tokens             = self::build_password_reset_tokens( $sample, 'sample-reset-key' );
+		$subject            = '[TEST] ' . str_replace( array_keys( $tokens ), array_values( $tokens ), (string) $subject );
+		$message            = str_replace( array_keys( $tokens ), array_values( $tokens ), (string) $body );
+		$sender             = Art_LMS_Settings::get_email_sender();
+		$headers            = array(
+			'Content-Type: text/html; charset=UTF-8',
+			'From: ' . $sender['email_from_name'] . ' <' . $sender['email_from'] . '>',
+		);
+
+		$sent = wp_mail( $to, $subject, self::wrap_html_email( $message ), $headers );
+
+		if ( ! $sent ) {
+			return new WP_Error( 'send_failed', __( 'Не удалось отправить письмо. Проверьте настройки почты WordPress.', 'art-lms' ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Sample user object for password-reset previews/tests.
+	 *
+	 * @return WP_User
+	 */
+	private static function get_sample_password_reset_user() {
+		$user               = new WP_User();
+		$user->ID           = 0;
+		$user->user_login   = 'buyer';
+		$user->user_email   = 'buyer@example.com';
+		$user->display_name = __( 'Иван Покупатель', 'art-lms' );
+
+		return $user;
 	}
 
 	/**

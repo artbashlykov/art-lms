@@ -4,7 +4,7 @@ Tags: lms, elearning, payments, digital products, checkout
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.17.23
+Stable tag: 2.17.28
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -89,6 +89,21 @@ When a customer completes checkout with a live payment gateway enabled, the plug
 By default, no. If you enable **Delete all plugin data when uninstalling ART LMS** in the general plugin settings and then delete the plugin from the Plugins screen, the plugin removes its custom database tables, settings, materials, payment buttons, order/access records, plugin-specific user meta, and the `art_lms_customer` role. WordPress pages you selected in the settings are not deleted.
 
 == Changelog ==
+
+= 2.17.28 =
+* Password page: email-only copy (no “login”); redirect logged-in users away from request/confirmation screens.
+
+= 2.17.27 =
+* Fix: infinite recursion (memory exhausted) when loading login/password page settings after adding the custom password page.
+
+= 2.17.26 =
+* Password-reset email: remove the "Login: {login}" line from the default template (email-only sites).
+
+= 2.17.25 =
+* Custom password page (request reset + set new password), enabled with the custom login page; design inherited from login; reset links from email and {установить_пароль} go to the custom page.
+
+= 2.17.24 =
+* Emails: custom password-reset template for ART LMS customers (HTML + plugin sender), configurable under Form settings → Emails.
 
 = 2.17.23 =
 * Purchase email: `{установить_пароль}` sends the generated password for brand-new accounts, and a set-password link for existing users.
