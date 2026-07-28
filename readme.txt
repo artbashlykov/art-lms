@@ -4,7 +4,7 @@ Tags: lms, elearning, payments, digital products, checkout
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.17.29
+Stable tag: 2.17.30
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -90,6 +90,10 @@ By default, no. If you enable **Delete all plugin data when uninstalling ART LMS
 
 == Changelog ==
 
+= 2.17.30 =
+* Password-reset email: send the ART LMS template to all users (not only art_lms_customer).
+* Account: fix “Change password” link for logged-in users (open the custom new-password form).
+
 = 2.17.29 =
 * Purchase email: keep the generated password until the paid-order email is sent (fixes `{установить_пароль}` sending a set-password link when the user was created before payment).
 
@@ -106,7 +110,7 @@ By default, no. If you enable **Delete all plugin data when uninstalling ART LMS
 * Custom password page (request reset + set new password), enabled with the custom login page; design inherited from login; reset links from email and {установить_пароль} go to the custom page.
 
 = 2.17.24 =
-* Emails: custom password-reset template for ART LMS customers (HTML + plugin sender), configurable under Form settings → Emails.
+* Emails: custom password-reset template (HTML + plugin sender) for all users, configurable under Form settings → Emails.
 
 = 2.17.23 =
 * Purchase email: `{установить_пароль}` sends the generated password for brand-new accounts, and a set-password link for existing users.

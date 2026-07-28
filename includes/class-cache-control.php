@@ -75,6 +75,7 @@ class Art_LMS_Cache_Control {
 			'art_lms_order',
 			Art_LMS_Checkout::QUERY_PAY,
 			Art_LMS_Account::QUERY_SET_PASSWORD,
+			Art_LMS_Account::QUERY_CHANGE_PASSWORD,
 			Art_LMS_User_Registration::QUERY_VERIFY_CHECKOUT,
 		);
 

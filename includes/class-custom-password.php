@@ -346,6 +346,9 @@ class Art_LMS_Custom_Password {
 			exit;
 		}
 
+		// Logged-in “Сменить пароль” from account — before guest-only redirect.
+		Art_LMS_Account::maybe_handle_change_password_link();
+
 		self::maybe_redirect_logged_in_user();
 		self::maybe_handle_post();
 

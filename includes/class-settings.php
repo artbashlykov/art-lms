@@ -1842,8 +1842,8 @@ class Art_LMS_Settings {
 	 */
 	public static function get_password_reset_email_placeholder_catalog() {
 		return array(
-			'{имя}'     => __( 'Имя покупателя (или email, если имени нет)', 'art-lms' ),
-			'{email}'   => __( 'Email покупателя', 'art-lms' ),
+			'{имя}'     => __( 'Имя пользователя (или email, если имени нет)', 'art-lms' ),
+			'{email}'   => __( 'Email пользователя', 'art-lms' ),
 			'{ссылка}'  => __( 'Ссылка «Сбросить пароль»', 'art-lms' ),
 			'{кабинет}' => __( 'URL личного кабинета (текстом)', 'art-lms' ),
 			'{войти}'   => __( 'Ссылка «Войти» на личный кабинет', 'art-lms' ),

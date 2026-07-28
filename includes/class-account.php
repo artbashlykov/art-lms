@@ -14,15 +14,17 @@ defined( 'ABSPATH' ) || exit;
  */
 class Art_LMS_Account {
 
-	const QUERY_SET_PASSWORD     = 'art_lms_set_password';
-	const SET_PASSWORD_PREFIX    = 'art_lms_set_password_';
-	const SET_PASSWORD_TOKEN_TTL = DAY_IN_SECONDS;
+	const QUERY_SET_PASSWORD       = 'art_lms_set_password';
+	const QUERY_CHANGE_PASSWORD    = 'art_lms_change_password';
+	const SET_PASSWORD_PREFIX      = 'art_lms_set_password_';
+	const SET_PASSWORD_TOKEN_TTL   = DAY_IN_SECONDS;
 
 	/**
 	 * Register hooks.
 	 */
 	public static function init() {
 		add_action( 'template_redirect', array( __CLASS__, 'maybe_handle_set_password_link' ), 1 );
+		add_action( 'template_redirect', array( __CLASS__, 'maybe_handle_change_password_link' ), 1 );
 		add_action( 'template_redirect', array( __CLASS__, 'maybe_redirect_account_page_guest' ), 5 );
 		add_action( 'login_form_lostpassword', array( __CLASS__, 'prefill_lostpassword_email_field' ) );
 	}
@@ -298,26 +300,95 @@ class Art_LMS_Account {
 	}
 
 	/**
-	 * Build lost-password URL with the current user's email prefilled.
+	 * Build change-password URL for the account footer.
 	 *
-	 * @param string   $redirect_to Redirect target after password reset flow.
-	 * @param WP_User|null $user    Optional user object.
+	 * With the custom password page enabled, logged-in users go straight to the
+	 * “new password” form (no email step). Otherwise fall back to lostpassword.
+	 *
+	 * @param string       $redirect_to Redirect target after password reset flow.
+	 * @param WP_User|null $user        Optional user object.
 	 * @return string
 	 */
 	public static function get_reset_password_url( $redirect_to = '', $user = null ) {
 		$redirect_to = self::sanitize_redirect_to( $redirect_to );
 
-		$url = wp_lostpassword_url( $redirect_to );
-
 		if ( ! $user instanceof WP_User ) {
 			$user = wp_get_current_user();
 		}
 
-		if ( $user && $user->ID && is_email( $user->user_email ) ) {
+		if (
+			$user instanceof WP_User
+			&& $user->ID
+			&& class_exists( 'Art_LMS_Custom_Password' )
+			&& Art_LMS_Custom_Password::is_enabled()
+		) {
+			$url = Art_LMS_Custom_Password::get_url(
+				array( self::QUERY_CHANGE_PASSWORD => '1' ),
+				$redirect_to
+			);
+
+			if ( '' !== $url ) {
+				return $url;
+			}
+		}
+
+		$url = wp_lostpassword_url( $redirect_to );
+
+		if ( $user instanceof WP_User && $user->ID && is_email( $user->user_email ) ) {
 			$url = add_query_arg( 'user_login', $user->user_email, $url );
 		}
 
 		return $url;
+	}
+
+	/**
+	 * Start the logged-in “change password” flow on the custom password page.
+	 */
+	public static function maybe_handle_change_password_link() {
+		if ( empty( $_GET[ self::QUERY_CHANGE_PASSWORD ] ) ) {
+			return;
+		}
+
+		if ( ! class_exists( 'Art_LMS_Custom_Password' ) || ! Art_LMS_Custom_Password::is_enabled() ) {
+			return;
+		}
+
+		if ( ! Art_LMS_Custom_Password::is_password_request() ) {
+			return;
+		}
+
+		if ( ! is_user_logged_in() ) {
+			wp_safe_redirect( Art_LMS_Custom_Password::get_lostpassword_url() );
+			exit;
+		}
+
+		$user = wp_get_current_user();
+
+		if ( ! $user instanceof WP_User || ! $user->ID ) {
+			wp_safe_redirect( Art_LMS_Custom_Password::get_lostpassword_url() );
+			exit;
+		}
+
+		$key = get_password_reset_key( $user );
+
+		if ( is_wp_error( $key ) ) {
+			wp_die(
+				esc_html__( 'Не удалось открыть смену пароля. Попробуйте позже или воспользуйтесь восстановлением пароля.', 'art-lms' ),
+				esc_html__( 'Смена пароля', 'art-lms' ),
+				array( 'response' => 500 )
+			);
+		}
+
+		$redirect_to = self::sanitize_redirect_to(
+			Art_LMS_Custom_Login::get_sanitized_redirect_to_from_get()
+		);
+
+		self::prime_password_reset_cookie( $user->user_login, $key );
+
+		wp_safe_redirect(
+			Art_LMS_Custom_Password::get_reset_url( $key, $user->user_login, $redirect_to )
+		);
+		exit;
 	}
 
 	/**

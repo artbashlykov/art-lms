@@ -129,7 +129,7 @@ class Art_LMS_Email {
 	}
 
 	/**
-	 * Replace WordPress password-reset email for ART LMS customers.
+	 * Replace WordPress password-reset email with the ART LMS template.
 	 *
 	 * Sends the plugin HTML template with the configured From header, then
 	 * returns an empty message so core skips its default plain-text mail.
@@ -144,10 +144,6 @@ class Art_LMS_Email {
 		unset( $user_login );
 
 		if ( ! $user_data instanceof WP_User ) {
-			return $message;
-		}
-
-		if ( ! Art_LMS_Roles::user_is_customer( (int) $user_data->ID ) ) {
 			return $message;
 		}
 

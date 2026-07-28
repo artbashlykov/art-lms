@@ -393,7 +393,7 @@ $test_email    = $current_user->user_email ? $current_user->user_email : get_opt
 						<?php esc_html_e( 'Заменять стандартное письмо WordPress о сбросе пароля', 'art-lms' ); ?>
 					</label>
 					<p class="description">
-						<?php esc_html_e( 'Только для пользователей с ролью «Покупатель ART LMS». Администраторы и другие роли получают стандартное письмо WordPress.', 'art-lms' ); ?>
+						<?php esc_html_e( 'Заменяет стандартное письмо WordPress для всех пользователей: сброс с сайта, со страницы пароля и из раздела «Пользователи».', 'art-lms' ); ?>
 					</p>
 				</td>
 			</tr>
