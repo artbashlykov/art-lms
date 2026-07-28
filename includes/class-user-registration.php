@@ -42,13 +42,15 @@ class Art_LMS_User_Registration {
 
 	/**
 
-	 * Plaintext passwords generated in this request, keyed by user ID.
+	 * Plaintext passwords generated for new buyers, keyed by user ID.
 
 	 *
 
-	 * Used once for the purchase email placeholder `{установить_пароль}`.
+	 * Kept in request memory and mirrored to a short-lived transient so the
 
-	 * Never persisted to the database.
+	 * purchase email can still resolve `{установить_пароль}` when the user was
+
+	 * created before payment (checkout request ≠ webhook / mark_paid request).
 
 	 *
 
@@ -62,6 +64,26 @@ class Art_LMS_User_Registration {
 
 	/**
 
+	 * Transient key prefix for pending plaintext passwords.
+
+	 */
+
+	const GENERATED_PASSWORD_TRANSIENT_PREFIX = 'art_lms_gen_pass_';
+
+
+
+	/**
+
+	 * How long to keep a generated password until the purchase email consumes it.
+
+	 */
+
+	const GENERATED_PASSWORD_TTL = DAY_IN_SECONDS;
+
+
+
+	/**
+
 	 * Register hooks.
 
 	 */
@@ -69,6 +91,8 @@ class Art_LMS_User_Registration {
 	public static function init() {
 
 		add_action( 'template_redirect', array( __CLASS__, 'maybe_complete_email_verification' ), 1 );
+
+		add_action( 'wp_login', array( __CLASS__, 'clear_generated_password_on_login' ), 10, 2 );
 
 	}
 
@@ -755,7 +779,7 @@ class Art_LMS_User_Registration {
 
 	/**
 
-	 * Remember a freshly generated password for the current request.
+	 * Remember a freshly generated password until the purchase email uses it.
 
 	 *
 
@@ -783,13 +807,15 @@ class Art_LMS_User_Registration {
 
 		self::$generated_passwords[ $user_id ] = $password;
 
+		set_transient( self::generated_password_transient_key( $user_id ), $password, self::GENERATED_PASSWORD_TTL );
+
 	}
 
 
 
 	/**
 
-	 * Get a password generated earlier in this request (does not clear it).
+	 * Get a password generated for a new buyer (request memory or transient).
 
 	 *
 
@@ -805,7 +831,7 @@ class Art_LMS_User_Registration {
 
 
 
-		if ( ! $user_id || ! isset( self::$generated_passwords[ $user_id ] ) ) {
+		if ( ! $user_id ) {
 
 			return '';
 
@@ -813,7 +839,31 @@ class Art_LMS_User_Registration {
 
 
 
-		return (string) self::$generated_passwords[ $user_id ];
+		if ( isset( self::$generated_passwords[ $user_id ] ) ) {
+
+			return (string) self::$generated_passwords[ $user_id ];
+
+		}
+
+
+
+		$stored = get_transient( self::generated_password_transient_key( $user_id ) );
+
+
+
+		if ( ! is_string( $stored ) || '' === $stored ) {
+
+			return '';
+
+		}
+
+
+
+		self::$generated_passwords[ $user_id ] = $stored;
+
+
+
+		return $stored;
 
 	}
 
@@ -844,6 +894,56 @@ class Art_LMS_User_Registration {
 
 
 		unset( self::$generated_passwords[ $user_id ] );
+
+		delete_transient( self::generated_password_transient_key( $user_id ) );
+
+	}
+
+
+
+	/**
+
+	 * Drop a pending generated password after the buyer logs in.
+
+	 *
+
+	 * @param string  $user_login Username.
+
+	 * @param WP_User $user       User object.
+
+	 */
+
+	public static function clear_generated_password_on_login( $user_login, $user ) {
+
+		unset( $user_login );
+
+
+
+		if ( $user instanceof WP_User ) {
+
+			self::clear_generated_password( (int) $user->ID );
+
+		}
+
+	}
+
+
+
+	/**
+
+	 * Transient key for a pending generated password.
+
+	 *
+
+	 * @param int $user_id User ID.
+
+	 * @return string
+
+	 */
+
+	private static function generated_password_transient_key( $user_id ) {
+
+		return self::GENERATED_PASSWORD_TRANSIENT_PREFIX . absint( $user_id );
 
 	}
 
