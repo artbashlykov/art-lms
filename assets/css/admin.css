@@ -1160,6 +1160,23 @@ body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start.wp-has-curre
 	max-width: 640px;
 }
 
+.art-lms-field-required-notice,
+.art-lms-material-picker__required-notice {
+	display: none;
+}
+
+.art-lms-field-required-notice.is-required-notice-visible,
+.art-lms-material-picker__required-notice.is-required-notice-visible {
+	display: block;
+}
+
+.art-lms-field-required-notice.is-required-notice-hidden,
+.art-lms-material-picker__required-notice.is-required-notice-hidden,
+.art-lms-field-required-notice[hidden],
+.art-lms-material-picker__required-notice[hidden] {
+	display: none !important;
+}
+
 .post-type-art_lms_pay_button .art-lms-material-picker.is-materials-required {
 	box-shadow: 0 0 0 1px #d63638;
 	border-radius: 4px;
@@ -1186,10 +1203,16 @@ body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start.wp-has-curre
 	border-left: 4px solid #d63638;
 	background: #fcf0f1;
 	color: #1d2327;
+	display: none;
 }
 
 .post-type-art_lms_pay_button .art-lms-material-picker__required-notice {
 	margin-bottom: 12px;
+}
+
+.post-type-art_lms_pay_button .art-lms-field-required-notice.is-required-notice-visible,
+.post-type-art_lms_pay_button .art-lms-material-picker__required-notice.is-required-notice-visible {
+	display: block;
 }
 
 .post-type-art_lms_pay_button .art-lms-field-required-notice[hidden],

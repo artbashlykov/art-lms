@@ -9,6 +9,7 @@
 	var isSubmittingSave = false;
 	var userMadeChanges = false;
 	var paymentButtonEditorInitialized = false;
+	var validationAttempted = false;
 
 	function getAllMetaBoxes() {
 		return $('.art-lms-payment-button-meta-box');
@@ -43,11 +44,39 @@
 		var active = document.activeElement;
 
 		if (active && active.getAttribute && active.getAttribute('name') === fieldName) {
-			return $.trim(active.value || '');
+			var activeVal = $.trim(active.value || '');
+
+			if (activeVal) {
+				return activeVal;
+			}
 		}
 
 		var best = '';
-		var bestVisible = '';
+		var boxes = document.querySelectorAll('.art-lms-payment-button-meta-box');
+
+		for (var i = 0; i < boxes.length; i++) {
+			var field = boxes[i].querySelector('[name="' + fieldName + '"]');
+
+			if (!field) {
+				continue;
+			}
+
+			var val = $.trim(field.value || '');
+
+			if (!val) {
+				continue;
+			}
+
+			best = val;
+
+			if (field.offsetParent !== null) {
+				return val;
+			}
+		}
+
+		if (best) {
+			return best;
+		}
 
 		$('[name="' + fieldName + '"]').each(function () {
 			var $field = $(this);
@@ -60,11 +89,35 @@
 			best = val;
 
 			if ($field.is(':visible')) {
-				bestVisible = val;
+				return false;
 			}
 		});
 
-		return bestVisible || best;
+		if (best) {
+			return best;
+		}
+
+		if (window.wp && wp.data && metaKeys) {
+			var metaKeyMap = {
+				art_lms_product_name: metaKeys.productName,
+				art_lms_compare_price: metaKeys.comparePrice,
+				art_lms_price: metaKeys.price,
+				art_lms_access_mode: null,
+			};
+			var metaKey = metaKeyMap[fieldName];
+			var editor = wp.data.select('core/editor');
+
+			if (metaKey && editor && editor.getEditedPostAttribute) {
+				var meta = editor.getEditedPostAttribute('meta') || {};
+				var metaVal = meta[metaKey];
+
+				if (metaVal !== undefined && metaVal !== null && String(metaVal).trim() !== '') {
+					return $.trim(String(metaVal));
+				}
+			}
+		}
+
+		return '';
 	}
 
 	/**
@@ -533,6 +586,10 @@
 			return true;
 		}
 
+		if (document.querySelectorAll('.art-lms-material-picker__item').length > 0) {
+			return true;
+		}
+
 		// Last-resort visual check: list has a real item row.
 		return (
 			$('.art-lms-material-picker__selected li')
@@ -677,6 +734,10 @@
 		$fieldWrap.toggleClass('is-field-required', !!isRequired);
 	}
 
+	function shouldShowRequiredNotice(isMissing) {
+		return validationAttempted && !!isMissing;
+	}
+
 	function updateRequiredFieldsUi() {
 		var state = getRequiredFieldState();
 		var missing = getMissingRequiredFields(state);
@@ -690,9 +751,9 @@
 		var $titleInput = $('.editor-post-title__input, #title, #post-title-0').first();
 		var $titleNotice = ensureTitleRequiredNotice();
 
-		toggleFieldRequiredNotice($titleNotice, !!missingMap.title);
-		toggleFieldRequiredState($titleWrap.length ? $titleWrap : $titleInput, !!missingMap.title);
-		toggleFieldRequiredState($titleInput, !!missingMap.title);
+		toggleFieldRequiredNotice($titleNotice, shouldShowRequiredNotice(missingMap.title));
+		toggleFieldRequiredState($titleWrap.length ? $titleWrap : $titleInput, shouldShowRequiredNotice(missingMap.title));
+		toggleFieldRequiredState($titleInput, shouldShowRequiredNotice(missingMap.title));
 
 		// Also update title highlight inside the editor canvas iframe when present.
 		$('iframe').each(function () {
@@ -705,24 +766,30 @@
 					'.edit-post-visual-editor__post-title-wrapper, .editor-post-title, .editor-post-title__input'
 				);
 
-				toggleFieldRequiredState($iframeTitle, !!missingMap.title);
+				toggleFieldRequiredState($iframeTitle, shouldShowRequiredNotice(missingMap.title));
 			} catch (error) {
 				// Ignore cross-origin frames.
 			}
 		});
 
 		// Update notices globally by class (avoid #id lookups with duplicate IDs).
-		toggleFieldRequiredNotice($('.art-lms-product-name-required-notice'), !!missingMap.productName);
-		toggleFieldRequiredState($('input[name="art_lms_product_name"]').closest('td'), !!missingMap.productName);
+		toggleFieldRequiredNotice(
+			$('.art-lms-product-name-required-notice'),
+			shouldShowRequiredNotice(missingMap.productName)
+		);
+		toggleFieldRequiredState(
+			$('input[name="art_lms_product_name"]').closest('td'),
+			shouldShowRequiredNotice(missingMap.productName)
+		);
 
-		toggleFieldRequiredNotice($('.art-lms-price-required-notice'), !!missingMap.price);
-		toggleFieldRequiredState($('input[name="art_lms_price"]').closest('td'), !!missingMap.price);
+		toggleFieldRequiredNotice($('.art-lms-price-required-notice'), shouldShowRequiredNotice(missingMap.price));
+		toggleFieldRequiredState($('input[name="art_lms_price"]').closest('td'), shouldShowRequiredNotice(missingMap.price));
 
 		toggleFieldRequiredNotice(
 			$('.art-lms-materials-required-notice, .art-lms-material-picker__required-notice'),
-			!!missingMap.materials
+			shouldShowRequiredNotice(missingMap.materials)
 		);
-		$('.art-lms-material-picker').toggleClass('is-materials-required', !!missingMap.materials);
+		$('.art-lms-material-picker').toggleClass('is-materials-required', shouldShowRequiredNotice(missingMap.materials));
 	}
 
 	function scrollToFirstMissingField(missing) {
@@ -752,6 +819,7 @@
 	}
 
 	function showRequiredFieldsFeedback() {
+		validationAttempted = true;
 		var missing = getMissingRequiredFields();
 
 		updateRequiredFieldsUi();
@@ -759,45 +827,87 @@
 		scrollToFirstMissingField(missing);
 	}
 
-	function bindRequiredFieldsValidation() {
-		var attempts = 0;
+	function bindRequiredFieldsLiveUpdates() {
+		$(document)
+			.off(
+				'input.artLmsRequiredLive change.artLmsRequiredLive',
+				'.art-lms-payment-button-meta-box input, .art-lms-payment-button-meta-box select, .editor-post-title__input, #title, #post-title-0'
+			)
+			.on(
+				'input.artLmsRequiredLive change.artLmsRequiredLive',
+				'.art-lms-payment-button-meta-box input, .art-lms-payment-button-meta-box select, .editor-post-title__input, #title, #post-title-0',
+				function () {
+					var $field = $(this);
 
-		updateRequiredFieldsUi();
+					if ($field.closest('.art-lms-payment-button-meta-box').length) {
+						syncMetaFieldAcrossBoxes($field);
+					}
 
-		var intervalId = window.setInterval(function () {
-			attempts += 1;
+					window.setTimeout(updateRequiredFieldsUi, 0);
+				}
+			);
+
+		$(document)
+			.off('click.artLmsMaterialLive', '.art-lms-material-picker__add, .art-lms-material-picker__remove')
+			.on('click.artLmsMaterialLive', '.art-lms-material-picker__add, .art-lms-material-picker__remove', function () {
+				window.setTimeout(updateRequiredFieldsUi, 0);
+			});
+	}
+
+	function watchMetaBoxMount() {
+		if (!window.MutationObserver) {
+			return;
+		}
+
+		var observer = new MutationObserver(function () {
+			if (!$('.art-lms-payment-button-meta-box').length) {
+				return;
+			}
+
 			updateRequiredFieldsUi();
 
-			if ($('.edit-post-visual-editor__post-title-wrapper, .editor-post-title, .editor-post-title__input').length || attempts >= 100) {
-				window.clearInterval(intervalId);
+			if (!paymentButtonEditorInitialized) {
+				initPaymentButtonEditor();
 			}
-		}, 100);
+		});
+
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true,
+		});
+	}
+
+	function bindRequiredFieldsValidation() {
+		updateRequiredFieldsUi();
 
 		if (window.wp && wp.data && wp.data.subscribe) {
 			var lastTitle = null;
 			var lastMaterials = null;
+			var lastProduct = null;
+			var lastPrice = null;
 
 			wp.data.subscribe(function () {
 				var title = getEditedTitle();
 				var materialsKey = getSelectedMaterialIds().join(',');
+				var product = getNamedFieldValue('art_lms_product_name');
+				var price = getNamedFieldValue('art_lms_price');
 
-				if (title === lastTitle && materialsKey === lastMaterials) {
+				if (
+					title === lastTitle &&
+					materialsKey === lastMaterials &&
+					product === lastProduct &&
+					price === lastPrice
+				) {
 					return;
 				}
 
 				lastTitle = title;
 				lastMaterials = materialsKey;
+				lastProduct = product;
+				lastPrice = price;
 				updateRequiredFieldsUi();
 			});
 		}
-
-		$(document).on(
-			'input.artLmsTitleRequired keyup.artLmsTitleRequired',
-			'.editor-post-title__input, #title, #post-title-0',
-			function () {
-				window.setTimeout(updateRequiredFieldsUi, 0);
-			}
-		);
 	}
 
 	function bindPreSavePostFilter() {
@@ -1263,7 +1373,7 @@
 			return;
 		}
 
-		if (attempts < 100) {
+		if (attempts < 600) {
 			window.setTimeout(function () {
 				waitForPaymentButtonEditor(attempts + 1);
 			}, 100);
@@ -1273,6 +1383,9 @@
 	$(document).ready(function () {
 		bindCopyButtons();
 		bindShortcodeAutoSelect();
+		bindRequiredFieldsLiveUpdates();
+		watchMetaBoxMount();
+		updateRequiredFieldsUi();
 		waitForPaymentButtonEditor(0);
 	});
 })(jQuery);

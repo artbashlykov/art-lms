@@ -521,7 +521,7 @@ class Art_LMS_Admin_Menu {
 			wp_enqueue_script(
 				'art-lms-admin-payment-button-meta-box',
 				ART_LMS_PLUGIN_URL . 'assets/js/admin-payment-button-meta-box.js',
-				array( 'jquery', 'wp-data', 'wp-hooks', 'wp-notices' ),
+				array( 'jquery', 'wp-data', 'wp-hooks' ),
 				ART_LMS_VERSION,
 				true
 			);
