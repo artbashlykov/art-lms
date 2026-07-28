@@ -27,13 +27,17 @@ class Art_LMS_Email {
 	 * @param object $order    Order object.
 	 */
 	public static function send_purchase_email( $order_id, $order ) {
+		$user_id = absint( $order->user_id ?? 0 );
+
 		$settings = Art_LMS_Settings::get_emails();
 
 		if ( 'yes' !== ( $settings['purchase']['enabled'] ?? 'yes' ) ) {
+			Art_LMS_User_Registration::clear_generated_password( $user_id );
 			return;
 		}
 
 		if ( ! is_email( $order->email ) ) {
+			Art_LMS_User_Registration::clear_generated_password( $user_id );
 			return;
 		}
 
@@ -47,6 +51,8 @@ class Art_LMS_Email {
 			$subject,
 			$body
 		);
+
+		Art_LMS_User_Registration::clear_generated_password( $user_id );
 	}
 
 	/**
@@ -259,8 +265,14 @@ class Art_LMS_Email {
 	 * @return bool
 	 */
 	private static function send_order_email_to( $to, $order_id, $order, $subject, $body, $is_test = false, $context = 'purchase' ) {
-		$subject = self::apply_email_tokens( $subject, $order_id, $order, $context );
-		$message = self::apply_email_tokens( $body, $order_id, $order, $context );
+		$tokens = self::build_purchase_email_tokens( $order_id, $order, $context );
+
+		if ( 'admin_payment' === $context ) {
+			$tokens['{all-fields}'] = esc_html( Art_LMS_Order_Form_Data::format_for_email( $order ) );
+		}
+
+		$subject = str_replace( array_keys( $tokens ), array_values( $tokens ), (string) $subject );
+		$message = str_replace( array_keys( $tokens ), array_values( $tokens ), (string) $body );
 
 		if ( $is_test ) {
 			$subject = '[TEST] ' . $subject;
@@ -297,7 +309,7 @@ class Art_LMS_Email {
 	 * @return string
 	 */
 	public static function apply_email_tokens( $text, $order_id, $order, $context = 'purchase' ) {
-		$tokens = self::build_purchase_email_tokens( $order_id, $order );
+		$tokens = self::build_purchase_email_tokens( $order_id, $order, $context );
 
 		if ( 'admin_payment' === $context ) {
 			$tokens['{all-fields}'] = esc_html( Art_LMS_Order_Form_Data::format_for_email( $order ) );
@@ -311,9 +323,10 @@ class Art_LMS_Email {
 	 *
 	 * @param int    $order_id Order ID.
 	 * @param object $order    Order object.
+	 * @param string $context  Email context: purchase or admin_payment.
 	 * @return array<string, string>
 	 */
-	public static function build_purchase_email_tokens( $order_id, $order ) {
+	public static function build_purchase_email_tokens( $order_id, $order, $context = 'purchase' ) {
 		$account_url = Art_LMS_Settings::get_account_url() ?: Art_LMS_Settings::get_login_page_url();
 		$name        = ! empty( $order->name ) ? $order->name : $order->email;
 		$email       = (string) $order->email;
@@ -334,11 +347,31 @@ class Art_LMS_Email {
 			'{кабинет}'           => esc_url( $account_url ),
 			'{войти}'             => self::build_email_link( $account_url, __( 'Войти', 'art-lms' ) ),
 			'{логин}'             => esc_html( $email ),
-			'{установить_пароль}' => self::build_set_password_email_link( $set_password_url ),
+			'{установить_пароль}' => self::build_password_email_token( $user, $set_password_url, $context ),
 			'{материалы}'         => self::get_order_materials_html( $order ),
 			'{сайт}'              => esc_html( get_bloginfo( 'name' ) ),
 			'{заказ}'             => esc_url( Art_LMS_Admin_Orders::get_edit_url( absint( $order_id ) ) ),
 		);
+	}
+
+	/**
+	 * Resolve `{установить_пароль}`: plaintext for a brand-new account, set-password link otherwise.
+	 *
+	 * @param WP_User|false|null $user             Buyer user.
+	 * @param string             $set_password_url Set-password or lost-password URL.
+	 * @param string             $context          Email context.
+	 * @return string
+	 */
+	private static function build_password_email_token( $user, $set_password_url, $context ) {
+		if ( 'purchase' === $context && $user instanceof WP_User ) {
+			$plain = Art_LMS_User_Registration::get_generated_password( (int) $user->ID );
+
+			if ( '' !== $plain ) {
+				return esc_html( $plain );
+			}
+		}
+
+		return self::build_set_password_email_link( $set_password_url );
 	}
 
 	/**

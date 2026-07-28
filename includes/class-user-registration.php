@@ -42,6 +42,26 @@ class Art_LMS_User_Registration {
 
 	/**
 
+	 * Plaintext passwords generated in this request, keyed by user ID.
+
+	 *
+
+	 * Used once for the purchase email placeholder `{установить_пароль}`.
+
+	 * Never persisted to the database.
+
+	 *
+
+	 * @var array<int, string>
+
+	 */
+
+	private static $generated_passwords = array();
+
+
+
+	/**
+
 	 * Register hooks.
 
 	 */
@@ -711,17 +731,119 @@ class Art_LMS_User_Registration {
 
 
 
+		self::remember_generated_password( (int) $user_id, $password );
+
+
+
 		do_action( 'art_lms_user_registered', $user_id, $email );
 
 
 
 		return array(
 
-			'user_id' => (int) $user_id,
+			'user_id'  => (int) $user_id,
 
-			'is_new'  => true,
+			'is_new'   => true,
+
+			'password' => $password,
 
 		);
+
+	}
+
+
+
+	/**
+
+	 * Remember a freshly generated password for the current request.
+
+	 *
+
+	 * @param int    $user_id  User ID.
+
+	 * @param string $password Plaintext password.
+
+	 */
+
+	public static function remember_generated_password( $user_id, $password ) {
+
+		$user_id  = absint( $user_id );
+
+		$password = (string) $password;
+
+
+
+		if ( ! $user_id || '' === $password ) {
+
+			return;
+
+		}
+
+
+
+		self::$generated_passwords[ $user_id ] = $password;
+
+	}
+
+
+
+	/**
+
+	 * Get a password generated earlier in this request (does not clear it).
+
+	 *
+
+	 * @param int $user_id User ID.
+
+	 * @return string Empty when none.
+
+	 */
+
+	public static function get_generated_password( $user_id ) {
+
+		$user_id = absint( $user_id );
+
+
+
+		if ( ! $user_id || ! isset( self::$generated_passwords[ $user_id ] ) ) {
+
+			return '';
+
+		}
+
+
+
+		return (string) self::$generated_passwords[ $user_id ];
+
+	}
+
+
+
+	/**
+
+	 * Forget a remembered plaintext password.
+
+	 *
+
+	 * @param int $user_id User ID.
+
+	 */
+
+	public static function clear_generated_password( $user_id ) {
+
+		$user_id = absint( $user_id );
+
+
+
+		if ( ! $user_id ) {
+
+			return;
+
+		}
+
+
+
+		unset( self::$generated_passwords[ $user_id ] );
 
 	}
 
