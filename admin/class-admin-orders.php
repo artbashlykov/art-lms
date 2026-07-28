@@ -31,6 +31,7 @@ class Art_LMS_Admin_Orders {
 		add_action( 'admin_post_art_lms_save_order', array( __CLASS__, 'handle_save_order' ) );
 		add_action( 'admin_post_art_lms_mark_order_paid', array( __CLASS__, 'handle_mark_order_paid' ) );
 		add_action( 'admin_post_art_lms_delete_order', array( __CLASS__, 'handle_delete_order' ) );
+		add_action( 'admin_post_art_lms_bulk_delete_orders', array( __CLASS__, 'handle_bulk_delete_orders' ) );
 		add_action( 'admin_post_art_lms_update_order_status', array( __CLASS__, 'handle_update_order_status' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'render_notices' ) );
 	}
@@ -235,21 +236,45 @@ class Art_LMS_Admin_Orders {
 	/**
 	 * Render WordPress-style pagination for orders list.
 	 *
-	 * @param array  $filters  Active list filters.
-	 * @param int    $total    Total matching orders.
-	 * @param int    $page     Current page.
-	 * @param int    $pages    Total pages.
-	 * @param string $position Nav position class: top|bottom.
+	 * @param array  $filters      Active list filters.
+	 * @param int    $total        Total matching orders.
+	 * @param int    $page         Current page.
+	 * @param int    $pages        Total pages.
+	 * @param string $position     Nav position class: top|bottom.
+	 * @param bool   $bulk_actions Whether to show bulk actions controls.
 	 */
-	public static function render_list_pagination( array $filters, $total, $page, $pages, $position = 'bottom' ) {
+	public static function render_list_pagination( array $filters, $total, $page, $pages, $position = 'bottom', $bulk_actions = false ) {
 		if ( $total <= 0 ) {
 			return;
 		}
 
 		$page  = max( 1, (int) $page );
 		$pages = max( 1, (int) $pages );
+		$which = ( 'top' === $position ) ? 'top' : 'bottom';
 		?>
 		<div class="tablenav <?php echo esc_attr( $position ); ?>">
+			<?php if ( $bulk_actions ) : ?>
+				<div class="alignleft actions bulkactions">
+					<label for="art-lms-bulk-action-<?php echo esc_attr( $which ); ?>" class="screen-reader-text">
+						<?php esc_html_e( 'Выберите действие', 'art-lms' ); ?>
+					</label>
+					<select name="<?php echo esc_attr( 'top' === $which ? 'bulk_action' : 'bulk_action2' ); ?>" id="art-lms-bulk-action-<?php echo esc_attr( $which ); ?>">
+						<option value="-1"><?php esc_html_e( 'Действия', 'art-lms' ); ?></option>
+						<option value="delete"><?php esc_html_e( 'Удалить', 'art-lms' ); ?></option>
+					</select>
+					<?php
+					submit_button(
+						__( 'Применить', 'art-lms' ),
+						'action',
+						'',
+						false,
+						array(
+							'id' => 'art-lms-doaction-' . $which,
+						)
+					);
+					?>
+				</div>
+			<?php endif; ?>
 			<div class="tablenav-pages">
 				<span class="displaying-num">
 					<?php
@@ -296,6 +321,7 @@ class Art_LMS_Admin_Orders {
 					</span>
 				<?php endif; ?>
 			</div>
+			<br class="clear">
 		</div>
 		<?php
 	}
@@ -588,6 +614,83 @@ class Art_LMS_Admin_Orders {
 	}
 
 	/**
+	 * Permanently delete selected orders from the list.
+	 */
+	public static function handle_bulk_delete_orders() {
+		if ( ! Art_LMS_Security::can_manage() ) {
+			wp_die( esc_html__( 'Недостаточно прав.', 'art-lms' ) );
+		}
+
+		check_admin_referer( 'art_lms_bulk_delete_orders', 'art_lms_bulk_orders_nonce' );
+
+		$bulk_action = isset( $_POST['bulk_action'] ) ? sanitize_key( wp_unslash( $_POST['bulk_action'] ) ) : '';
+
+		if ( isset( $_POST['bulk_action2'] ) && ( '' === $bulk_action || '-1' === $bulk_action ) ) {
+			$bulk_action = sanitize_key( wp_unslash( $_POST['bulk_action2'] ) );
+		}
+
+		$redirect_args = array(
+			'buyer'     => isset( $_POST['buyer'] ) ? sanitize_text_field( wp_unslash( $_POST['buyer'] ) ) : '',
+			'status'    => isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '',
+			'date_from' => isset( $_POST['date_from'] ) ? Art_LMS_Orders::sanitize_list_date( sanitize_text_field( wp_unslash( $_POST['date_from'] ) ) ) : '',
+			'date_to'   => isset( $_POST['date_to'] ) ? Art_LMS_Orders::sanitize_list_date( sanitize_text_field( wp_unslash( $_POST['date_to'] ) ) ) : '',
+			'orderby'   => isset( $_POST['orderby'] ) ? sanitize_key( wp_unslash( $_POST['orderby'] ) ) : 'created_at',
+			'order'     => isset( $_POST['order'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['order'] ) ) ) : 'DESC',
+			'paged'     => isset( $_POST['paged'] ) ? max( 1, absint( $_POST['paged'] ) ) : 1,
+		);
+
+		if ( ! in_array( $redirect_args['orderby'], Art_LMS_Orders::get_list_orderby_keys(), true ) ) {
+			$redirect_args['orderby'] = 'created_at';
+		}
+
+		if ( ! in_array( $redirect_args['order'], array( 'ASC', 'DESC' ), true ) ) {
+			$redirect_args['order'] = 'DESC';
+		}
+
+		if ( '' !== $redirect_args['status'] && ! isset( Art_LMS_Orders::get_status_labels()[ $redirect_args['status'] ] ) ) {
+			$redirect_args['status'] = '';
+		}
+
+		$redirect_to = self::get_list_url( $redirect_args );
+
+		if ( 'delete' !== $bulk_action ) {
+			wp_safe_redirect( $redirect_to );
+			exit;
+		}
+
+		$raw_ids = isset( $_POST['order_ids'] ) ? (array) wp_unslash( $_POST['order_ids'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via absint below.
+		$ids     = array_values(
+			array_filter(
+				array_map( 'absint', $raw_ids )
+			)
+		);
+
+		if ( empty( $ids ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					'art_lms_notice',
+					'orders_bulk_none',
+					$redirect_to
+				)
+			);
+			exit;
+		}
+
+		$result = Art_LMS_Orders::delete_many( $ids );
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'art_lms_notice'       => 'orders_bulk_deleted',
+					'art_lms_deleted_count' => (int) $result['deleted'],
+				),
+				$redirect_to
+			)
+		);
+		exit;
+	}
+
+	/**
 	 * Show admin notices on order pages.
 	 */
 	public static function render_notices() {
@@ -630,6 +733,20 @@ class Art_LMS_Admin_Orders {
 
 		if ( 'order_deleted' === $notice ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Заказ удалён.', 'art-lms' ) . '</p></div>';
+		}
+
+		if ( 'orders_bulk_deleted' === $notice ) {
+			$deleted_count = isset( $_GET['art_lms_deleted_count'] ) ? absint( $_GET['art_lms_deleted_count'] ) : 0;
+			$message       = sprintf(
+				/* translators: %d: number of deleted orders */
+				_n( 'Удалён %d заказ.', 'Удалено заказов: %d.', $deleted_count, 'art-lms' ),
+				$deleted_count
+			);
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
+		}
+
+		if ( 'orders_bulk_none' === $notice ) {
+			echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'Выберите хотя бы один заказ.', 'art-lms' ) . '</p></div>';
 		}
 
 		if ( 'order_error' === $notice && $error ) {

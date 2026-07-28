@@ -1707,5 +1707,32 @@ class Art_LMS_Orders {
 		return true;
 	}
 
+	/**
+	 * Permanently delete multiple orders.
+	 *
+	 * @param int[] $order_ids Order IDs.
+	 * @return array{deleted: int, failed: int}
+	 */
+	public static function delete_many( array $order_ids ) {
+		$deleted = 0;
+		$failed  = 0;
+
+		foreach ( $order_ids as $order_id ) {
+			$result = self::delete( absint( $order_id ) );
+
+			if ( is_wp_error( $result ) ) {
+				++$failed;
+				continue;
+			}
+
+			++$deleted;
+		}
+
+		return array(
+			'deleted' => $deleted,
+			'failed'  => $failed,
+		);
+	}
+
 	// phpcs:enable
 }

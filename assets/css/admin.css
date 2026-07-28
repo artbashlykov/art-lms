@@ -236,6 +236,21 @@
 	width: 130px;
 }
 
+.art-lms-orders-table .check-column {
+	width: 2.2em;
+	padding: 11px 0 0 3px;
+	vertical-align: top;
+}
+
+.art-lms-orders-table thead td.check-column,
+.art-lms-orders-table tfoot td.check-column {
+	padding: 8px 0 0 3px;
+}
+
+.art-lms-orders-page .tablenav .actions {
+	padding: 2px 8px 0 0;
+}
+
 .art-lms-orders-summary {
 	margin: 0 0 10px;
 	color: #646970;

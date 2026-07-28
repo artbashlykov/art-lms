@@ -869,23 +869,17 @@ class Art_LMS_Admin_Menu {
 
 
 			wp_localize_script(
-
 				'art-lms-admin-orders-list',
-
 				'artLmsAdminOrders',
-
 				array(
-
 					'strings'    => array(
-
-						'clearDate' => __( 'Сбросить', 'art-lms' ),
-
+						'clearDate'         => __( 'Сбросить', 'art-lms' ),
+						'selectAction'      => __( 'Выберите действие.', 'art-lms' ),
+						'selectOrders'      => __( 'Выберите хотя бы один заказ.', 'art-lms' ),
+						'confirmBulkDelete' => __( 'Удалить выбранные заказы безвозвратно?', 'art-lms' ),
 					),
-
 					'datepicker' => self::get_datepicker_i18n(),
-
 				)
-
 			);
 
 		}
