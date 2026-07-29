@@ -683,7 +683,17 @@ class Art_LMS_Payment_Buttons {
 			return '';
 		}
 
-		return $price . ' ₽';
+		$normalized = str_replace( array( ' ', "\xc2\xa0" ), '', $price );
+		$normalized = str_replace( ',', '.', $normalized );
+
+		if ( ! is_numeric( $normalized ) ) {
+			return $price . ' ₽';
+		}
+
+		$amount   = (float) $normalized;
+		$decimals = abs( $amount - round( $amount ) ) < 0.00001 ? 0 : 2;
+
+		return number_format( $amount, $decimals, '.', ' ' ) . ' ₽';
 	}
 
 	/**
@@ -1175,7 +1185,7 @@ class Art_LMS_Payment_Buttons {
 		}
 
 		if ( 'art_lms_price' === $column ) {
-			echo esc_html( $meta['price'] ? $meta['price'] . ' ₽' : '—' );
+			echo esc_html( $meta['price'] ? self::format_price( $meta['price'] ) : '—' );
 			return;
 		}
 

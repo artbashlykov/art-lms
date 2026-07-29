@@ -163,6 +163,14 @@ class Art_LMS_Admin_Orders {
 		$total    = $result['total'];
 		$per_page = $result['per_page'];
 
+		$order_ids           = array_map(
+			static function ( $order ) {
+				return (int) $order->id;
+			},
+			$orders
+		);
+		$access_expires_map = Art_LMS_Access::get_expires_map_for_orders( $order_ids );
+
 		include ART_LMS_PLUGIN_DIR . 'admin/views/orders.php';
 	}
 

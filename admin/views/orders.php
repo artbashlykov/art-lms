@@ -10,6 +10,7 @@
  * @var int       $per_page Orders per page.
  * @var int       $page     Current page.
  * @var int       $pages    Total pages.
+ * @var array<int, string|null> $access_expires_map Order ID => access expires_at.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -21,6 +22,7 @@ $reset_url     = Art_LMS_Admin_Orders::get_list_url();
 $status_labels = Art_LMS_Orders::get_status_labels();
 $has_filters   = $filters['buyer'] || $filters['status'] || $filters['date_from'] || $filters['date_to'];
 $has_orders    = ! empty( $orders );
+$access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_map ) ? $access_expires_map : array();
 ?>
 <div class="wrap art-lms-admin art-lms-orders-page">
 	<h1 class="wp-heading-inline"><?php esc_html_e( 'Заказы ART LMS', 'art-lms' ); ?></h1>
@@ -117,6 +119,7 @@ $has_orders    = ! empty( $orders );
 								<span class="art-lms-sort-indicator" aria-hidden="true"></span>
 							</a>
 						</th>
+						<th scope="col"><?php esc_html_e( 'Доступ истекает', 'art-lms' ); ?></th>
 						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_sort_classes( 'amount', $filters ) ); ?>">
 							<a href="<?php echo esc_url( Art_LMS_Admin_Orders::get_list_sort_link( 'amount', $filters ) ); ?>">
 								<span><?php esc_html_e( 'Сумма', 'art-lms' ); ?></span>
@@ -177,6 +180,19 @@ $has_orders    = ! empty( $orders );
 									<br><small><a href="<?php echo esc_url( $profile_url ); ?>"><?php esc_html_e( 'Открыть профиль', 'art-lms' ); ?></a></small>
 								<?php endif; ?>
 							</td>
+							<td>
+								<?php
+								$expires_display = Art_LMS_Access::get_admin_expires_display(
+									$access_expires_map[ (int) $order->id ] ?? null
+								);
+
+								if ( 'expired' === $expires_display['state'] ) :
+									?>
+									<span class="art-lms-access-expired"><?php echo esc_html( $expires_display['label'] ); ?></span>
+								<?php else : ?>
+									<?php echo esc_html( $expires_display['label'] ); ?>
+								<?php endif; ?>
+							</td>
 							<td><?php echo esc_html( number_format( (float) $order->amount, 2, '.', ' ' ) ); ?> ₽</td>
 							<td>
 								<span class="art-lms-order-status art-lms-order-status--<?php echo esc_attr( $order->status ); ?>">
@@ -207,6 +223,7 @@ $has_orders    = ! empty( $orders );
 						</td>
 						<th scope="col"><?php esc_html_e( 'Дата', 'art-lms' ); ?></th>
 						<th scope="col"><?php esc_html_e( 'Покупатель', 'art-lms' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Доступ истекает', 'art-lms' ); ?></th>
 						<th scope="col"><?php esc_html_e( 'Сумма', 'art-lms' ); ?></th>
 						<th scope="col"><?php esc_html_e( 'Статус', 'art-lms' ); ?></th>
 						<th scope="col"><?php esc_html_e( 'Платёжный шлюз', 'art-lms' ); ?></th>
@@ -226,6 +243,7 @@ $has_orders    = ! empty( $orders );
 				<tr>
 					<th scope="col"><?php esc_html_e( 'Дата', 'art-lms' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Покупатель', 'art-lms' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Доступ истекает', 'art-lms' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Сумма', 'art-lms' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Статус', 'art-lms' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Платёжный шлюз', 'art-lms' ); ?></th>
@@ -235,7 +253,7 @@ $has_orders    = ! empty( $orders );
 			</thead>
 			<tbody>
 				<tr>
-					<td colspan="7">
+					<td colspan="8">
 						<?php
 						if ( $has_filters ) {
 							esc_html_e( 'Заказы не найдены. Измените фильтры.', 'art-lms' );

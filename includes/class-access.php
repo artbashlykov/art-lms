@@ -251,6 +251,97 @@ class Art_LMS_Access {
 	}
 
 	/**
+	 * Map order IDs to access expiration datetimes (MAX expires_at per order).
+	 *
+	 * @param int[] $order_ids Order IDs.
+	 * @return array<int, string|null> order_id => MySQL datetime or null when unlimited / none.
+	 */
+	public static function get_expires_map_for_orders( array $order_ids ) {
+		global $wpdb;
+
+		$order_ids = array_values(
+			array_unique(
+				array_filter(
+					array_map( 'absint', $order_ids )
+				)
+			)
+		);
+
+		if ( empty( $order_ids ) ) {
+			return array();
+		}
+
+		$table        = self::table_name();
+		$placeholders = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Placeholders built dynamically.
+		$sql = $wpdb->prepare(
+			"SELECT order_id, MAX(expires_at) AS expires_at
+			FROM `{$table}`
+			WHERE order_id IN ({$placeholders})
+			GROUP BY order_id",
+			...$order_ids
+		);
+
+		$rows = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared above.
+		$map  = array();
+
+		foreach ( $order_ids as $order_id ) {
+			$map[ $order_id ] = null;
+		}
+
+		foreach ( (array) $rows as $row ) {
+			$order_id   = absint( $row->order_id );
+			$expires_at = isset( $row->expires_at ) ? (string) $row->expires_at : '';
+
+			if ( '' === $expires_at || '0000-00-00 00:00:00' === $expires_at ) {
+				$map[ $order_id ] = null;
+				continue;
+			}
+
+			$map[ $order_id ] = $expires_at;
+		}
+
+		return $map;
+	}
+
+	/**
+	 * Admin list display data for access expiration.
+	 *
+	 * @param string|null $expires_at MySQL datetime or null.
+	 * @return array{state: string, label: string} state: none|active|expired.
+	 */
+	public static function get_admin_expires_display( $expires_at ) {
+		if ( empty( $expires_at ) || '0000-00-00 00:00:00' === $expires_at ) {
+			return array(
+				'state' => 'none',
+				'label' => '—',
+			);
+		}
+
+		$timestamp = strtotime( (string) $expires_at );
+
+		if ( ! $timestamp ) {
+			return array(
+				'state' => 'none',
+				'label' => '—',
+			);
+		}
+
+		if ( $timestamp < current_time( 'timestamp' ) ) {
+			return array(
+				'state' => 'expired',
+				'label' => __( 'ИСТЕК', 'art-lms' ),
+			);
+		}
+
+		return array(
+			'state' => 'active',
+			'label' => Art_LMS_Orders::format_admin_datetime( (string) $expires_at ),
+		);
+	}
+
+	/**
 	 * Check whether an order already granted active access to a material.
 	 *
 	 * @param int $order_id   Order ID.
