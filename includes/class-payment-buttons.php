@@ -561,8 +561,8 @@ class Art_LMS_Payment_Buttons {
 
 			$options[] = array(
 				'id'          => $button_id,
-				'title'       => self::get_product_name( $button_id ),
-				'admin_title' => get_the_title( $button_id ),
+				'title'       => self::get_admin_title( $button_id ),
+				'admin_title' => self::get_admin_title( $button_id ),
 				'price'       => trim( (string) $meta['price'] ),
 				'materials'   => $materials,
 			);

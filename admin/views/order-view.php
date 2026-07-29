@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Template variables scoped to this view.
 
 $status_labels = Art_LMS_Orders::get_status_labels();
-$product_name  = Art_LMS_Payment_Buttons::get_product_name( (int) $order->product_id );
+$button_title  = Art_LMS_Payment_Buttons::get_admin_title( (int) $order->product_id );
 $can_send_email = Art_LMS_Orders::STATUS_PAID !== $order->status;
 ?>
 <div class="wrap art-lms-admin art-lms-order-view-page">
@@ -89,7 +89,7 @@ $can_send_email = Art_LMS_Orders::STATUS_PAID !== $order->status;
 				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Платёжная кнопка', 'art-lms' ); ?></th>
-					<td><?php echo esc_html( $product_name ? $product_name : '—' ); ?></td>
+					<td><?php echo esc_html( $button_title ? $button_title : '—' ); ?></td>
 				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Платёжный шлюз', 'art-lms' ); ?></th>

@@ -62,7 +62,7 @@ $can_change_product = $is_new || Art_LMS_Orders::STATUS_PAID !== $order['status'
 					<?php if ( ! empty( $order['product_id'] ) ) : ?>
 						<tr>
 							<th><?php esc_html_e( 'Платёжная кнопка', 'art-lms' ); ?></th>
-							<td><?php echo esc_html( Art_LMS_Payment_Buttons::get_product_name( (int) $order['product_id'] ) ); ?></td>
+							<td><?php echo esc_html( Art_LMS_Payment_Buttons::get_admin_title( (int) $order['product_id'] ) ); ?></td>
 						</tr>
 					<?php endif; ?>
 				</table>
@@ -95,7 +95,7 @@ $can_change_product = $is_new || Art_LMS_Orders::STATUS_PAID !== $order['status'
 					<td>
 						<?php if ( ! $can_change_product ) : ?>
 							<input type="hidden" name="product_id" value="<?php echo esc_attr( (string) $order['product_id'] ); ?>">
-							<p><strong><?php echo esc_html( Art_LMS_Payment_Buttons::get_product_name( (int) $order['product_id'] ) ); ?></strong></p>
+							<p><strong><?php echo esc_html( Art_LMS_Payment_Buttons::get_admin_title( (int) $order['product_id'] ) ); ?></strong></p>
 							<p class="description"><?php esc_html_e( 'Для оплаченного заказа продукт изменить нельзя.', 'art-lms' ); ?></p>
 						<?php else : ?>
 							<select name="product_id" id="art_lms_order_product_id" class="regular-text" required>
