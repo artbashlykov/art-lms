@@ -313,16 +313,18 @@ class Art_LMS_Gateway_Prodamus extends Art_LMS_Payment_Gateway {
 			return $this->webhook_response( 'Ignored status', 200 );
 		}
 
-		$order = $this->find_order_from_notification_labels(
-			array(
-				$submit['order_num'] ?? '',
-				$params['order_num'] ?? '',
-				$submit['order_id'] ?? '',
-				$params['order_id'] ?? '',
-			)
-		);
+		$label_candidates = $this->get_notification_order_label_candidates( $submit, $params );
+
+		$order = $this->find_order_from_notification_labels( $label_candidates );
 
 		if ( ! $order ) {
+			// Direct Prodamus links share this URL but have no ART LMS ord_… reference.
+			if ( ! $this->notification_has_art_lms_payment_label( $label_candidates ) ) {
+				$this->log_webhook_debug( 'ignored_foreign_order', $params );
+
+				return $this->webhook_response( 'Ignored: not an ART LMS order', 200 );
+			}
+
 			$this->log_webhook_debug( 'order_not_found', $params );
 
 			return $this->webhook_response( 'Order not found', 404 );
@@ -368,6 +370,38 @@ class Art_LMS_Gateway_Prodamus extends Art_LMS_Payment_Gateway {
 		do_action( 'art_lms_payment_confirmed', (int) $order->id, $params );
 
 		return $this->webhook_response( 'success', 200 );
+	}
+
+	/**
+	 * Collect merchant/order reference candidates from a Prodamus notification.
+	 *
+	 * @param array<string, mixed> $submit Nested submit payload.
+	 * @param array<string, mixed> $params Full notification params.
+	 * @return array<int, string>
+	 */
+	protected function get_notification_order_label_candidates( array $submit, array $params ) {
+		return array(
+			(string) ( $submit['order_num'] ?? '' ),
+			(string) ( $params['order_num'] ?? '' ),
+			(string) ( $submit['order_id'] ?? '' ),
+			(string) ( $params['order_id'] ?? '' ),
+		);
+	}
+
+	/**
+	 * Whether any notification label looks like an ART LMS payment_label (ord_…).
+	 *
+	 * @param array<int, string> $candidates Label candidates.
+	 * @return bool
+	 */
+	protected function notification_has_art_lms_payment_label( array $candidates ) {
+		foreach ( $candidates as $candidate ) {
+			if ( Art_LMS_Orders::looks_like_art_lms_payment_label( $candidate ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

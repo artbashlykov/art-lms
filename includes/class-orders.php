@@ -339,6 +339,21 @@ class Art_LMS_Orders {
 	}
 
 	/**
+	 * Whether a value matches the ART LMS payment_label format (ord_…).
+	 *
+	 * Used to tell plugin checkout payments from foreign Prodamus links that
+	 * share the same notification URL.
+	 *
+	 * @param string $label Candidate label.
+	 * @return bool
+	 */
+	public static function looks_like_art_lms_payment_label( $label ) {
+		$label = sanitize_text_field( (string) $label );
+
+		return 1 === preg_match( '/^ord_[a-z0-9]{16,24}$/i', $label );
+	}
+
+	/**
 	 * External payment reference sent to gateways.
 	 *
 	 * @param object $order Order object.
