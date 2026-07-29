@@ -4,7 +4,7 @@ Tags: lms, elearning, payments, digital products, checkout
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.17.32
+Stable tag: 2.17.33
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -89,6 +89,9 @@ When a customer completes checkout with a live payment gateway enabled, the plug
 By default, no. If you enable **Delete all plugin data when uninstalling ART LMS** in the general plugin settings and then delete the plugin from the Plugins screen, the plugin removes its custom database tables, settings, materials, payment buttons, order/access records, plugin-specific user meta, and the `art_lms_customer` role. WordPress pages you selected in the settings are not deleted.
 
 == Changelog ==
+
+= 2.17.33 =
+* Prodamus: always acknowledge missing orders with HTTP 200 (stops merchant error emails from direct/Tilda links); LMS paid flow unchanged when the order is found.
 
 = 2.17.32 =
 * Prodamus: ignore foreign payment notifications (no ART LMS `ord_…` label) with HTTP 200 so Prodamus does not email errors; real LMS checkouts still mark paid and grant access as before.

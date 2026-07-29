@@ -318,16 +318,30 @@ class Art_LMS_Gateway_Prodamus extends Art_LMS_Payment_Gateway {
 		$order = $this->find_order_from_notification_labels( $label_candidates );
 
 		if ( ! $order ) {
-			// Direct Prodamus links share this URL but have no ART LMS ord_… reference.
-			if ( ! $this->notification_has_art_lms_payment_label( $label_candidates ) ) {
-				$this->log_webhook_debug( 'ignored_foreign_order', $params );
+			/*
+			 * Missing order: always acknowledge with HTTP 200.
+			 *
+			 * Prodamus retries and emails the merchant on any non-200 response.
+			 * Direct / Tilda / manual payform links share this notification URL and
+			 * have no ART LMS order — those must not look like failures.
+			 *
+			 * Real LMS checkouts send payment_label as order_id → order_num (ord_…).
+			 * When that label is present but the row is missing, we still return 200
+			 * so Prodamus stops retrying; the miss is logged when WP_DEBUG is on.
+			 *
+			 * Successful LMS path (order found → mark_paid → grant access) is unchanged.
+			 */
+			$looks_like_ours = $this->notification_has_art_lms_payment_label( $label_candidates );
 
-				return $this->webhook_response( 'Ignored: not an ART LMS order', 200 );
-			}
+			$this->log_webhook_debug(
+				$looks_like_ours ? 'order_not_found_acknowledged' : 'ignored_foreign_order',
+				$params
+			);
 
-			$this->log_webhook_debug( 'order_not_found', $params );
-
-			return $this->webhook_response( 'Order not found', 404 );
+			return $this->webhook_response(
+				$looks_like_ours ? 'Order not found (acknowledged)' : 'Ignored: not an ART LMS order',
+				200
+			);
 		}
 
 		if ( self::ID !== Art_LMS_Orders::get_payment_gateway_slug( $order ) ) {
