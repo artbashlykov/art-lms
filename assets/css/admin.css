@@ -215,6 +215,10 @@
 	align-items: center;
 }
 
+.art-lms-orders-filters-row + .art-lms-orders-filters-row {
+	margin-top: 8px;
+}
+
 .art-lms-orders-filters-row input[type="search"],
 .art-lms-orders-filters-row select {
 	min-width: 180px;

@@ -1346,11 +1346,21 @@ class Art_LMS_Payment_Buttons {
 	public static function is_admin_list_query( $query ) {
 		global $pagenow;
 
-		if ( ! is_admin() || 'edit.php' !== $pagenow || ! $query->is_main_query() ) {
+		if ( ! is_admin() || ! $query instanceof WP_Query || 'edit.php' !== $pagenow || ! $query->is_main_query() ) {
 			return false;
 		}
 
-		return self::POST_TYPE === $query->get( 'post_type' );
+		$post_type = $query->get( 'post_type' );
+
+		if ( is_array( $post_type ) ) {
+			return 1 === count( $post_type ) && self::POST_TYPE === reset( $post_type );
+		}
+
+		if ( '' === $post_type || false === $post_type ) {
+			$post_type = isset( $_GET['post_type'] ) ? sanitize_key( wp_unslash( $_GET['post_type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list screen detection only.
+		}
+
+		return self::POST_TYPE === $post_type;
 	}
 
 	/**
@@ -1469,23 +1479,30 @@ class Art_LMS_Payment_Buttons {
 	/**
 	 * Extend admin search to product name meta.
 	 *
+	 * Replaces the default posts_search clause so OR-meta is grouped correctly
+	 * under post_type (avoids matching unrelated posts across the site).
+	 *
 	 * @param string   $search Search SQL clause.
 	 * @param WP_Query $query  Query object.
 	 * @return string
 	 */
 	public static function filter_admin_list_search_where( $search, $query ) {
-		if ( ! self::is_admin_list_query( $query ) || ! $query->get( 's' ) || '' === $search ) {
+		if ( ! self::is_admin_list_query( $query ) || ! $query->get( 's' ) ) {
 			return $search;
 		}
 
 		global $wpdb;
 
-		$term = $query->get( 's' );
-		$like = '%' . $wpdb->esc_like( $term ) . '%';
+		$like = '%' . $wpdb->esc_like( (string) $query->get( 's' ) ) . '%';
 
-		$search .= $wpdb->prepare( ' OR (art_lms_btn_product_search.meta_value LIKE %s)', $like );
-
-		return $search;
+		return $wpdb->prepare(
+			" AND (
+				({$wpdb->posts}.post_title LIKE %s)
+				OR (art_lms_btn_product_search.meta_value LIKE %s)
+			) ",
+			$like,
+			$like
+		);
 	}
 
 	/**

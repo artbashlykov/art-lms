@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 $add_url       = Art_LMS_Admin_Orders::get_edit_url();
 $reset_url     = Art_LMS_Admin_Orders::get_list_url();
 $status_labels = Art_LMS_Orders::get_status_labels();
-$has_filters   = $filters['buyer'] || $filters['status'] || $filters['date_from'] || $filters['date_to'];
+$has_filters   = $filters['buyer'] || $filters['status'] || $filters['date_from'] || $filters['date_to'] || $filters['expires_from'] || $filters['expires_to'] || $filters['access_expiry'];
 $has_orders    = ! empty( $orders );
 $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_map ) ? $access_expires_map : array();
 ?>
@@ -56,7 +56,7 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 			</select>
 
 			<span class="art-lms-orders-date-filter">
-				<label for="art_lms_orders_date_from"><?php esc_html_e( 'С', 'art-lms' ); ?></label>
+				<label for="art_lms_orders_date_from"><?php esc_html_e( 'Создан', 'art-lms' ); ?></label>
 				<input
 					type="text"
 					name="date_from"
@@ -66,13 +66,46 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 					autocomplete="off"
 					placeholder="<?php esc_attr_e( 'гггг-мм-дд', 'art-lms' ); ?>"
 				>
-				<label for="art_lms_orders_date_to"><?php esc_html_e( 'По', 'art-lms' ); ?></label>
+				<span aria-hidden="true">—</span>
 				<input
 					type="text"
 					name="date_to"
 					id="art_lms_orders_date_to"
 					class="art-lms-date-input"
 					value="<?php echo esc_attr( $filters['date_to'] ); ?>"
+					autocomplete="off"
+					placeholder="<?php esc_attr_e( 'гггг-мм-дд', 'art-lms' ); ?>"
+				>
+			</span>
+		</div>
+
+		<div class="art-lms-orders-filters-row">
+			<label class="screen-reader-text" for="art_lms_orders_access_expiry"><?php esc_html_e( 'Срок доступа', 'art-lms' ); ?></label>
+			<select name="access_expiry" id="art_lms_orders_access_expiry">
+				<option value="" <?php selected( $filters['access_expiry'], '' ); ?>><?php esc_html_e( 'Любой срок доступа', 'art-lms' ); ?></option>
+				<option value="expired" <?php selected( $filters['access_expiry'], 'expired' ); ?>><?php esc_html_e( 'Истёк', 'art-lms' ); ?></option>
+				<option value="active" <?php selected( $filters['access_expiry'], 'active' ); ?>><?php esc_html_e( 'Ещё действует', 'art-lms' ); ?></option>
+				<option value="none" <?php selected( $filters['access_expiry'], 'none' ); ?>><?php esc_html_e( 'Бессрочный / без срока', 'art-lms' ); ?></option>
+			</select>
+
+			<span class="art-lms-orders-date-filter">
+				<label for="art_lms_orders_expires_from"><?php esc_html_e( 'Истекает', 'art-lms' ); ?></label>
+				<input
+					type="text"
+					name="expires_from"
+					id="art_lms_orders_expires_from"
+					class="art-lms-date-input"
+					value="<?php echo esc_attr( $filters['expires_from'] ); ?>"
+					autocomplete="off"
+					placeholder="<?php esc_attr_e( 'гггг-мм-дд', 'art-lms' ); ?>"
+				>
+				<span aria-hidden="true">—</span>
+				<input
+					type="text"
+					name="expires_to"
+					id="art_lms_orders_expires_to"
+					class="art-lms-date-input"
+					value="<?php echo esc_attr( $filters['expires_to'] ); ?>"
 					autocomplete="off"
 					placeholder="<?php esc_attr_e( 'гггг-мм-дд', 'art-lms' ); ?>"
 				>
@@ -94,6 +127,9 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 			<input type="hidden" name="status" value="<?php echo esc_attr( $filters['status'] ); ?>">
 			<input type="hidden" name="date_from" value="<?php echo esc_attr( $filters['date_from'] ); ?>">
 			<input type="hidden" name="date_to" value="<?php echo esc_attr( $filters['date_to'] ); ?>">
+			<input type="hidden" name="expires_from" value="<?php echo esc_attr( $filters['expires_from'] ); ?>">
+			<input type="hidden" name="expires_to" value="<?php echo esc_attr( $filters['expires_to'] ); ?>">
+			<input type="hidden" name="access_expiry" value="<?php echo esc_attr( $filters['access_expiry'] ); ?>">
 			<input type="hidden" name="orderby" value="<?php echo esc_attr( $filters['orderby'] ); ?>">
 			<input type="hidden" name="order" value="<?php echo esc_attr( $filters['order'] ); ?>">
 			<input type="hidden" name="paged" value="<?php echo esc_attr( (string) $page ); ?>">

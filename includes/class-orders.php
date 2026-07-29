@@ -998,20 +998,24 @@ class Art_LMS_Orders {
 		global $wpdb;
 
 		$defaults = array(
-			'buyer'     => '',
-			'status'    => '',
-			'date_from' => '',
-			'date_to'   => '',
-			'orderby'   => 'created_at',
-			'order'     => 'DESC',
-			'per_page'  => 50,
-			'page'      => 1,
+			'buyer'          => '',
+			'status'         => '',
+			'date_from'      => '',
+			'date_to'        => '',
+			'expires_from'   => '',
+			'expires_to'     => '',
+			'access_expiry'  => '',
+			'orderby'        => 'created_at',
+			'order'          => 'DESC',
+			'per_page'       => 50,
+			'page'           => 1,
 		);
 
 		$args = wp_parse_args( $args, $defaults );
 
-		$table       = self::table_name();
-		$users_table = $wpdb->users;
+		$table        = self::table_name();
+		$users_table  = $wpdb->users;
+		$access_table = Art_LMS_Access::table_name();
 
 		$joins = array(
 			"LEFT JOIN {$users_table} u ON u.ID = o.user_id",
@@ -1052,6 +1056,51 @@ class Art_LMS_Orders {
 		if ( $date_to ) {
 			$where[]  = 'o.created_at <= %s';
 			$params[] = $date_to . ' 23:59:59';
+		}
+
+		$expires_from  = self::sanitize_list_date( $args['expires_from'] ?? '' );
+		$expires_to    = self::sanitize_list_date( $args['expires_to'] ?? '' );
+		$access_expiry = sanitize_key( (string) ( $args['access_expiry'] ?? '' ) );
+
+		if ( ! in_array( $access_expiry, array( 'expired', 'active', 'none' ), true ) ) {
+			$access_expiry = '';
+		}
+
+		if ( $expires_from && $expires_to && $expires_from > $expires_to ) {
+			$swap         = $expires_from;
+			$expires_from = $expires_to;
+			$expires_to   = $swap;
+		}
+
+		$needs_access_join = '' !== $access_expiry || $expires_from || $expires_to;
+
+		if ( $needs_access_join ) {
+			$joins[] = "LEFT JOIN (
+				SELECT order_id, MAX(expires_at) AS expires_at
+				FROM `{$access_table}`
+				GROUP BY order_id
+			) art_lms_access_exp ON art_lms_access_exp.order_id = o.id";
+		}
+
+		if ( 'expired' === $access_expiry ) {
+			$where[]  = 'art_lms_access_exp.expires_at IS NOT NULL AND art_lms_access_exp.expires_at < %s';
+			$params[] = current_time( 'mysql' );
+		} elseif ( 'active' === $access_expiry ) {
+			$where[]  = 'art_lms_access_exp.expires_at IS NOT NULL AND art_lms_access_exp.expires_at >= %s';
+			$params[] = current_time( 'mysql' );
+		} elseif ( 'none' === $access_expiry ) {
+			$where[] = '( art_lms_access_exp.expires_at IS NULL OR art_lms_access_exp.expires_at = %s )';
+			$params[] = '0000-00-00 00:00:00';
+		}
+
+		if ( $expires_from ) {
+			$where[]  = 'art_lms_access_exp.expires_at IS NOT NULL AND art_lms_access_exp.expires_at >= %s';
+			$params[] = $expires_from . ' 00:00:00';
+		}
+
+		if ( $expires_to ) {
+			$where[]  = 'art_lms_access_exp.expires_at IS NOT NULL AND art_lms_access_exp.expires_at <= %s';
+			$params[] = $expires_to . ' 23:59:59';
 		}
 
 		$orderby_map = array(

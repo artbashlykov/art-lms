@@ -229,15 +229,33 @@ class Art_LMS_Admin_Orders {
 			$date_to   = $swap;
 		}
 
+		$expires_from = isset( $_GET['expires_from'] ) ? Art_LMS_Orders::sanitize_list_date( sanitize_text_field( wp_unslash( $_GET['expires_from'] ) ) ) : '';
+		$expires_to   = isset( $_GET['expires_to'] ) ? Art_LMS_Orders::sanitize_list_date( sanitize_text_field( wp_unslash( $_GET['expires_to'] ) ) ) : '';
+
+		if ( $expires_from && $expires_to && $expires_from > $expires_to ) {
+			$swap         = $expires_from;
+			$expires_from = $expires_to;
+			$expires_to   = $swap;
+		}
+
+		$access_expiry = isset( $_GET['access_expiry'] ) ? sanitize_key( wp_unslash( $_GET['access_expiry'] ) ) : '';
+
+		if ( ! in_array( $access_expiry, array( 'expired', 'active', 'none' ), true ) ) {
+			$access_expiry = '';
+		}
+
 		return array(
-			'buyer'     => isset( $_GET['buyer'] ) ? sanitize_text_field( wp_unslash( $_GET['buyer'] ) ) : '',
-			'status'    => $status,
-			'date_from' => $date_from,
-			'date_to'   => $date_to,
-			'orderby'   => $orderby,
-			'order'     => $order,
-			'per_page'  => self::get_list_per_page(),
-			'page'      => isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1,
+			'buyer'         => isset( $_GET['buyer'] ) ? sanitize_text_field( wp_unslash( $_GET['buyer'] ) ) : '',
+			'status'        => $status,
+			'date_from'     => $date_from,
+			'date_to'       => $date_to,
+			'expires_from'  => $expires_from,
+			'expires_to'    => $expires_to,
+			'access_expiry' => $access_expiry,
+			'orderby'       => $orderby,
+			'order'         => $order,
+			'per_page'      => self::get_list_per_page(),
+			'page'          => isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1,
 		);
 	}
 
@@ -345,7 +363,7 @@ class Art_LMS_Admin_Orders {
 			'page' => self::PAGE_LIST,
 		);
 
-		$allowed = array( 'buyer', 'status', 'date_from', 'date_to', 'orderby', 'order', 'paged' );
+		$allowed = array( 'buyer', 'status', 'date_from', 'date_to', 'expires_from', 'expires_to', 'access_expiry', 'orderby', 'order', 'paged' );
 
 		foreach ( $allowed as $key ) {
 			if ( ! array_key_exists( $key, $args ) ) {
@@ -358,11 +376,15 @@ class Art_LMS_Admin_Orders {
 				continue;
 			}
 
+			if ( 'access_expiry' === $key && '' === $value ) {
+				continue;
+			}
+
 			if ( 'buyer' === $key && '' === trim( (string) $value ) ) {
 				continue;
 			}
 
-			if ( in_array( $key, array( 'date_from', 'date_to' ), true ) && '' === $value ) {
+			if ( in_array( $key, array( 'date_from', 'date_to', 'expires_from', 'expires_to' ), true ) && '' === $value ) {
 				continue;
 			}
 
@@ -638,13 +660,16 @@ class Art_LMS_Admin_Orders {
 		}
 
 		$redirect_args = array(
-			'buyer'     => isset( $_POST['buyer'] ) ? sanitize_text_field( wp_unslash( $_POST['buyer'] ) ) : '',
-			'status'    => isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '',
-			'date_from' => isset( $_POST['date_from'] ) ? Art_LMS_Orders::sanitize_list_date( sanitize_text_field( wp_unslash( $_POST['date_from'] ) ) ) : '',
-			'date_to'   => isset( $_POST['date_to'] ) ? Art_LMS_Orders::sanitize_list_date( sanitize_text_field( wp_unslash( $_POST['date_to'] ) ) ) : '',
-			'orderby'   => isset( $_POST['orderby'] ) ? sanitize_key( wp_unslash( $_POST['orderby'] ) ) : 'created_at',
-			'order'     => isset( $_POST['order'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['order'] ) ) ) : 'DESC',
-			'paged'     => isset( $_POST['paged'] ) ? max( 1, absint( $_POST['paged'] ) ) : 1,
+			'buyer'         => isset( $_POST['buyer'] ) ? sanitize_text_field( wp_unslash( $_POST['buyer'] ) ) : '',
+			'status'        => isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '',
+			'date_from'     => isset( $_POST['date_from'] ) ? Art_LMS_Orders::sanitize_list_date( sanitize_text_field( wp_unslash( $_POST['date_from'] ) ) ) : '',
+			'date_to'       => isset( $_POST['date_to'] ) ? Art_LMS_Orders::sanitize_list_date( sanitize_text_field( wp_unslash( $_POST['date_to'] ) ) ) : '',
+			'expires_from'  => isset( $_POST['expires_from'] ) ? Art_LMS_Orders::sanitize_list_date( sanitize_text_field( wp_unslash( $_POST['expires_from'] ) ) ) : '',
+			'expires_to'    => isset( $_POST['expires_to'] ) ? Art_LMS_Orders::sanitize_list_date( sanitize_text_field( wp_unslash( $_POST['expires_to'] ) ) ) : '',
+			'access_expiry' => isset( $_POST['access_expiry'] ) ? sanitize_key( wp_unslash( $_POST['access_expiry'] ) ) : '',
+			'orderby'       => isset( $_POST['orderby'] ) ? sanitize_key( wp_unslash( $_POST['orderby'] ) ) : 'created_at',
+			'order'         => isset( $_POST['order'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['order'] ) ) ) : 'DESC',
+			'paged'         => isset( $_POST['paged'] ) ? max( 1, absint( $_POST['paged'] ) ) : 1,
 		);
 
 		if ( ! in_array( $redirect_args['orderby'], Art_LMS_Orders::get_list_orderby_keys(), true ) ) {
@@ -657,6 +682,10 @@ class Art_LMS_Admin_Orders {
 
 		if ( '' !== $redirect_args['status'] && ! isset( Art_LMS_Orders::get_status_labels()[ $redirect_args['status'] ] ) ) {
 			$redirect_args['status'] = '';
+		}
+
+		if ( ! in_array( $redirect_args['access_expiry'], array( 'expired', 'active', 'none' ), true ) ) {
+			$redirect_args['access_expiry'] = '';
 		}
 
 		$redirect_to = self::get_list_url( $redirect_args );
