@@ -28,7 +28,7 @@ class Art_LMS_Security {
 	 */
 	public static function init() {
 		add_action( 'admin_init', array( __CLASS__, 'block_buyers_from_admin' ), 1 );
-		add_filter( 'show_admin_bar', array( __CLASS__, 'hide_admin_bar_for_buyers' ) );
+		add_filter( 'show_admin_bar', array( __CLASS__, 'hide_admin_bar_for_non_admins' ) );
 	}
 
 	/**
@@ -127,17 +127,38 @@ class Art_LMS_Security {
 	}
 
 	/**
-	 * Hide admin bar for buyers on the frontend.
+	 * Hide WordPress admin bar for everyone except site admins.
+	 *
+	 * @param bool $show Whether to show admin bar.
+	 * @return bool
+	 */
+	public static function hide_admin_bar_for_non_admins( $show ) {
+		if ( ! is_user_logged_in() ) {
+			return $show;
+		}
+
+		if ( current_user_can( 'manage_options' ) ) {
+			return $show;
+		}
+
+		/**
+		 * Whether to show the admin bar for a logged-in non-admin.
+		 *
+		 * Default: hidden. Return true to show it for the current user.
+		 *
+		 * @param bool $show Whether to show the admin bar.
+		 */
+		return (bool) apply_filters( 'art_lms_show_admin_bar_for_non_admin', false );
+	}
+
+	/**
+	 * Backward-compatible alias.
 	 *
 	 * @param bool $show Whether to show admin bar.
 	 * @return bool
 	 */
 	public static function hide_admin_bar_for_buyers( $show ) {
-		if ( self::is_buyer_only() ) {
-			return false;
-		}
-
-		return $show;
+		return self::hide_admin_bar_for_non_admins( $show );
 	}
 
 	/**
