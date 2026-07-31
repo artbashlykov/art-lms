@@ -18,11 +18,99 @@ class Art_LMS_Access {
 	const STATUS_EXPIRED = 'expired';
 	const STATUS_REVOKED = 'revoked';
 
+	const CRON_HOOK = 'art_lms_expire_access_daily';
+
 	/**
 	 * Register hooks.
 	 */
 	public static function init() {
-		// Access checks are used by shortcodes and protected content views.
+		add_action( self::CRON_HOOK, array( __CLASS__, 'expire_due_access' ) );
+		self::maybe_schedule_cron();
+	}
+
+	/**
+	 * Schedule daily expiry cron if missing.
+	 */
+	public static function maybe_schedule_cron() {
+		if ( wp_next_scheduled( self::CRON_HOOK ) ) {
+			return;
+		}
+
+		self::schedule_cron();
+	}
+
+	/**
+	 * Schedule the daily access expiry event.
+	 */
+	public static function schedule_cron() {
+		if ( wp_next_scheduled( self::CRON_HOOK ) ) {
+			return;
+		}
+
+		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::CRON_HOOK );
+	}
+
+	/**
+	 * Clear the daily access expiry event.
+	 */
+	public static function unschedule_cron() {
+		$timestamp = wp_next_scheduled( self::CRON_HOOK );
+
+		while ( $timestamp ) {
+			wp_unschedule_event( $timestamp, self::CRON_HOOK );
+			$timestamp = wp_next_scheduled( self::CRON_HOOK );
+		}
+	}
+
+	/**
+	 * Mark all due active access rows as expired (cron + manual).
+	 *
+	 * @return int Number of rows updated.
+	 */
+	public static function expire_due_access() {
+		global $wpdb;
+
+		$table = self::table_name();
+		$now   = current_time( 'mysql' );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is internal; values are prepared.
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE `{$table}`
+				SET status = %s
+				WHERE status = %s
+					AND expires_at IS NOT NULL
+					AND expires_at <> %s
+					AND expires_at <> ''
+					AND expires_at < %s",
+				self::STATUS_EXPIRED,
+				self::STATUS_ACTIVE,
+				'0000-00-00 00:00:00',
+				$now
+			)
+		);
+
+		return false === $updated ? 0 : (int) $updated;
+	}
+
+	/**
+	 * Whether an expiration datetime is in the past.
+	 *
+	 * @param string|null $expires_at MySQL datetime or empty/null for unlimited.
+	 * @return bool
+	 */
+	public static function is_past_expiry( $expires_at ) {
+		if ( empty( $expires_at ) || '0000-00-00 00:00:00' === $expires_at ) {
+			return false;
+		}
+
+		$timestamp = strtotime( (string) $expires_at );
+
+		if ( ! $timestamp ) {
+			return false;
+		}
+
+		return $timestamp < current_time( 'timestamp' );
 	}
 
 	/**
@@ -80,6 +168,9 @@ class Art_LMS_Access {
 	/**
 	 * Check if user has active access to product.
 	 *
+	 * Considers every active row for the material: expired ones are closed,
+	 * and access remains if any non-expired row is still valid.
+	 *
 	 * @param int $user_id    User ID.
 	 * @param int $product_id Product ID.
 	 * @return bool
@@ -96,27 +187,33 @@ class Art_LMS_Access {
 
 		$table = self::table_name();
 
-		$row = $wpdb->get_row(
+		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM `{$table}`
+				"SELECT id, expires_at FROM `{$table}`
 				WHERE user_id = %d AND product_id = %d AND status = %s
-				ORDER BY id DESC LIMIT 1",
+				ORDER BY id DESC",
 				$user_id,
 				$product_id,
 				self::STATUS_ACTIVE
 			)
 		);
 
-		if ( ! $row ) {
+		if ( empty( $rows ) ) {
 			return false;
 		}
 
-		if ( ! empty( $row->expires_at ) && strtotime( $row->expires_at ) < current_time( 'timestamp' ) ) {
-			self::expire( (int) $row->id );
-			return false;
+		$has_valid = false;
+
+		foreach ( $rows as $row ) {
+			if ( self::is_past_expiry( $row->expires_at ?? null ) ) {
+				self::expire( (int) $row->id );
+				continue;
+			}
+
+			$has_valid = true;
 		}
 
-		return true;
+		return $has_valid;
 	}
 
 	/**
@@ -142,8 +239,8 @@ class Art_LMS_Access {
 
 		$active = array();
 
-		foreach ( $rows as $row ) {
-			if ( ! empty( $row->expires_at ) && strtotime( $row->expires_at ) < current_time( 'timestamp' ) ) {
+		foreach ( (array) $rows as $row ) {
+			if ( self::is_past_expiry( $row->expires_at ?? null ) ) {
 				self::expire( (int) $row->id );
 				continue;
 			}
@@ -342,7 +439,7 @@ class Art_LMS_Access {
 	}
 
 	/**
-	 * Check whether an order already granted active access to a material.
+	 * Check whether an order already granted active (non-expired) access to a material.
 	 *
 	 * @param int $order_id   Order ID.
 	 * @param int $product_id Material post ID.
@@ -353,18 +450,32 @@ class Art_LMS_Access {
 
 		$table = self::table_name();
 
-		$access_id = $wpdb->get_var(
+		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id FROM `{$table}`
-				WHERE order_id = %d AND product_id = %d AND status = %s
-				LIMIT 1",
+				"SELECT id, expires_at FROM `{$table}`
+				WHERE order_id = %d AND product_id = %d AND status = %s",
 				absint( $order_id ),
 				absint( $product_id ),
 				self::STATUS_ACTIVE
 			)
 		);
 
-		return ! empty( $access_id );
+		if ( empty( $rows ) ) {
+			return false;
+		}
+
+		$has_valid = false;
+
+		foreach ( $rows as $row ) {
+			if ( self::is_past_expiry( $row->expires_at ?? null ) ) {
+				self::expire( (int) $row->id );
+				continue;
+			}
+
+			$has_valid = true;
+		}
+
+		return $has_valid;
 	}
 
 	// phpcs:enable
