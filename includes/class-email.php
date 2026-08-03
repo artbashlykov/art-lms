@@ -12,13 +12,69 @@ defined( 'ABSPATH' ) || exit;
  */
 class Art_LMS_Email {
 
+	const CRON_SEND_PAID_EMAILS = 'art_lms_send_order_paid_emails';
+
 	/**
 	 * Register hooks.
 	 */
 	public static function init() {
-		add_action( 'art_lms_order_paid', array( __CLASS__, 'send_purchase_email' ), 10, 2 );
-		add_action( 'art_lms_order_paid', array( __CLASS__, 'send_admin_payment_email' ), 11, 2 );
+		add_action( 'art_lms_order_paid', array( __CLASS__, 'schedule_order_paid_emails' ), 10, 2 );
+		add_action( self::CRON_SEND_PAID_EMAILS, array( __CLASS__, 'send_scheduled_order_paid_emails' ), 10, 1 );
 		add_filter( 'retrieve_password_message', array( __CLASS__, 'filter_retrieve_password_message' ), 10, 4 );
+	}
+
+	/**
+	 * Queue purchase/admin emails after payment so gateways can respond quickly.
+	 *
+	 * Webhooks (e.g. Prodamus) must return HTTP 200 fast; wp_mail is deferred via a
+	 * single cron event. mark_paid / access grant stay synchronous.
+	 *
+	 * @param int    $order_id Order ID.
+	 * @param object $order    Order object.
+	 */
+	public static function schedule_order_paid_emails( $order_id, $order ) {
+		unset( $order );
+
+		$order_id = absint( $order_id );
+
+		if ( ! $order_id ) {
+			return;
+		}
+
+		$args = array( $order_id );
+
+		if ( ! wp_next_scheduled( self::CRON_SEND_PAID_EMAILS, $args ) ) {
+			wp_schedule_single_event( time(), self::CRON_SEND_PAID_EMAILS, $args );
+		}
+
+		if ( function_exists( 'spawn_cron' ) ) {
+			spawn_cron();
+		}
+	}
+
+	/**
+	 * Cron callback: send deferred paid-order emails.
+	 *
+	 * @param int $order_id Order ID.
+	 */
+	public static function send_scheduled_order_paid_emails( $order_id ) {
+		$order_id = absint( $order_id );
+		$order    = $order_id ? Art_LMS_Orders::get( $order_id ) : null;
+
+		if ( ! $order || Art_LMS_Orders::STATUS_PAID !== $order->status ) {
+			return;
+		}
+
+		$done_key = 'art_lms_paid_emails_done_' . $order_id;
+
+		if ( get_transient( $done_key ) ) {
+			return;
+		}
+
+		self::send_purchase_email( $order_id, $order );
+		self::send_admin_payment_email( $order_id, $order );
+
+		set_transient( $done_key, 1, WEEK_IN_SECONDS );
 	}
 
 	/**
