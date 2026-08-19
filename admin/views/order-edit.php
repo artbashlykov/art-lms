@@ -128,13 +128,13 @@ $can_change_product = $is_new || Art_LMS_Orders::STATUS_PAID !== $order['status'
 				<tr>
 					<th scope="row"><label for="art_lms_order_amount"><?php esc_html_e( 'Сумма (₽)', 'art-lms' ); ?></label></th>
 					<td>
-						<input type="text" inputmode="decimal" name="amount" id="art_lms_order_amount" class="small-text" value="<?php echo esc_attr( $order['amount'] ); ?>" required autocomplete="off">
+						<input type="text" inputmode="decimal" name="amount" id="art_lms_order_amount" class="regular-text" value="<?php echo esc_attr( $order['amount'] ); ?>" required autocomplete="off">
 					</td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="art_lms_order_status"><?php esc_html_e( 'Статус', 'art-lms' ); ?></label></th>
 					<td>
-						<select name="status" id="art_lms_order_status">
+						<select name="status" id="art_lms_order_status" class="regular-text">
 							<?php foreach ( Art_LMS_Orders::get_status_labels() as $status_key => $status_label ) : ?>
 								<option value="<?php echo esc_attr( $status_key ); ?>" <?php selected( $order['status'], $status_key ); ?>>
 									<?php echo esc_html( $status_label ); ?>

@@ -337,9 +337,11 @@
 	max-width: 820px;
 }
 
-.art-lms-order-form .form-table th {
-	width: 200px;
-	padding-left: 0;
+.art-lms-order-form .regular-text,
+.art-lms-order-form select.regular-text {
+	width: 25em;
+	max-width: 100%;
+	box-sizing: border-box;
 }
 
 .art-lms-buyer-lookup {
