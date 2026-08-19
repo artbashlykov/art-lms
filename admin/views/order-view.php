@@ -57,7 +57,7 @@ $can_send_email = Art_LMS_Orders::STATUS_PAID !== $order->status;
 							<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order->id ); ?>">
 
 							<div class="art-lms-order-status-form__controls">
-								<select name="status" id="art_lms_order_view_status" class="art-lms-order-status-select">
+								<select name="status" id="art_lms_order_view_status" class="regular-text art-lms-order-status-select">
 									<?php foreach ( $status_labels as $status_key => $status_label ) : ?>
 										<option value="<?php echo esc_attr( $status_key ); ?>" <?php selected( $order->status, $status_key ); ?>>
 											<?php echo esc_html( $status_label ); ?>
@@ -85,7 +85,11 @@ $can_send_email = Art_LMS_Orders::STATUS_PAID !== $order->status;
 				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Сумма', 'art-lms' ); ?></th>
-					<td><?php echo esc_html( number_format( (float) $order->amount, 2, '.', ' ' ) ); ?> ₽</td>
+					<td>
+						<span class="regular-text art-lms-order-view-amount">
+							<?php echo esc_html( number_format( (float) $order->amount, 2, '.', ' ' ) ); ?> ₽
+						</span>
+					</td>
 				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Платёжная кнопка', 'art-lms' ); ?></th>

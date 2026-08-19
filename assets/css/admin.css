@@ -459,8 +459,21 @@
 	gap: 8px;
 }
 
-.art-lms-order-status-select {
-	min-width: 180px;
+.art-lms-order-view-page .art-lms-order-status-select,
+.art-lms-order-view-page .art-lms-order-view-amount {
+	width: 25em;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.art-lms-order-view-amount {
+	display: inline-block;
+	min-height: 30px;
+	padding: 0 8px;
+	line-height: 2;
+	background: #fff;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
 }
 
 .art-lms-order-status-preview {
