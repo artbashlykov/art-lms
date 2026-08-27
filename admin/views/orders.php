@@ -155,7 +155,12 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 								<span class="art-lms-sort-indicator" aria-hidden="true"></span>
 							</a>
 						</th>
-						<th scope="col"><?php esc_html_e( 'Доступ истекает', 'art-lms' ); ?></th>
+						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'product' ) ); ?>">
+							<?php esc_html_e( 'Продукт', 'art-lms' ); ?>
+						</th>
+						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'access_expiry' ) ); ?>">
+							<?php esc_html_e( 'Доступ истекает', 'art-lms' ); ?>
+						</th>
 						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_sort_classes( 'amount', $filters ) ); ?>">
 							<a href="<?php echo esc_url( Art_LMS_Admin_Orders::get_list_sort_link( 'amount', $filters ) ); ?>">
 								<span><?php esc_html_e( 'Сумма', 'art-lms' ); ?></span>
@@ -168,23 +173,29 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 								<span class="art-lms-sort-indicator" aria-hidden="true"></span>
 							</a>
 						</th>
-						<th scope="col"><?php esc_html_e( 'Платёжный шлюз', 'art-lms' ); ?></th>
+						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'gateway' ) ); ?>">
+							<?php esc_html_e( 'Платёжный шлюз', 'art-lms' ); ?>
+						</th>
 						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_sort_classes( 'payment_label', $filters ) ); ?>">
 							<a href="<?php echo esc_url( Art_LMS_Admin_Orders::get_list_sort_link( 'payment_label', $filters ) ); ?>">
 								<span><?php esc_html_e( 'ID для платёжной системы', 'art-lms' ); ?></span>
 								<span class="art-lms-sort-indicator" aria-hidden="true"></span>
 							</a>
 						</th>
-						<th scope="col"><?php esc_html_e( 'Действия', 'art-lms' ); ?></th>
+						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'actions' ) ); ?>">
+							<?php esc_html_e( 'Действия', 'art-lms' ); ?>
+						</th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php foreach ( $orders as $order ) : ?>
 						<?php
-						$edit_url   = Art_LMS_Admin_Orders::get_edit_url( (int) $order->id );
-						$delete_url = Art_LMS_Admin_Orders::get_delete_url( (int) $order->id, $filters );
-						$user       = $order->user_id ? get_userdata( (int) $order->user_id ) : false;
-						$cb_id      = 'art-lms-order-cb-' . (int) $order->id;
+						$edit_url     = Art_LMS_Admin_Orders::get_edit_url( (int) $order->id );
+						$view_url     = Art_LMS_Admin_Orders::get_view_url( (int) $order->id );
+						$delete_url   = Art_LMS_Admin_Orders::get_delete_url( (int) $order->id, $filters );
+						$user         = $order->user_id ? get_userdata( (int) $order->user_id ) : false;
+						$cb_id        = 'art-lms-order-cb-' . (int) $order->id;
+						$product_name = Art_LMS_Payment_Buttons::get_admin_title( (int) $order->product_id );
 						?>
 						<tr>
 							<th scope="row" class="check-column">
@@ -205,8 +216,10 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 									value="<?php echo esc_attr( (string) (int) $order->id ); ?>"
 								>
 							</th>
-							<td><?php echo esc_html( Art_LMS_Orders::format_admin_datetime( $order->created_at ) ); ?></td>
-							<td>
+							<td class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'created_at' ) ); ?>">
+								<?php echo esc_html( Art_LMS_Orders::format_admin_datetime( $order->created_at ) ); ?>
+							</td>
+							<td class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'buyer' ) ); ?>">
 								<?php echo esc_html( $order->name ? $order->name : $order->email ); ?><br>
 								<small><?php echo esc_html( $order->email ); ?></small>
 								<?php
@@ -216,7 +229,16 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 									<br><small><a href="<?php echo esc_url( $profile_url ); ?>"><?php esc_html_e( 'Открыть профиль', 'art-lms' ); ?></a></small>
 								<?php endif; ?>
 							</td>
-							<td>
+							<td class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'product' ) ); ?>">
+								<?php
+								if ( $product_name ) {
+									echo esc_html( $product_name );
+								} else {
+									echo '&mdash;';
+								}
+								?>
+							</td>
+							<td class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'access_expiry' ) ); ?>">
 								<?php
 								$expires_display = Art_LMS_Access::get_admin_expires_display(
 									$access_expires_map[ (int) $order->id ] ?? null
@@ -229,24 +251,46 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 									<?php echo esc_html( $expires_display['label'] ); ?>
 								<?php endif; ?>
 							</td>
-							<td><?php echo esc_html( number_format( (float) $order->amount, 2, '.', ' ' ) ); ?> ₽</td>
-							<td>
+							<td class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'amount' ) ); ?>">
+								<?php echo esc_html( number_format( (float) $order->amount, 2, '.', ' ' ) ); ?> ₽
+							</td>
+							<td class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'status' ) ); ?>">
 								<span class="art-lms-order-status art-lms-order-status--<?php echo esc_attr( $order->status ); ?>">
 									<?php echo esc_html( Art_LMS_Orders::get_status_label( $order->status ) ); ?>
 								</span>
 							</td>
-							<td><?php echo esc_html( Art_LMS_Orders::get_payment_gateway_label( $order ) ); ?></td>
-							<td><code><?php echo esc_html( $order->payment_label ); ?></code></td>
-							<td class="art-lms-actions">
-								<a href="<?php echo esc_url( Art_LMS_Admin_Orders::get_view_url( (int) $order->id ) ); ?>"><?php esc_html_e( 'Просмотреть', 'art-lms' ); ?></a>
-								<span class="art-lms-actions-sep" aria-hidden="true">|</span>
-								<a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Изменить', 'art-lms' ); ?></a>
-								<span class="art-lms-actions-sep" aria-hidden="true">|</span>
+							<td class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'gateway' ) ); ?>">
+								<?php echo esc_html( Art_LMS_Orders::get_payment_gateway_label( $order ) ); ?>
+							</td>
+							<td class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'payment_label' ) ); ?>">
+								<code><?php echo esc_html( $order->payment_label ); ?></code>
+							</td>
+							<td class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'actions', array( 'art-lms-actions' ) ) ); ?>">
+								<a
+									href="<?php echo esc_url( $view_url ); ?>"
+									class="art-lms-action-icon"
+									title="<?php esc_attr_e( 'Просмотреть', 'art-lms' ); ?>"
+								>
+									<span class="dashicons dashicons-visibility" aria-hidden="true"></span>
+									<span class="screen-reader-text"><?php esc_html_e( 'Просмотреть', 'art-lms' ); ?></span>
+								</a>
+								<a
+									href="<?php echo esc_url( $edit_url ); ?>"
+									class="art-lms-action-icon"
+									title="<?php esc_attr_e( 'Изменить', 'art-lms' ); ?>"
+								>
+									<span class="dashicons dashicons-edit" aria-hidden="true"></span>
+									<span class="screen-reader-text"><?php esc_html_e( 'Изменить', 'art-lms' ); ?></span>
+								</a>
 								<a
 									href="<?php echo esc_url( $delete_url ); ?>"
-									class="submitdelete"
+									class="art-lms-action-icon art-lms-action-icon--delete submitdelete"
+									title="<?php esc_attr_e( 'Удалить', 'art-lms' ); ?>"
 									onclick="return confirm('<?php echo esc_js( __( 'Удалить этот заказ безвозвратно?', 'art-lms' ) ); ?>');"
-								><?php esc_html_e( 'Удалить', 'art-lms' ); ?></a>
+								>
+									<span class="dashicons dashicons-trash" aria-hidden="true"></span>
+									<span class="screen-reader-text"><?php esc_html_e( 'Удалить', 'art-lms' ); ?></span>
+								</a>
 							</td>
 						</tr>
 					<?php endforeach; ?>
@@ -257,14 +301,15 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 							<label class="screen-reader-text" for="art-lms-cb-select-all-bottom"><?php esc_html_e( 'Выбрать все', 'art-lms' ); ?></label>
 							<input id="art-lms-cb-select-all-bottom" type="checkbox" class="art-lms-orders-cb-select-all">
 						</td>
-						<th scope="col"><?php esc_html_e( 'Дата', 'art-lms' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Покупатель', 'art-lms' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Доступ истекает', 'art-lms' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Сумма', 'art-lms' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Статус', 'art-lms' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Платёжный шлюз', 'art-lms' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'ID для платёжной системы', 'art-lms' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Действия', 'art-lms' ); ?></th>
+						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'created_at' ) ); ?>"><?php esc_html_e( 'Дата', 'art-lms' ); ?></th>
+						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'buyer' ) ); ?>"><?php esc_html_e( 'Покупатель', 'art-lms' ); ?></th>
+						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'product' ) ); ?>"><?php esc_html_e( 'Продукт', 'art-lms' ); ?></th>
+						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'access_expiry' ) ); ?>"><?php esc_html_e( 'Доступ истекает', 'art-lms' ); ?></th>
+						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'amount' ) ); ?>"><?php esc_html_e( 'Сумма', 'art-lms' ); ?></th>
+						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'status' ) ); ?>"><?php esc_html_e( 'Статус', 'art-lms' ); ?></th>
+						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'gateway' ) ); ?>"><?php esc_html_e( 'Платёжный шлюз', 'art-lms' ); ?></th>
+						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'payment_label' ) ); ?>"><?php esc_html_e( 'ID для платёжной системы', 'art-lms' ); ?></th>
+						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'actions' ) ); ?>"><?php esc_html_e( 'Действия', 'art-lms' ); ?></th>
 					</tr>
 				</tfoot>
 			</table>
@@ -277,19 +322,20 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 		<table class="widefat striped art-lms-orders-table">
 			<thead>
 				<tr>
-					<th scope="col"><?php esc_html_e( 'Дата', 'art-lms' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Покупатель', 'art-lms' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Доступ истекает', 'art-lms' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Сумма', 'art-lms' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Статус', 'art-lms' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Платёжный шлюз', 'art-lms' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'ID для платёжной системы', 'art-lms' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Действия', 'art-lms' ); ?></th>
+					<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'created_at' ) ); ?>"><?php esc_html_e( 'Дата', 'art-lms' ); ?></th>
+					<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'buyer' ) ); ?>"><?php esc_html_e( 'Покупатель', 'art-lms' ); ?></th>
+					<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'product' ) ); ?>"><?php esc_html_e( 'Продукт', 'art-lms' ); ?></th>
+					<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'access_expiry' ) ); ?>"><?php esc_html_e( 'Доступ истекает', 'art-lms' ); ?></th>
+					<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'amount' ) ); ?>"><?php esc_html_e( 'Сумма', 'art-lms' ); ?></th>
+					<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'status' ) ); ?>"><?php esc_html_e( 'Статус', 'art-lms' ); ?></th>
+					<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'gateway' ) ); ?>"><?php esc_html_e( 'Платёжный шлюз', 'art-lms' ); ?></th>
+					<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'payment_label' ) ); ?>"><?php esc_html_e( 'ID для платёжной системы', 'art-lms' ); ?></th>
+					<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'actions' ) ); ?>"><?php esc_html_e( 'Действия', 'art-lms' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr>
-					<td colspan="8">
+					<td colspan="<?php echo esc_attr( (string) max( 1, Art_LMS_Admin_Orders::get_visible_list_columns_count() ) ); ?>">
 						<?php
 						if ( $has_filters ) {
 							esc_html_e( 'Заказы не найдены. Измените фильтры.', 'art-lms' );

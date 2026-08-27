@@ -52,6 +52,100 @@ class Art_LMS_Admin_Orders {
 				'option'  => self::SCREEN_OPTION_PER_PAGE,
 			)
 		);
+
+		$screen = get_current_screen();
+
+		if ( $screen instanceof WP_Screen ) {
+			add_filter( 'manage_' . $screen->id . '_columns', array( __CLASS__, 'get_list_columns' ) );
+		}
+	}
+
+	/**
+	 * Columns available in Screen Options for the orders list.
+	 *
+	 * @param array<string, string> $columns Existing columns.
+	 * @return array<string, string>
+	 */
+	public static function get_list_columns( $columns = array() ) {
+		unset( $columns );
+
+		return array(
+			'created_at'    => __( 'Дата', 'art-lms' ),
+			'buyer'         => __( 'Покупатель', 'art-lms' ),
+			'product'       => __( 'Продукт', 'art-lms' ),
+			'access_expiry' => __( 'Доступ истекает', 'art-lms' ),
+			'amount'        => __( 'Сумма', 'art-lms' ),
+			'status'        => __( 'Статус', 'art-lms' ),
+			'gateway'       => __( 'Платёжный шлюз', 'art-lms' ),
+			'payment_label' => __( 'ID для платёжной системы', 'art-lms' ),
+			'actions'       => __( 'Действия', 'art-lms' ),
+		);
+	}
+
+	/**
+	 * Hidden orders-list columns for the current user.
+	 *
+	 * @return array<int, string>
+	 */
+	public static function get_hidden_list_columns() {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen instanceof WP_Screen ) {
+			return array();
+		}
+
+		$hidden = get_hidden_columns( $screen );
+
+		return is_array( $hidden ) ? $hidden : array();
+	}
+
+	/**
+	 * Whether a list column is visible for the current user.
+	 *
+	 * @param string $column Column key.
+	 * @return bool
+	 */
+	public static function is_list_column_visible( $column ) {
+		return ! in_array( (string) $column, self::get_hidden_list_columns(), true );
+	}
+
+	/**
+	 * CSS classes for an orders-list column cell or header.
+	 *
+	 * @param string               $column Column key.
+	 * @param array<int, string>   $extra  Extra classes.
+	 * @return string
+	 */
+	public static function get_list_column_class( $column, array $extra = array() ) {
+		$classes = array_merge(
+			array(
+				'column-' . sanitize_html_class( (string) $column ),
+			),
+			$extra
+		);
+
+		if ( ! self::is_list_column_visible( $column ) ) {
+			$classes[] = 'hidden';
+		}
+
+		return implode( ' ', array_filter( array_map( 'sanitize_html_class', $classes ) ) );
+	}
+
+	/**
+	 * Number of currently visible data columns (excluding checkbox).
+	 *
+	 * @return int
+	 */
+	public static function get_visible_list_columns_count() {
+		$count = 0;
+
+		foreach ( array_keys( self::get_list_columns() ) as $column ) {
+			if ( self::is_list_column_visible( $column ) ) {
+				++$count;
+			}
+		}
+
+		return max( 1, $count );
 	}
 
 	/**
@@ -433,14 +527,14 @@ class Art_LMS_Admin_Orders {
 	 * @return string
 	 */
 	public static function get_list_sort_classes( $column, array $filters ) {
-		$classes = array( 'art-lms-sortable' );
+		$extra = array( 'art-lms-sortable' );
 
 		if ( $filters['orderby'] === $column ) {
-			$classes[] = 'is-sorted';
-			$classes[] = 'is-' . strtolower( $filters['order'] );
+			$extra[] = 'is-sorted';
+			$extra[] = 'is-' . strtolower( $filters['order'] );
 		}
 
-		return implode( ' ', $classes );
+		return self::get_list_column_class( $column, $extra );
 	}
 
 	/**
