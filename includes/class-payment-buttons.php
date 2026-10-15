@@ -44,6 +44,9 @@ class Art_LMS_Payment_Buttons {
 		add_action( 'manage_' . self::POST_TYPE . '_posts_custom_column', array( __CLASS__, 'render_list_column' ), 10, 2 );
 		add_filter( 'post_row_actions', array( __CLASS__, 'filter_admin_row_actions' ), 10, 2 );
 		add_filter( 'display_post_states', array( __CLASS__, 'filter_display_post_states' ), 10, 2 );
+		add_filter( 'bulk_actions-edit-' . self::POST_TYPE, array( __CLASS__, 'filter_bulk_actions' ) );
+		add_filter( 'handle_bulk_actions-edit-' . self::POST_TYPE, array( __CLASS__, 'handle_bulk_actions' ), 10, 3 );
+		add_action( 'admin_notices', array( __CLASS__, 'render_bulk_archive_notices' ) );
 		add_action( 'pre_get_posts', array( __CLASS__, 'filter_admin_list_query' ) );
 		add_action( 'restrict_manage_posts', array( __CLASS__, 'render_admin_list_filters' ) );
 		add_filter( 'posts_join', array( __CLASS__, 'filter_admin_list_search_join' ), 10, 2 );
@@ -546,7 +549,7 @@ class Art_LMS_Payment_Buttons {
 		$posts = get_posts(
 			array(
 				'post_type'      => self::POST_TYPE,
-				'post_status'    => array( 'publish', self::POST_STATUS_ARCHIVED ),
+				'post_status'    => 'publish',
 				'posts_per_page' => -1,
 				'orderby'        => 'title',
 				'order'          => 'ASC',
@@ -556,18 +559,9 @@ class Art_LMS_Payment_Buttons {
 		$options = array();
 
 		foreach ( $posts as $post ) {
-			$button_id   = (int) $post->ID;
-			$meta        = self::get_meta( $button_id );
-			$materials   = array();
-			$admin_title = self::get_admin_title( $button_id );
-
-			if ( self::is_archived( $button_id ) ) {
-				$admin_title = sprintf(
-					/* translators: %s: payment button title */
-					__( '%s (архив)', 'art-lms' ),
-					$admin_title
-				);
-			}
+			$button_id = (int) $post->ID;
+			$meta      = self::get_meta( $button_id );
+			$materials = array();
 
 			foreach ( $meta['material_ids'] as $material_id ) {
 				$title = get_the_title( $material_id );
@@ -579,8 +573,8 @@ class Art_LMS_Payment_Buttons {
 
 			$options[] = array(
 				'id'          => $button_id,
-				'title'       => $admin_title,
-				'admin_title' => $admin_title,
+				'title'       => self::get_admin_title( $button_id ),
+				'admin_title' => self::get_admin_title( $button_id ),
 				'price'       => trim( (string) $meta['price'] ),
 				'materials'   => $materials,
 			);
@@ -608,7 +602,11 @@ class Art_LMS_Payment_Buttons {
 			return new WP_Error( 'invalid_product', __( 'Платёжная кнопка не найдена.', 'art-lms' ) );
 		}
 
-		if ( ! self::is_usable_status( $button ) ) {
+		if ( self::is_archived( $button_id ) ) {
+			return new WP_Error( 'archived_product', __( 'Платёжная кнопка находится в архиве.', 'art-lms' ) );
+		}
+
+		if ( 'publish' !== $button->post_status ) {
 			return new WP_Error( 'invalid_product', __( 'Платёжная кнопка не опубликована.', 'art-lms' ) );
 		}
 
@@ -999,36 +997,20 @@ class Art_LMS_Payment_Buttons {
 			return 'not_found';
 		}
 
+		// Archive stops new sales; existing buyer access in the account is unchanged.
+		if ( self::is_archived( $button_id ) ) {
+			return 'archived';
+		}
+
 		if ( ! self::is_enabled( $button_id ) ) {
 			return 'disabled';
 		}
 
-		// Archived buttons stay usable for checkout / shortcodes; only draft/trash are blocked.
-		if ( ! self::is_usable_status( $post ) ) {
+		if ( 'publish' !== $post->post_status ) {
 			return 'not_published';
 		}
 
 		return '';
-	}
-
-	/**
-	 * Whether post status allows checkout and frontend button output.
-	 *
-	 * Published and archived buttons both work; archive only hides them from the main admin list.
-	 *
-	 * @param int|WP_Post|null $post Post ID or object.
-	 * @return bool
-	 */
-	public static function is_usable_status( $post ) {
-		if ( is_numeric( $post ) ) {
-			$post = get_post( absint( $post ) );
-		}
-
-		if ( ! $post instanceof WP_Post || self::POST_TYPE !== $post->post_type ) {
-			return false;
-		}
-
-		return in_array( $post->post_status, array( 'publish', self::POST_STATUS_ARCHIVED ), true );
 	}
 
 	/**
@@ -1044,7 +1026,9 @@ class Art_LMS_Payment_Buttons {
 	}
 
 	/**
-	 * Move payment button to archive.
+	 * Move payment button to archive and disable new checkout sales.
+	 *
+	 * Buyer access already granted in the account is not revoked.
 	 *
 	 * @param int $button_id Button post ID.
 	 * @return int|WP_Error
@@ -1056,6 +1040,8 @@ class Art_LMS_Payment_Buttons {
 		if ( ! $post || self::POST_TYPE !== $post->post_type ) {
 			return new WP_Error( 'invalid_button', __( 'Платежная кнопка не найдена.', 'art-lms' ) );
 		}
+
+		update_post_meta( $button_id, self::META_ENABLED, false );
 
 		if ( self::POST_STATUS_ARCHIVED === $post->post_status ) {
 			return $button_id;
@@ -1071,7 +1057,7 @@ class Art_LMS_Payment_Buttons {
 	}
 
 	/**
-	 * Restore payment button from archive.
+	 * Restore payment button from archive (stays disabled until enabled manually).
 	 *
 	 * @param int $button_id Button post ID.
 	 * @return int|WP_Error
@@ -1099,6 +1085,9 @@ class Art_LMS_Payment_Buttons {
 		);
 
 		self::$skip_archive_preserve = false;
+
+		// Keep sales off until the admin explicitly enables the button again.
+		update_post_meta( $button_id, self::META_ENABLED, false );
 
 		return $result;
 	}
@@ -1195,7 +1184,7 @@ class Art_LMS_Payment_Buttons {
 	}
 
 	/**
-	 * Add archive action to payment buttons list table.
+	 * Add archive action to payment buttons list table (under the title).
 	 *
 	 * @param array   $actions Row actions.
 	 * @param WP_Post $post    Current post.
@@ -1210,8 +1199,10 @@ class Art_LMS_Payment_Buttons {
 			return $actions;
 		}
 
+		$archive_actions = array();
+
 		if ( 'publish' === $post->post_status ) {
-			$actions['art_lms_archive'] = sprintf(
+			$archive_actions['art_lms_archive'] = sprintf(
 				'<a href="%s" aria-label="%s">%s</a>',
 				esc_url( self::get_archive_action_url( (int) $post->ID ) ),
 				esc_attr(
@@ -1226,7 +1217,7 @@ class Art_LMS_Payment_Buttons {
 		}
 
 		if ( self::POST_STATUS_ARCHIVED === $post->post_status ) {
-			$actions['art_lms_unarchive'] = sprintf(
+			$archive_actions['art_lms_unarchive'] = sprintf(
 				'<a href="%s" aria-label="%s">%s</a>',
 				esc_url( self::get_unarchive_action_url( (int) $post->ID ) ),
 				esc_attr(
@@ -1240,7 +1231,141 @@ class Art_LMS_Payment_Buttons {
 			);
 		}
 
+		if ( array() === $archive_actions ) {
+			return $actions;
+		}
+
+		// Place archive actions right after Edit / Quick Edit for discoverability.
+		$ordered = array();
+
+		foreach ( $actions as $key => $html ) {
+			$ordered[ $key ] = $html;
+
+			if ( in_array( $key, array( 'edit', 'inline hide-if-no-js' ), true ) ) {
+				foreach ( $archive_actions as $archive_key => $archive_html ) {
+					$ordered[ $archive_key ] = $archive_html;
+				}
+				$archive_actions = array();
+			}
+		}
+
+		foreach ( $archive_actions as $archive_key => $archive_html ) {
+			$ordered[ $archive_key ] = $archive_html;
+		}
+
+		return $ordered;
+	}
+
+	/**
+	 * Bulk actions for the payment buttons list.
+	 *
+	 * @param array $actions Bulk actions.
+	 * @return array
+	 */
+	public static function filter_bulk_actions( $actions ) {
+		$actions['art_lms_archive']   = __( 'Архивировать', 'art-lms' );
+		$actions['art_lms_unarchive'] = __( 'Вернуть из архива', 'art-lms' );
+
 		return $actions;
+	}
+
+	/**
+	 * Handle archive/unarchive bulk actions on the list screen.
+	 *
+	 * @param string $redirect_url Redirect URL.
+	 * @param string $action       Bulk action key.
+	 * @param int[]  $post_ids     Selected post IDs.
+	 * @return string
+	 */
+	public static function handle_bulk_actions( $redirect_url, $action, $post_ids ) {
+		if ( ! Art_LMS_Security::can_manage() ) {
+			return $redirect_url;
+		}
+
+		if ( ! in_array( $action, array( 'art_lms_archive', 'art_lms_unarchive' ), true ) ) {
+			return $redirect_url;
+		}
+
+		$done = 0;
+
+		foreach ( (array) $post_ids as $post_id ) {
+			$post_id = absint( $post_id );
+
+			if ( ! $post_id ) {
+				continue;
+			}
+
+			$result = ( 'art_lms_archive' === $action )
+				? self::archive( $post_id )
+				: self::unarchive( $post_id );
+
+			if ( ! is_wp_error( $result ) ) {
+				++$done;
+			}
+		}
+
+		return add_query_arg(
+			array(
+				'art_lms_bulk_archive' => ( 'art_lms_archive' === $action ) ? '1' : '0',
+				'art_lms_bulk_done'    => $done,
+			),
+			$redirect_url
+		);
+	}
+
+	/**
+	 * Notices after bulk archive / unarchive.
+	 */
+	public static function render_bulk_archive_notices() {
+		if ( ! Art_LMS_Security::can_manage() ) {
+			return;
+		}
+
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || self::POST_TYPE !== $screen->post_type || 'edit' !== $screen->base ) {
+			return;
+		}
+
+		if ( ! isset( $_GET['art_lms_bulk_archive'], $_GET['art_lms_bulk_done'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin notice after bulk redirect.
+			return;
+		}
+
+		$is_archive = '1' === sanitize_key( wp_unslash( $_GET['art_lms_bulk_archive'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$done       = absint( wp_unslash( $_GET['art_lms_bulk_done'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		if ( $is_archive ) {
+			echo '<div class="notice notice-success is-dismissible"><p>';
+			echo esc_html(
+				sprintf(
+					/* translators: %d: number of payment buttons */
+					_n(
+						'%d платёжная кнопка перенесена в архив и выключена для новых оплат.',
+						'%d платёжных кнопок перенесено в архив и выключено для новых оплат.',
+						$done,
+						'art-lms'
+					),
+					$done
+				)
+			);
+			echo '</p></div>';
+			return;
+		}
+
+		echo '<div class="notice notice-success is-dismissible"><p>';
+		echo esc_html(
+			sprintf(
+				/* translators: %d: number of payment buttons */
+				_n(
+					'%d платёжная кнопка возвращена из архива (остаётся выключенной — включите вручную при необходимости).',
+					'%d платёжных кнопок возвращено из архива (остаются выключенными — включите вручную при необходимости).',
+					$done,
+					'art-lms'
+				),
+				$done
+			)
+		);
+		echo '</p></div>';
 	}
 
 	/**

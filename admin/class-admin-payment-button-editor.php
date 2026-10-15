@@ -165,11 +165,11 @@ class Art_LMS_Admin_Payment_Button_Editor {
 		}
 
 		if ( ! empty( $_GET['archived'] ) ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Платежная кнопка перенесена в архив.', 'art-lms' ) . '</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Платежная кнопка перенесена в архив и выключена для новых оплат. Доступ у уже купивших в кабинете сохранён.', 'art-lms' ) . '</p></div>';
 		}
 
 		if ( ! empty( $_GET['unarchived'] ) ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Платежная кнопка возвращена из архива.', 'art-lms' ) . '</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Платежная кнопка возвращена из архива и остаётся выключенной — включите её вручную, когда снова понадобятся продажи.', 'art-lms' ) . '</p></div>';
 		}
 
 		$materials_notice_post_id = get_transient( 'art_lms_payment_button_materials_required_' . get_current_user_id() );

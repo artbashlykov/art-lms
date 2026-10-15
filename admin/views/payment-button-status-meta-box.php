@@ -21,49 +21,50 @@ $is_archived = Art_LMS_Payment_Buttons::is_archived( (int) $post->ID );
 			<span class="art-lms-button-status art-lms-button-status--archived"><?php esc_html_e( 'В архиве', 'art-lms' ); ?></span>
 		</p>
 		<p class="description">
-			<?php esc_html_e( 'Кнопка скрыта из основного списка, но по-прежнему работает: шорткод, блок и ссылка на checkout продолжают принимать оплату (если статус «Активна»).', 'art-lms' ); ?>
+			<?php esc_html_e( 'Новые оплаты по кнопке и ссылке недоступны. Материалы у уже купивших остаются в личном кабинете.', 'art-lms' ); ?>
 		</p>
-	<?php endif; ?>
-
-	<fieldset class="art-lms-payment-button-status__options">
-		<legend class="screen-reader-text"><?php esc_html_e( 'Статус кнопки', 'art-lms' ); ?></legend>
-		<label class="art-lms-payment-button-status__option">
-			<input
-				type="radio"
-				name="art_lms_button_enabled"
-				value="1"
-				<?php checked( $is_enabled ); ?>
-			>
-			<?php esc_html_e( 'Активна', 'art-lms' ); ?>
-		</label>
-		<label class="art-lms-payment-button-status__option">
-			<input
-				type="radio"
-				name="art_lms_button_enabled"
-				value="0"
-				<?php checked( ! $is_enabled ); ?>
-			>
-			<?php esc_html_e( 'Выключена', 'art-lms' ); ?>
-		</label>
-	</fieldset>
-	<p class="description">
-		<?php esc_html_e( 'Выключенная кнопка не показывается на сайте и недоступна для checkout.', 'art-lms' ); ?>
-	</p>
-
-	<?php if ( $is_archived ) : ?>
 		<p>
 			<a class="button button-secondary" href="<?php echo esc_url( Art_LMS_Payment_Buttons::get_unarchive_action_url( (int) $post->ID ) ); ?>">
 				<?php esc_html_e( 'Вернуть из архива', 'art-lms' ); ?>
 			</a>
 		</p>
-	<?php elseif ( 'publish' === $post->post_status ) : ?>
-		<p class="art-lms-payment-button-status__archive-action">
-			<a class="button button-secondary" href="<?php echo esc_url( Art_LMS_Payment_Buttons::get_archive_action_url( (int) $post->ID ) ); ?>">
-				<?php esc_html_e( 'Архивировать', 'art-lms' ); ?>
-			</a>
-		</p>
 		<p class="description">
-			<?php esc_html_e( 'Архив убирает кнопку из основного списка, но не отключает оплату по уже размещённым ссылкам и шорткодам.', 'art-lms' ); ?>
+			<?php esc_html_e( 'После возврата кнопка останется выключенной — включите её вручную, когда снова понадобятся продажи.', 'art-lms' ); ?>
 		</p>
+	<?php else : ?>
+		<fieldset class="art-lms-payment-button-status__options">
+			<legend class="screen-reader-text"><?php esc_html_e( 'Статус кнопки', 'art-lms' ); ?></legend>
+			<label class="art-lms-payment-button-status__option">
+				<input
+					type="radio"
+					name="art_lms_button_enabled"
+					value="1"
+					<?php checked( $is_enabled ); ?>
+				>
+				<?php esc_html_e( 'Активна', 'art-lms' ); ?>
+			</label>
+			<label class="art-lms-payment-button-status__option">
+				<input
+					type="radio"
+					name="art_lms_button_enabled"
+					value="0"
+					<?php checked( ! $is_enabled ); ?>
+				>
+				<?php esc_html_e( 'Выключена', 'art-lms' ); ?>
+			</label>
+		</fieldset>
+		<p class="description">
+			<?php esc_html_e( 'Выключенная кнопка не показывается на сайте и недоступна для checkout.', 'art-lms' ); ?>
+		</p>
+		<?php if ( 'publish' === $post->post_status ) : ?>
+			<p class="art-lms-payment-button-status__archive-action">
+				<a class="button button-secondary" href="<?php echo esc_url( Art_LMS_Payment_Buttons::get_archive_action_url( (int) $post->ID ) ); ?>">
+					<?php esc_html_e( 'Архивировать', 'art-lms' ); ?>
+				</a>
+			</p>
+			<p class="description">
+				<?php esc_html_e( 'Архив убирает кнопку из основного списка и останавливает новые оплаты. Доступ у покупателей в кабинете сохраняется.', 'art-lms' ); ?>
+			</p>
+		<?php endif; ?>
 	<?php endif; ?>
 </div>
