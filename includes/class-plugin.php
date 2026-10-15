@@ -50,6 +50,7 @@ class Art_LMS_Plugin {
 	private function load_dependencies() {
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-transliteration.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-materials.php';
+		require_once ART_LMS_PLUGIN_DIR . 'includes/class-material-lessons.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-protected-media.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-payment-buttons.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-orders.php';

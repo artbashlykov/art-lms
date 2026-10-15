@@ -133,3 +133,15 @@
 	flex-shrink: 0;
 	height: 36px;
 }
+
+.editor-styles-wrapper .art-lms-editor-shell--lesson,
+.block-editor-block-list__block .art-lms-editor-shell--lesson,
+.art-lms-editor-shell--lesson {
+	border-color: #2271b1;
+	border-style: solid;
+	background: #f0f6fc;
+}
+
+.art-lms-editor-shell--lesson .components-base-control {
+	margin-bottom: 0;
+}

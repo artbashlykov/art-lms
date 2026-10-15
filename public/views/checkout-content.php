@@ -32,9 +32,6 @@ $actions_class = Art_LMS_Settings::get_checkout_button_actions_class();
 				case 'disabled':
 					esc_html_e( 'Платежная кнопка выключена. Оформление заказа временно недоступно.', 'art-lms' );
 					break;
-				case 'archived':
-					esc_html_e( 'Платежная кнопка находится в архиве. Оформление заказа недоступно.', 'art-lms' );
-					break;
 				case 'not_published':
 					esc_html_e( 'Платежная кнопка ещё не опубликована. Опубликуйте её в админке и попробуйте снова.', 'art-lms' );
 					break;

@@ -4,7 +4,7 @@ Tags: lms, elearning, payments, digital products, checkout
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.17.42
+Stable tag: 2.17.51
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -89,6 +89,34 @@ When a customer completes checkout with a live payment gateway enabled, the plug
 By default, no. If you enable **Delete all plugin data when uninstalling ART LMS** in the general plugin settings and then delete the plugin from the Plugins screen, the plugin removes its custom database tables, settings, materials, payment buttons, order/access records, plugin-specific user meta, and the `art_lms_customer` role. WordPress pages you selected in the settings are not deleted.
 
 == Changelog ==
+
+= 2.17.51 =
+* Materials: show content placed before the first Lesson block above the mini-course table of contents.
+
+= 2.17.50 =
+* Materials: 20px gap between top lesson nav and lesson number.
+
+= 2.17.49 =
+* Payment buttons: archive keeps checkout/shortcodes working; buttons stay usable while hidden from the main list.
+
+= 2.17.48 =
+* Materials: center mini-course nav button labels vertically and horizontally.
+
+= 2.17.47 =
+* Materials: stretch mini-course and material content to the full content column width.
+
+= 2.17.46 =
+* Materials: keep course nav buttons on one row; fix Vimeo/embed display in lessons.
+
+= 2.17.45 =
+* Materials: fix mini-course TOC layout against theme list styles; simplify back link.
+
+= 2.17.44 =
+* Materials: tighten mini-course TOC and back-to-account button layout.
+
+= 2.17.43 =
+* Materials: mini-course screens via Gutenberg "Lesson" block markers.
+* Materials: table of contents start screen and Back / Navigation / Forward controls.
 
 = 2.17.42 =
 * Admin orders list: add Product column (payment button title).

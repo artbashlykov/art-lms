@@ -254,6 +254,29 @@ class Art_LMS_Blocks {
 				'render_callback' => array( __CLASS__, 'render_payment_button' ),
 			)
 		);
+
+		register_block_type(
+			'art-lms/lesson',
+			array(
+				'editor_style'    => 'art-lms-blocks-editor',
+				'attributes'      => array(
+					'title' => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+				),
+				'render_callback' => array( __CLASS__, 'render_lesson_marker' ),
+			)
+		);
+	}
+
+	/**
+	 * Lesson markers are invisible on the frontend; the course renderer uses them.
+	 *
+	 * @return string
+	 */
+	public static function render_lesson_marker() {
+		return '';
 	}
 
 	/**

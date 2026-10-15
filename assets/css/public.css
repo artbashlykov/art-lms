@@ -223,12 +223,15 @@
 }
 
 .art-lms-material-page-header__title {
-	margin: 0 0 1rem;
+	margin: 0 0 0.5rem;
+	line-height: 1.25;
 }
 
 .art-lms-material-back {
 	margin: 0;
+	padding: 0;
 	max-width: 100%;
+	line-height: 1.3;
 }
 
 .art-lms-material-back__link,
@@ -238,59 +241,25 @@
 .art-lms-material-back__link:focus,
 .art-lms-material-back__link:focus-visible,
 .art-lms-material-back__link:active {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.4rem;
-	box-sizing: border-box;
-	max-width: 100%;
-	min-height: 44px;
-	padding: 0.5rem 0.875rem;
-	border: 1px solid #e2e8f0;
-	border-radius: 6px;
-	background: #fff;
-	color: #334155 !important;
+	display: inline;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	color: #64748b !important;
 	text-decoration: none !important;
-	font-size: 0.9375rem;
-	font-weight: 600;
+	font-family: inherit;
+	font-size: 0.875rem;
+	font-weight: 500;
 	line-height: 1.4;
-	-webkit-tap-highlight-color: transparent;
 }
 
 .art-lms-material-back__link:hover,
 .art-lms-material-back__link:focus,
 .art-lms-material-back__link:focus-visible {
-	border-color: #cbd5e1;
 	color: #0f172a !important;
-}
-
-.art-lms-material-back__icon {
-	flex: 0 0 auto;
-	line-height: 1;
-}
-
-@media (max-width: 640px) {
-	.art-lms-material-page-header {
-		margin-bottom: 1.25rem;
-	}
-
-	.art-lms-material-page-header__title {
-		margin-bottom: 0.875rem;
-	}
-
-	.art-lms-material-back__link,
-	.art-lms-material-back__link:link,
-	.art-lms-material-back__link:visited,
-	.art-lms-material-back__link:hover,
-	.art-lms-material-back__link:focus,
-	.art-lms-material-back__link:focus-visible,
-	.art-lms-material-back__link:active {
-		display: flex;
-		width: 100%;
-		justify-content: center;
-		padding: 0.625rem 0.875rem;
-		font-size: 0.875rem;
-		text-align: center;
-	}
+	text-decoration: underline !important;
 }
 
 .single-art_lms_material .page-header,
@@ -337,6 +306,257 @@
 .art-lms-material-single .wp-block-comments,
 .art-lms-material-single .wp-block-post-comments-form {
 	display: none !important;
+}
+
+.art-lms-course {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	max-width: none;
+	margin: 0;
+}
+
+.art-lms-material-page-header,
+.art-lms-material-back,
+.single-art_lms_material .art-theme-entry-content > .art-lms-course,
+.art-lms-material-single .art-theme-entry-content > .art-lms-course,
+.single-art_lms_material .entry-content > .art-lms-course,
+.art-lms-material-single .entry-content > .art-lms-course {
+	width: 100%;
+	max-width: none;
+	box-sizing: border-box;
+}
+
+.art-lms-course__screen[hidden] {
+	display: none !important;
+}
+
+.art-lms-course__intro {
+	margin: 0 0 1.25rem;
+}
+
+.art-lms-course__intro > *:first-child {
+	margin-top: 0;
+}
+
+.art-lms-course__intro > *:last-child {
+	margin-bottom: 0;
+}
+
+.art-lms-course__toc-title,
+.art-lms-course__lesson-title {
+	margin: 0 0 0.75rem;
+	font-size: 1.125rem;
+	line-height: 1.3;
+}
+
+.art-lms-course__toc-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	list-style: none;
+}
+
+.art-lms-course__toc-item {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.art-lms-course__toc-link {
+	display: flex;
+	align-items: center;
+	gap: 0.65rem;
+	width: 100%;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	background: #fff;
+	box-shadow: none;
+	color: #111827;
+	text-align: left;
+	font-family: inherit;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	line-height: 1.3;
+	cursor: pointer;
+	-webkit-appearance: none;
+	appearance: none;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.art-lms-course__toc-link:hover,
+.art-lms-course__toc-link:focus,
+.art-lms-course__toc-link:focus-visible {
+	border-color: #cbd5e1;
+	background: #f8fafc;
+	outline: none;
+}
+
+.art-lms-course__toc-number {
+	flex: 0 0 1.35rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.35rem;
+	height: 1.35rem;
+	margin: 0;
+	padding: 0;
+	border-radius: 999px;
+	background: #eef2ff;
+	color: #3730a3;
+	font-size: 0.75rem;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.art-lms-course__toc-label {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.art-lms-course__lesson-header {
+	margin: 0 0 1rem;
+}
+
+.art-lms-course__lesson-meta {
+	margin: 0 0 0.25rem;
+	color: #64748b;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.art-lms-course__lesson-content {
+	margin: 0 0 1.25rem;
+}
+
+.art-lms-course__lesson-content .wp-block-embed,
+.art-lms-course__lesson-content .wp-block-video,
+.art-lms-course__lesson-content .wp-block-image {
+	margin: 1rem 0;
+	max-width: 100%;
+}
+
+.art-lms-course__lesson-content .wp-block-embed__wrapper {
+	position: relative;
+	width: 100%;
+	margin: 0;
+}
+
+.art-lms-course__lesson-content .wp-has-aspect-ratio .wp-block-embed__wrapper::before {
+	display: block;
+	content: '';
+	padding-top: 56.25%;
+}
+
+.art-lms-course__lesson-content .wp-block-embed iframe,
+.art-lms-course__lesson-content .wp-block-embed__wrapper iframe {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	border: 0;
+}
+
+.art-lms-course__lesson-content .wp-has-aspect-ratio .wp-block-embed__wrapper iframe {
+	position: absolute;
+	inset: 0;
+	height: 100%;
+}
+
+.art-lms-course__nav {
+	display: flex !important;
+	flex-direction: row !important;
+	flex-wrap: nowrap !important;
+	align-items: stretch !important;
+	justify-content: space-between !important;
+	gap: 0.4rem;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	box-sizing: border-box;
+}
+
+.art-lms-course__nav--top {
+	margin: 0 0 20px;
+}
+
+.art-lms-course__nav--bottom {
+	margin: 1.25rem 0 0;
+}
+
+.art-lms-course__nav-btn {
+	display: inline-flex !important;
+	flex: 1 1 0 !important;
+	align-items: center !important;
+	justify-content: center !important;
+	float: none !important;
+	clear: none !important;
+	position: static !important;
+	box-sizing: border-box !important;
+	width: auto !important;
+	min-width: 0 !important;
+	max-width: none !important;
+	min-height: 2.5rem !important;
+	height: auto !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	padding-block: 0.625rem !important;
+	padding-inline: 0.5rem !important;
+	border: 1px solid #e5e7eb !important;
+	border-radius: 8px !important;
+	background: #fff !important;
+	box-shadow: none !important;
+	color: #111827 !important;
+	font-family: inherit !important;
+	font-size: 0.8125rem !important;
+	font-weight: 600 !important;
+	line-height: 1 !important;
+	letter-spacing: normal !important;
+	text-align: center !important;
+	text-indent: 0 !important;
+	vertical-align: middle !important;
+	white-space: nowrap;
+	cursor: pointer;
+	-webkit-appearance: none;
+	appearance: none;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.art-lms-course__nav-btn:hover,
+.art-lms-course__nav-btn:focus,
+.art-lms-course__nav-btn:focus-visible {
+	border-color: #cbd5e1 !important;
+	background: #f8fafc !important;
+	outline: none !important;
+}
+
+.art-lms-course__nav-toc {
+	background: #f8fafc !important;
+}
+
+.art-lms-course__nav-btn:disabled,
+.art-lms-course__nav-btn[disabled] {
+	opacity: 0.4 !important;
+	cursor: not-allowed !important;
+}
+
+@media (max-width: 640px) {
+	.art-lms-course__nav-btn {
+		font-size: 0.75rem !important;
+		padding-block: 0.625rem !important;
+		padding-inline: 0.25rem !important;
+		white-space: normal;
+		line-height: 1.15 !important;
+	}
 }
 
 a.art-lms-button,

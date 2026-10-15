@@ -46,6 +46,7 @@ class Art_LMS_Materials {
 		add_filter( 'body_class', array( __CLASS__, 'filter_material_body_class' ) );
 		add_filter( 'render_block', array( __CLASS__, 'filter_single_material_blocks' ), 10, 2 );
 		add_filter( 'the_content', array( __CLASS__, 'prepend_material_page_header' ), 1 );
+		add_filter( 'the_content', array( __CLASS__, 'maybe_render_material_course' ), 8 );
 		add_filter( 'hello_elementor_page_title', array( __CLASS__, 'filter_hello_elementor_page_title' ), 20 );
 		add_filter( 'rest_pre_dispatch', array( __CLASS__, 'rest_guard_material' ), 10, 3 );
 		add_filter( 'wp_sitemaps_post_types', array( __CLASS__, 'exclude_from_sitemaps' ) );
@@ -599,6 +600,10 @@ class Art_LMS_Materials {
 	public static function filter_material_body_class( $classes ) {
 		if ( is_singular( self::POST_TYPE ) ) {
 			$classes[] = 'art-lms-material-single';
+
+			if ( Art_LMS_Material_Lessons::has_lessons( get_queried_object_id() ) ) {
+				$classes[] = 'art-lms-material-course';
+			}
 		}
 
 		return $classes;
@@ -613,6 +618,91 @@ class Art_LMS_Materials {
 		}
 
 		wp_enqueue_style( 'art-lms-public' );
+
+		$material_id = get_queried_object_id();
+
+		if ( ! Art_LMS_Material_Lessons::has_lessons( $material_id ) ) {
+			return;
+		}
+
+		// Embed aspect-ratio styles (Vimeo/YouTube) for lesson screens.
+		wp_enqueue_style( 'wp-block-library' );
+
+		wp_enqueue_script(
+			'art-lms-public-course',
+			ART_LMS_PLUGIN_URL . 'assets/js/public-course.js',
+			array(),
+			ART_LMS_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'art-lms-public-course',
+			'artLmsCourse',
+			array(
+				'i18n' => array(
+					'prev' => __( 'Назад', 'art-lms' ),
+					'toc'  => __( 'Навигация', 'art-lms' ),
+					'next' => __( 'Вперёд', 'art-lms' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Replace material content with mini-course UI when lesson blocks exist.
+	 *
+	 * Runs before do_blocks so lesson markers are not rendered as empty gaps.
+	 *
+	 * @param string $content Post content.
+	 * @return string
+	 */
+	public static function maybe_render_material_course( $content ) {
+		if ( ! is_singular( self::POST_TYPE ) || ! in_the_loop() || ! is_main_query() ) {
+			return $content;
+		}
+
+		$post = get_post();
+
+		if ( ! $post instanceof WP_Post ) {
+			return $content;
+		}
+
+		$course = Art_LMS_Material_Lessons::parse_course( $post );
+
+		if ( array() === $course['lessons'] ) {
+			return $content;
+		}
+
+		$header = self::build_material_page_header_html();
+
+		return $header . Art_LMS_Material_Lessons::render( $course['lessons'], $course['intro'] );
+	}
+
+	/**
+	 * Build material page header HTML (title + back link).
+	 *
+	 * @return string
+	 */
+	public static function build_material_page_header_html() {
+		$header = '<div class="art-lms-material-page-header">';
+		$back   = self::get_back_to_account_link_html();
+		$title  = get_the_title();
+		$title  = is_string( $title ) ? $title : '';
+
+		if ( '' !== $title ) {
+			$header .= '<h1 class="art-lms-material-page-header__title entry-title">';
+			$header .= esc_html( $title );
+			$header .= '</h1>';
+		}
+
+		if ( '' !== $back ) {
+			$header .= $back;
+		}
+
+		$header .= '</div>';
+
+		return $header;
 	}
 
 	/**
@@ -712,26 +802,14 @@ class Art_LMS_Materials {
 			return $content;
 		}
 
+		// Mini-courses inject their own header in maybe_render_material_course().
+		if ( Art_LMS_Material_Lessons::has_lessons( get_the_ID() ) ) {
+			return $content;
+		}
+
 		self::$material_page_header_prepended = true;
 
-		$header  = '<div class="art-lms-material-page-header">';
-		$back    = self::get_back_to_account_link_html();
-		$title   = get_the_title();
-		$title   = is_string( $title ) ? $title : '';
-
-		if ( '' !== $title ) {
-			$header .= '<h1 class="art-lms-material-page-header__title entry-title">';
-			$header .= esc_html( $title );
-			$header .= '</h1>';
-		}
-
-		if ( '' !== $back ) {
-			$header .= $back;
-		}
-
-		$header .= '</div>';
-
-		return $header . $content;
+		return self::build_material_page_header_html() . $content;
 	}
 
 	/**
@@ -756,12 +834,9 @@ class Art_LMS_Materials {
 
 		ob_start();
 		?>
-		<div class="art-lms-material-back">
-			<a class="art-lms-material-back__link" href="<?php echo esc_url( $account_url ); ?>">
-				<span class="art-lms-material-back__icon" aria-hidden="true">&larr;</span>
-				<?php esc_html_e( 'Вернуться в личный кабинет', 'art-lms' ); ?>
-			</a>
-		</div>
+		<p class="art-lms-material-back">
+			<a class="art-lms-material-back__link" href="<?php echo esc_url( $account_url ); ?>"><?php esc_html_e( '← Вернуться в личный кабинет', 'art-lms' ); ?></a>
+		</p>
 		<?php
 		return (string) ob_get_clean();
 	}

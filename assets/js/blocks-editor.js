@@ -1093,6 +1093,64 @@
 			edit: PaymentButtonBlockEdit,
 			save: saveNull,
 		});
+
+		registerDynamicBlock('art-lms/lesson', {
+			apiVersion: 3,
+			title: __('АРТ ЛМС: Урок', 'art-lms'),
+			category: 'art-lms',
+			icon: 'welcome-learn-more',
+			description: __(
+				'Начало урока мини-курса. Контент ниже до следующего блока «Урок» — этот урок.',
+				'art-lms'
+			),
+			keywords: ['art', 'lms', 'урок', 'курс', 'lesson', 'course'],
+			attributes: {
+				title: {
+					type: 'string',
+					default: '',
+				},
+			},
+			supports: {
+				html: false,
+				multiple: true,
+				reusable: false,
+			},
+			edit: function (props) {
+				var attributes = props.attributes || {};
+				var setAttributes = props.setAttributes;
+				var blockProps = useBlockProps({
+					className: 'art-lms-editor-shell art-lms-editor-shell--lesson',
+				});
+				var titleValue = attributes.title || '';
+
+				return el(
+					'div',
+					blockProps,
+					el(
+						'div',
+						{ className: 'art-lms-editor-title' },
+						__('АРТ ЛМС: Урок', 'art-lms')
+					),
+					el(
+						'div',
+						{ className: 'art-lms-editor-hint' },
+						__(
+							'Отмечает начало урока. Блоки ниже (до следующего «Урок») — содержимое этого экрана. Текст и блоки выше первого «Урок» покажутся перед «Содержание». Без блоков «Урок» материал остаётся обычным.',
+							'art-lms'
+						)
+					),
+					el(TextControl, {
+						label: __('Название урока', 'art-lms'),
+						value: titleValue,
+						placeholder: __('Например: Введение', 'art-lms'),
+						onChange: function (value) {
+							setAttributes({ title: value });
+						},
+					})
+				);
+			},
+			save: saveNull,
+		});
 	}
 
 	if (wp.domReady) {

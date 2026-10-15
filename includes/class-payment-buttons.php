@@ -30,18 +30,27 @@ class Art_LMS_Payment_Buttons {
 	const ADMIN_VISIBILITY_QUERY_ARG = 'art_lms_button_visibility';
 
 	/**
+	 * Skip preserving archived status (used by unarchive()).
+	 *
+	 * @var bool
+	 */
+	private static $skip_archive_preserve = false;
+
+	/**
 	 * Register hooks.
 	 */
 	public static function init() {
 		add_filter( 'manage_' . self::POST_TYPE . '_posts_columns', array( __CLASS__, 'filter_list_columns' ) );
 		add_action( 'manage_' . self::POST_TYPE . '_posts_custom_column', array( __CLASS__, 'render_list_column' ), 10, 2 );
 		add_filter( 'post_row_actions', array( __CLASS__, 'filter_admin_row_actions' ), 10, 2 );
+		add_filter( 'display_post_states', array( __CLASS__, 'filter_display_post_states' ), 10, 2 );
 		add_action( 'pre_get_posts', array( __CLASS__, 'filter_admin_list_query' ) );
 		add_action( 'restrict_manage_posts', array( __CLASS__, 'render_admin_list_filters' ) );
 		add_filter( 'posts_join', array( __CLASS__, 'filter_admin_list_search_join' ), 10, 2 );
 		add_filter( 'posts_search', array( __CLASS__, 'filter_admin_list_search_where' ), 10, 2 );
 		add_filter( 'posts_groupby', array( __CLASS__, 'filter_admin_list_search_groupby' ), 10, 2 );
 		add_filter( 'rest_pre_insert_' . self::POST_TYPE, array( __CLASS__, 'validate_payment_button_rest_save' ), 10, 2 );
+		add_filter( 'wp_insert_post_data', array( __CLASS__, 'preserve_archived_status_on_save' ), 10, 2 );
 	}
 
 	/**
@@ -537,7 +546,7 @@ class Art_LMS_Payment_Buttons {
 		$posts = get_posts(
 			array(
 				'post_type'      => self::POST_TYPE,
-				'post_status'    => 'publish',
+				'post_status'    => array( 'publish', self::POST_STATUS_ARCHIVED ),
 				'posts_per_page' => -1,
 				'orderby'        => 'title',
 				'order'          => 'ASC',
@@ -547,9 +556,18 @@ class Art_LMS_Payment_Buttons {
 		$options = array();
 
 		foreach ( $posts as $post ) {
-			$button_id = (int) $post->ID;
-			$meta      = self::get_meta( $button_id );
-			$materials = array();
+			$button_id   = (int) $post->ID;
+			$meta        = self::get_meta( $button_id );
+			$materials   = array();
+			$admin_title = self::get_admin_title( $button_id );
+
+			if ( self::is_archived( $button_id ) ) {
+				$admin_title = sprintf(
+					/* translators: %s: payment button title */
+					__( '%s (архив)', 'art-lms' ),
+					$admin_title
+				);
+			}
 
 			foreach ( $meta['material_ids'] as $material_id ) {
 				$title = get_the_title( $material_id );
@@ -561,8 +579,8 @@ class Art_LMS_Payment_Buttons {
 
 			$options[] = array(
 				'id'          => $button_id,
-				'title'       => self::get_admin_title( $button_id ),
-				'admin_title' => self::get_admin_title( $button_id ),
+				'title'       => $admin_title,
+				'admin_title' => $admin_title,
 				'price'       => trim( (string) $meta['price'] ),
 				'materials'   => $materials,
 			);
@@ -590,11 +608,7 @@ class Art_LMS_Payment_Buttons {
 			return new WP_Error( 'invalid_product', __( 'Платёжная кнопка не найдена.', 'art-lms' ) );
 		}
 
-		if ( self::is_archived( $button_id ) ) {
-			return new WP_Error( 'archived_product', __( 'Платёжная кнопка находится в архиве.', 'art-lms' ) );
-		}
-
-		if ( 'publish' !== $button->post_status ) {
+		if ( ! self::is_usable_status( $button ) ) {
 			return new WP_Error( 'invalid_product', __( 'Платёжная кнопка не опубликована.', 'art-lms' ) );
 		}
 
@@ -985,19 +999,36 @@ class Art_LMS_Payment_Buttons {
 			return 'not_found';
 		}
 
-		if ( self::is_archived( $button_id ) ) {
-			return 'archived';
-		}
-
 		if ( ! self::is_enabled( $button_id ) ) {
 			return 'disabled';
 		}
 
-		if ( 'publish' !== $post->post_status ) {
+		// Archived buttons stay usable for checkout / shortcodes; only draft/trash are blocked.
+		if ( ! self::is_usable_status( $post ) ) {
 			return 'not_published';
 		}
 
 		return '';
+	}
+
+	/**
+	 * Whether post status allows checkout and frontend button output.
+	 *
+	 * Published and archived buttons both work; archive only hides them from the main admin list.
+	 *
+	 * @param int|WP_Post|null $post Post ID or object.
+	 * @return bool
+	 */
+	public static function is_usable_status( $post ) {
+		if ( is_numeric( $post ) ) {
+			$post = get_post( absint( $post ) );
+		}
+
+		if ( ! $post instanceof WP_Post || self::POST_TYPE !== $post->post_type ) {
+			return false;
+		}
+
+		return in_array( $post->post_status, array( 'publish', self::POST_STATUS_ARCHIVED ), true );
 	}
 
 	/**
@@ -1057,13 +1088,80 @@ class Art_LMS_Payment_Buttons {
 			return $button_id;
 		}
 
-		return wp_update_post(
+		self::$skip_archive_preserve = true;
+
+		$result = wp_update_post(
 			array(
 				'ID'          => $button_id,
 				'post_status' => 'publish',
 			),
 			true
 		);
+
+		self::$skip_archive_preserve = false;
+
+		return $result;
+	}
+
+	/**
+	 * Keep archived status when the block editor saves the post as publish.
+	 *
+	 * @param array $data    Sanitized post data.
+	 * @param array $postarr Raw post data.
+	 * @return array
+	 */
+	public static function preserve_archived_status_on_save( $data, $postarr ) {
+		if ( self::$skip_archive_preserve ) {
+			return $data;
+		}
+
+		if ( self::POST_TYPE !== ( $data['post_type'] ?? '' ) ) {
+			return $data;
+		}
+
+		$post_id = absint( $postarr['ID'] ?? 0 );
+
+		if ( ! $post_id ) {
+			return $data;
+		}
+
+		$existing = get_post( $post_id );
+
+		if ( ! $existing || self::POST_STATUS_ARCHIVED !== $existing->post_status ) {
+			return $data;
+		}
+
+		$incoming = (string) ( $data['post_status'] ?? '' );
+
+		// Allow trash / delete flows; otherwise keep the button archived.
+		if ( in_array( $incoming, array( 'trash', 'delete' ), true ) ) {
+			return $data;
+		}
+
+		if ( self::POST_STATUS_ARCHIVED !== $incoming ) {
+			$data['post_status'] = self::POST_STATUS_ARCHIVED;
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Show “Архив” state next to the title in the admin list.
+	 *
+	 * @param array   $states Post states.
+	 * @param WP_Post $post   Post object.
+	 * @return array
+	 */
+	public static function filter_display_post_states( $states, $post ) {
+		if ( ! $post instanceof WP_Post || self::POST_TYPE !== $post->post_type ) {
+			return $states;
+		}
+
+		if ( self::POST_STATUS_ARCHIVED === $post->post_status ) {
+			$states['art_lms_archived'] = __( 'Архив', 'art-lms' );
+		}
+
+		return $states;
 	}
 
 	/**
