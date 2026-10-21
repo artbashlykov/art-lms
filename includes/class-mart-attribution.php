@@ -130,6 +130,10 @@ class Art_LMS_Mart_Attribution {
 	/**
 	 * Append mart_id to checkout URLs when known.
 	 *
+	 * Skipped in wp-admin so «Вставка» / copy links stay clean (no admin's own
+	 * mart_id from cookie after testing). Front-end buttons and MAX funnel
+	 * links still get mart_id from the visitor URL / cookie / {user_id}.
+	 *
 	 * @param string $url       Checkout URL.
 	 * @param int    $button_id Button ID.
 	 * @return string
@@ -138,6 +142,11 @@ class Art_LMS_Mart_Attribution {
 		unset( $button_id );
 		$url = (string) $url;
 		if ( '' === $url ) {
+			return $url;
+		}
+
+		/* Admin screens (incl. payment-button «Вставка») — never inject mart_id. */
+		if ( is_admin() ) {
 			return $url;
 		}
 
