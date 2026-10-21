@@ -73,6 +73,22 @@ $checkout_url  = Art_LMS_Payment_Buttons::get_checkout_link( $button_id );
 					</button>
 				<?php endif; ?>
 			</div>
+			<?php if ( $checkout_url ) : ?>
+				<p class="description art-lms-payment-button-links__mart-hint">
+					<?php
+					echo wp_kses(
+						sprintf(
+							/* translators: %s: query fragment with placeholder */
+							__( 'Для MAX-бота добавьте в конец ссылки: %s — подставится ID клиента. Без этого покупка не привяжется к чату.', 'art-lms' ),
+							'<code>&amp;mart_id={user_id}</code>'
+						),
+						array(
+							'code' => array(),
+						)
+					);
+					?>
+				</p>
+			<?php endif; ?>
 		</div>
 	<?php endif; ?>
 </div>
