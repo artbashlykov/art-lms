@@ -487,10 +487,14 @@
 
 .art-lms-course__nav--top {
 	margin: 0 0 20px;
+	padding: 0 0 0.85rem;
+	border-bottom: 1px solid #e5e7eb;
 }
 
 .art-lms-course__nav--bottom {
 	margin: 1.25rem 0 0;
+	padding: 0.85rem 0 0;
+	border-top: 1px solid #e5e7eb;
 }
 
 .art-lms-course__nav-btn {

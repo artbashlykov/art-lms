@@ -57,31 +57,80 @@
 			return index;
 		}
 
+		/**
+		 * Stop HTML5 media and unload embeds so a hidden lesson cannot keep playing.
+		 *
+		 * @param {Element|null} container Lesson screen.
+		 */
+		function stopMedia(container) {
+			if (!container) {
+				return;
+			}
+
+			Array.prototype.forEach.call(container.querySelectorAll('video, audio'), function (media) {
+				try {
+					media.pause();
+				} catch (e) {
+					// Ignore players that reject pause().
+				}
+
+				try {
+					if (!media.paused) {
+						media.currentTime = 0;
+					}
+				} catch (e2) {
+					// Some streams block seeking.
+				}
+			});
+
+			Array.prototype.forEach.call(container.querySelectorAll('iframe'), function (iframe) {
+				var src = iframe.getAttribute('src') || '';
+
+				if (!src || src === 'about:blank') {
+					return;
+				}
+
+				if (!iframe.getAttribute('data-art-lms-embed-src')) {
+					iframe.setAttribute('data-art-lms-embed-src', src);
+				}
+
+				// Unload the player: hidden iframes (Vimeo/YouTube) keep playing otherwise.
+				iframe.setAttribute('src', 'about:blank');
+			});
+		}
+
+		/**
+		 * Restore embeds for the visible lesson (lazy load after stopMedia).
+		 *
+		 * @param {Element|null} container Lesson screen.
+		 */
+		function restoreEmbeds(container) {
+			if (!container) {
+				return;
+			}
+
+			Array.prototype.forEach.call(container.querySelectorAll('iframe'), function (iframe) {
+				var saved = iframe.getAttribute('data-art-lms-embed-src');
+				var src = iframe.getAttribute('src') || '';
+
+				if (saved && (src === 'about:blank' || src === '' || src !== saved)) {
+					iframe.setAttribute('src', saved);
+				}
+			});
+		}
+
 		function showToc() {
 			root.setAttribute('data-view', 'toc');
 			root.setAttribute('data-lesson', '0');
 			tocScreen.hidden = false;
 
 			lessonScreens.forEach(function (screen) {
+				stopMedia(screen);
 				screen.hidden = true;
 			});
 
 			setHash('toc', 0);
 			tocScreen.scrollIntoView({ behavior: 'smooth', block: 'start' });
-		}
-
-		function refreshEmbeds(container) {
-			if (!container) {
-				return;
-			}
-
-			Array.prototype.forEach.call(container.querySelectorAll('iframe'), function (iframe) {
-				var src = iframe.getAttribute('src');
-
-				if (src) {
-					iframe.setAttribute('src', src);
-				}
-			});
 		}
 
 		function showLesson(index) {
@@ -92,7 +141,13 @@
 
 			lessonScreens.forEach(function (screen) {
 				var screenIndex = parseInt(screen.getAttribute('data-lesson-index'), 10);
-				screen.hidden = screenIndex !== index;
+				var isActive = screenIndex === index;
+
+				if (!isActive) {
+					stopMedia(screen);
+				}
+
+				screen.hidden = !isActive;
 			});
 
 			setHash('lesson', index);
@@ -102,7 +157,7 @@
 			);
 
 			if (active) {
-				refreshEmbeds(active);
+				restoreEmbeds(active);
 				active.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			}
 		}

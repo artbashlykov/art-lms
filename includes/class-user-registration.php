@@ -709,7 +709,7 @@ class Art_LMS_User_Registration {
 
 		$username = self::generate_username( $email );
 
-		$password = wp_generate_password( 16, true, true );
+		$password = self::generate_buyer_password();
 
 
 
@@ -775,7 +775,23 @@ class Art_LMS_User_Registration {
 
 	}
 
+	/**
+	 * Generate a buyer password without whitespace.
+	 *
+	 * Uses special characters, but not WP "extra" set (that set includes a space).
+	 *
+	 * @return string
+	 */
+	public static function generate_buyer_password() {
+		$password = wp_generate_password( 16, true, false );
+		$password = preg_replace( '/\s+/', '', (string) $password );
 
+		if ( ! is_string( $password ) || strlen( $password ) < 12 ) {
+			$password = str_replace( ' ', '', (string) wp_generate_password( 16, true, false ) );
+		}
+
+		return (string) $password;
+	}
 
 	/**
 

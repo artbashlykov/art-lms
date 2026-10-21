@@ -88,6 +88,7 @@ class Art_LMS_Plugin {
 		require_once ART_LMS_PLUGIN_DIR . 'admin/class-admin-materials.php';
 		require_once ART_LMS_PLUGIN_DIR . 'admin/class-admin-payment-buttons.php';
 		require_once ART_LMS_PLUGIN_DIR . 'admin/class-admin-payment-button-editor.php';
+		require_once ART_LMS_PLUGIN_DIR . 'admin/class-admin-users.php';
 		require_once ART_LMS_PLUGIN_DIR . 'public/class-public.php';
 
 		Art_LMS_Payment_Gateway_Registry::boot();
@@ -155,5 +156,6 @@ class Art_LMS_Plugin {
 		Art_LMS_Admin_Materials::init();
 		Art_LMS_Admin_Payment_Buttons::init();
 		Art_LMS_Admin_Payment_Button_Editor::init();
+		Art_LMS_Admin_Users::init();
 	}
 }
