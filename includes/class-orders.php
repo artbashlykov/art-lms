@@ -880,6 +880,16 @@ class Art_LMS_Orders {
 
 		Art_LMS_Payment_Buttons::grant_access_for_order( $order, $order_id );
 
+		/**
+		 * Always after a successful pending→paid transition (gateways + manual).
+		 * Integrations should use this; art_lms_order_paid may be skipped when emails are suppressed.
+		 *
+		 * @param int                  $order_id     Order ID.
+		 * @param object               $order        Order row.
+		 * @param array<string, mixed> $payment_data Gateway/manual payload.
+		 */
+		do_action( 'art_lms_order_marked_paid', $order_id, $order, $payment_data );
+
 		if ( empty( $payment_data['skip_email'] ) ) {
 			do_action( 'art_lms_order_paid', $order_id, $order );
 		}
@@ -1578,6 +1588,20 @@ class Art_LMS_Orders {
 					'status' => $new_status,
 				)
 			);
+
+			$fresh = self::get( $order_id );
+			if ( $fresh ) {
+				/**
+				 * Fires after an order status changes via admin/manual update
+				 * (not used on the gateway mark_paid path — that uses art_lms_order_paid).
+				 *
+				 * @param int    $order_id   Order ID.
+				 * @param string $new_status New status.
+				 * @param string $old_status Previous status.
+				 * @param object $order      Fresh order row.
+				 */
+				do_action( 'art_lms_order_status_changed', $order_id, $new_status, $old_status, $fresh );
+			}
 		}
 
 		return true;

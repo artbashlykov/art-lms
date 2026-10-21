@@ -54,9 +54,19 @@ class Art_LMS_Order_Form_Data {
 			);
 		}
 
-		return array(
+		$snapshot = array(
 			'fields' => $rows,
 		);
+
+		/**
+		 * Filter checkout form snapshot before it is stored on the order.
+		 *
+		 * @param array{fields: array<int, array<string, string>>} $snapshot Snapshot.
+		 * @param array                                             $input    Raw request data.
+		 */
+		$filtered = apply_filters( 'art_lms_order_form_snapshot', $snapshot, $input );
+
+		return is_array( $filtered ) ? $filtered : $snapshot;
 	}
 
 	/**

@@ -55,6 +55,7 @@ class Art_LMS_Plugin {
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-payment-buttons.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-orders.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-order-form-data.php';
+		require_once ART_LMS_PLUGIN_DIR . 'includes/class-mart-attribution.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-access.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-account.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-roles.php';
@@ -125,6 +126,7 @@ class Art_LMS_Plugin {
 		Art_LMS_Protected_Media::init();
 		Art_LMS_Payment_Buttons::init();
 		Art_LMS_Orders::init();
+		Art_LMS_Mart_Attribution::init();
 		Art_LMS_Access::init();
 		Art_LMS_Account::init();
 		Art_LMS_Notifications::init();

@@ -122,6 +122,13 @@ $actions_class = Art_LMS_Settings::get_checkout_button_actions_class();
 				</p>
 			<?php endforeach; ?>
 
+			<?php
+			/**
+			 * After visible checkout fields (e.g. hidden mart_id). Must not break submit.
+			 */
+			do_action( 'art_lms_checkout_form_after_fields' );
+			?>
+
 			<?php if ( ! empty( $consents['items'] ) ) : ?>
 				<div class="art-lms-checkout-form__consents">
 					<?php if ( ! empty( $consents['title'] ) ) : ?>

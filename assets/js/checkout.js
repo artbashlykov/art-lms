@@ -116,6 +116,12 @@
 			payload.payment_gateway = getFieldValue($form, 'payment_gateway');
 		}
 
+		/* Optional MAX attribution — hidden input; never required for payment. */
+		var martId = getFieldValue($form, 'mart_id');
+		if (martId) {
+			payload.mart_id = martId;
+		}
+
 		return payload;
 	}
 
