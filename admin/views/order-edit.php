@@ -51,12 +51,12 @@ $can_change_product = $is_new || Art_LMS_Orders::STATUS_PAID !== $order['status'
 					</tr>
 					<tr>
 						<th><?php esc_html_e( 'Создан', 'art-lms' ); ?></th>
-						<td><?php echo esc_html( $order['created_at'] ); ?></td>
+						<td><?php echo esc_html( Art_LMS_Orders::format_admin_datetime( $order['created_at'] ) ); ?></td>
 					</tr>
-					<?php if ( ! empty( $order['paid_at'] ) ) : ?>
+					<?php if ( ! empty( $order['paid_at'] ) && '0000-00-00 00:00:00' !== $order['paid_at'] ) : ?>
 						<tr>
 							<th><?php esc_html_e( 'Оплачен', 'art-lms' ); ?></th>
-							<td><?php echo esc_html( $order['paid_at'] ); ?></td>
+							<td><?php echo esc_html( Art_LMS_Orders::format_admin_datetime( $order['paid_at'] ) ); ?></td>
 						</tr>
 					<?php endif; ?>
 					<?php if ( ! empty( $order['product_id'] ) ) : ?>

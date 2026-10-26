@@ -422,7 +422,7 @@ class Art_LMS_Account {
 			return __( 'Доступ: бессрочный', 'art-lms' );
 		}
 
-		$timestamp = strtotime( (string) $expires_at );
+		$timestamp = Art_LMS_Orders::local_mysql_to_timestamp( (string) $expires_at );
 
 		if ( ! $timestamp ) {
 			return __( 'Доступ: бессрочный', 'art-lms' );

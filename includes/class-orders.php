@@ -1163,7 +1163,41 @@ class Art_LMS_Orders {
 	}
 
 	/**
+	 * Parse a MySQL datetime stored in the site timezone (current_time( 'mysql' )).
+	 *
+	 * Do not use bare strtotime() + wp_date(): strtotime() uses PHP's timezone,
+	 * while wp_date() uses the WordPress timezone — that double-shift breaks display.
+	 *
+	 * @param string $mysql_datetime MySQL datetime string.
+	 * @return int|false Unix timestamp, or false on failure.
+	 */
+	public static function local_mysql_to_timestamp( $mysql_datetime ) {
+		$mysql_datetime = trim( (string) $mysql_datetime );
+
+		if ( '' === $mysql_datetime || '0000-00-00 00:00:00' === $mysql_datetime ) {
+			return false;
+		}
+
+		$timezone = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' );
+
+		try {
+			$datetime = date_create_immutable( $mysql_datetime, $timezone );
+		} catch ( Exception $e ) {
+			unset( $e );
+			$datetime = false;
+		}
+
+		if ( ! $datetime instanceof DateTimeImmutable ) {
+			return false;
+		}
+
+		return $datetime->getTimestamp();
+	}
+
+	/**
 	 * Format datetime for admin UI (e.g. 06 июня 2026, 14:30).
+	 *
+	 * Expects datetimes written with current_time( 'mysql' ) (site timezone).
 	 *
 	 * @param string $mysql_datetime MySQL datetime string.
 	 * @return string
@@ -1173,10 +1207,10 @@ class Art_LMS_Orders {
 			return '—';
 		}
 
-		$timestamp = strtotime( $mysql_datetime );
+		$timestamp = self::local_mysql_to_timestamp( $mysql_datetime );
 
 		if ( ! $timestamp ) {
-			return $mysql_datetime;
+			return (string) $mysql_datetime;
 		}
 
 		$months = array(
