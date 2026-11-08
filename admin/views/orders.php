@@ -228,6 +228,15 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 									?>
 									<br><small><a href="<?php echo esc_url( $profile_url ); ?>"><?php esc_html_e( 'Открыть профиль', 'art-lms' ); ?></a></small>
 								<?php endif; ?>
+								<?php
+								/**
+								 * Extra buyer action links under the profile link (e.g. ART MAX BOT chat).
+								 *
+								 * @param object        $order Order row.
+								 * @param WP_User|false $user  Buyer WP user, or false when unknown.
+								 */
+								do_action( 'art_lms_orders_buyer_actions', $order, $user );
+								?>
 							</td>
 							<td class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'product' ) ); ?>">
 								<?php
