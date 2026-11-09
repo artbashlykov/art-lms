@@ -11,22 +11,26 @@
  * @var int       $page     Current page.
  * @var int       $pages    Total pages.
  * @var array<int, string|null> $access_expires_map Order ID => access expires_at.
+ * @var bool      $can_manage_orders Whether current user can mutate orders.
  */
 
 defined( 'ABSPATH' ) || exit;
 
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Template variables scoped to this view.
 
-$add_url       = Art_LMS_Admin_Orders::get_edit_url();
-$reset_url     = Art_LMS_Admin_Orders::get_list_url();
-$status_labels = Art_LMS_Orders::get_status_labels();
-$has_filters   = $filters['buyer'] || $filters['status'] || $filters['date_from'] || $filters['date_to'] || $filters['expires_from'] || $filters['expires_to'] || $filters['access_expiry'];
-$has_orders    = ! empty( $orders );
+$can_manage_orders  = ! empty( $can_manage_orders );
+$add_url            = Art_LMS_Admin_Orders::get_edit_url();
+$reset_url          = Art_LMS_Admin_Orders::get_list_url();
+$status_labels      = Art_LMS_Orders::get_status_labels();
+$has_filters        = $filters['buyer'] || $filters['status'] || $filters['date_from'] || $filters['date_to'] || $filters['expires_from'] || $filters['expires_to'] || $filters['access_expiry'];
+$has_orders         = ! empty( $orders );
 $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_map ) ? $access_expires_map : array();
 ?>
 <div class="wrap art-lms-admin art-lms-orders-page">
 	<h1 class="wp-heading-inline"><?php esc_html_e( 'Заказы ART LMS', 'art-lms' ); ?></h1>
-	<a href="<?php echo esc_url( $add_url ); ?>" class="page-title-action"><?php esc_html_e( 'Добавить', 'art-lms' ); ?></a>
+	<?php if ( $can_manage_orders ) : ?>
+		<a href="<?php echo esc_url( $add_url ); ?>" class="page-title-action"><?php esc_html_e( 'Добавить', 'art-lms' ); ?></a>
+	<?php endif; ?>
 	<hr class="wp-header-end">
 
 	<form method="get" class="art-lms-orders-filters">
@@ -120,6 +124,7 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 	</form>
 
 	<?php if ( $has_orders ) : ?>
+		<?php if ( $can_manage_orders ) : ?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="art-lms-orders-bulk-form" class="art-lms-orders-bulk-form">
 			<input type="hidden" name="action" value="art_lms_bulk_delete_orders">
 			<?php wp_nonce_field( 'art_lms_bulk_delete_orders', 'art_lms_bulk_orders_nonce' ); ?>
@@ -133,16 +138,19 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 			<input type="hidden" name="orderby" value="<?php echo esc_attr( $filters['orderby'] ); ?>">
 			<input type="hidden" name="order" value="<?php echo esc_attr( $filters['order'] ); ?>">
 			<input type="hidden" name="paged" value="<?php echo esc_attr( (string) $page ); ?>">
+		<?php endif; ?>
 
-			<?php Art_LMS_Admin_Orders::render_list_pagination( $filters, $total, $page, $pages, 'top', true ); ?>
+			<?php Art_LMS_Admin_Orders::render_list_pagination( $filters, $total, $page, $pages, 'top', $can_manage_orders ); ?>
 
 			<table class="widefat striped art-lms-orders-table">
 				<thead>
 					<tr>
+						<?php if ( $can_manage_orders ) : ?>
 						<td id="cb" class="manage-column column-cb check-column">
 							<label class="screen-reader-text" for="art-lms-cb-select-all-top"><?php esc_html_e( 'Выбрать все', 'art-lms' ); ?></label>
 							<input id="art-lms-cb-select-all-top" type="checkbox" class="art-lms-orders-cb-select-all">
 						</td>
+						<?php endif; ?>
 						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_sort_classes( 'created_at', $filters ) ); ?>">
 							<a href="<?php echo esc_url( Art_LMS_Admin_Orders::get_list_sort_link( 'created_at', $filters ) ); ?>">
 								<span><?php esc_html_e( 'Дата', 'art-lms' ); ?></span>
@@ -198,6 +206,7 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 						$product_name = Art_LMS_Payment_Buttons::get_admin_title( (int) $order->product_id );
 						?>
 						<tr>
+							<?php if ( $can_manage_orders ) : ?>
 							<th scope="row" class="check-column">
 								<label class="screen-reader-text" for="<?php echo esc_attr( $cb_id ); ?>">
 									<?php
@@ -216,6 +225,7 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 									value="<?php echo esc_attr( (string) (int) $order->id ); ?>"
 								>
 							</th>
+							<?php endif; ?>
 							<td class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'created_at' ) ); ?>">
 								<?php echo esc_html( Art_LMS_Orders::format_admin_datetime( $order->created_at ) ); ?>
 							</td>
@@ -283,6 +293,7 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 									<span class="dashicons dashicons-visibility" aria-hidden="true"></span>
 									<span class="screen-reader-text"><?php esc_html_e( 'Просмотреть', 'art-lms' ); ?></span>
 								</a>
+								<?php if ( $can_manage_orders ) : ?>
 								<a
 									href="<?php echo esc_url( $edit_url ); ?>"
 									class="art-lms-action-icon"
@@ -300,16 +311,19 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 									<span class="dashicons dashicons-trash" aria-hidden="true"></span>
 									<span class="screen-reader-text"><?php esc_html_e( 'Удалить', 'art-lms' ); ?></span>
 								</a>
+								<?php endif; ?>
 							</td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>
 				<tfoot>
 					<tr>
+						<?php if ( $can_manage_orders ) : ?>
 						<td class="manage-column column-cb check-column">
 							<label class="screen-reader-text" for="art-lms-cb-select-all-bottom"><?php esc_html_e( 'Выбрать все', 'art-lms' ); ?></label>
 							<input id="art-lms-cb-select-all-bottom" type="checkbox" class="art-lms-orders-cb-select-all">
 						</td>
+						<?php endif; ?>
 						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'created_at' ) ); ?>"><?php esc_html_e( 'Дата', 'art-lms' ); ?></th>
 						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'buyer' ) ); ?>"><?php esc_html_e( 'Покупатель', 'art-lms' ); ?></th>
 						<th scope="col" class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'product' ) ); ?>"><?php esc_html_e( 'Продукт', 'art-lms' ); ?></th>
@@ -323,8 +337,10 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 				</tfoot>
 			</table>
 
-			<?php Art_LMS_Admin_Orders::render_list_pagination( $filters, $total, $page, $pages, 'bottom', true ); ?>
+			<?php Art_LMS_Admin_Orders::render_list_pagination( $filters, $total, $page, $pages, 'bottom', $can_manage_orders ); ?>
+		<?php if ( $can_manage_orders ) : ?>
 		</form>
+		<?php endif; ?>
 	<?php else : ?>
 		<?php Art_LMS_Admin_Orders::render_list_pagination( $filters, $total, $page, $pages, 'top' ); ?>
 

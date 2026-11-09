@@ -40,7 +40,7 @@ class Art_LMS_Admin_Orders {
 	 * Prepare orders list screen (Screen Options).
 	 */
 	public static function load_list_page() {
-		if ( ! Art_LMS_Security::can_manage() ) {
+		if ( ! Art_LMS_Security::can_view_orders() ) {
 			return;
 		}
 
@@ -239,7 +239,7 @@ class Art_LMS_Admin_Orders {
 	 * Render orders list page.
 	 */
 	public static function render_list_page() {
-		if ( ! Art_LMS_Security::can_manage() ) {
+		if ( ! Art_LMS_Security::can_view_orders() ) {
 			return;
 		}
 
@@ -253,11 +253,12 @@ class Art_LMS_Admin_Orders {
 			exit;
 		}
 
-		$orders   = $result['items'];
-		$total    = $result['total'];
-		$per_page = $result['per_page'];
+		$orders             = $result['items'];
+		$total              = $result['total'];
+		$per_page           = $result['per_page'];
+		$can_manage_orders  = Art_LMS_Security::can_manage();
 
-		$order_ids           = array_map(
+		$order_ids          = array_map(
 			static function ( $order ) {
 				return (int) $order->id;
 			},
@@ -272,7 +273,7 @@ class Art_LMS_Admin_Orders {
 	 * Render read-only order details page.
 	 */
 	public static function render_view_page() {
-		if ( ! Art_LMS_Security::can_manage() ) {
+		if ( ! Art_LMS_Security::can_view_orders() ) {
 			return;
 		}
 
@@ -283,9 +284,10 @@ class Art_LMS_Admin_Orders {
 			wp_die( esc_html__( 'Заказ не найден.', 'art-lms' ) );
 		}
 
-		$form_groups = Art_LMS_Order_Form_Data::get_display_groups( $order );
-		$list_url    = self::get_list_url();
-		$edit_url    = self::get_edit_url( $order_id );
+		$form_groups       = Art_LMS_Order_Form_Data::get_display_groups( $order );
+		$list_url          = self::get_list_url();
+		$edit_url          = self::get_edit_url( $order_id );
+		$can_manage_orders = Art_LMS_Security::can_manage();
 
 		include ART_LMS_PLUGIN_DIR . 'admin/views/order-view.php';
 	}

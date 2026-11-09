@@ -8,15 +8,17 @@
  * @var array  $form_groups  Parsed form field groups.
  * @var string $list_url     Orders list URL.
  * @var string $edit_url     Order edit URL.
+ * @var bool   $can_manage_orders Whether current user can mutate orders.
  */
 
 defined( 'ABSPATH' ) || exit;
 
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Template variables scoped to this view.
 
-$status_labels = Art_LMS_Orders::get_status_labels();
-$button_title  = Art_LMS_Payment_Buttons::get_admin_title( (int) $order->product_id );
-$can_send_email = Art_LMS_Orders::STATUS_PAID !== $order->status;
+$can_manage_orders = ! empty( $can_manage_orders );
+$status_labels     = Art_LMS_Orders::get_status_labels();
+$button_title      = Art_LMS_Payment_Buttons::get_admin_title( (int) $order->product_id );
+$can_send_email    = Art_LMS_Orders::STATUS_PAID !== $order->status;
 ?>
 <div class="wrap art-lms-admin art-lms-order-view-page">
 	<h1>
@@ -29,15 +31,17 @@ $can_send_email = Art_LMS_Orders::STATUS_PAID !== $order->status;
 		?>
 	</h1>
 
-	<?php $delete_url = Art_LMS_Admin_Orders::get_delete_url( (int) $order->id ); ?>
 	<p class="art-lms-order-view-actions">
 		<a href="<?php echo esc_url( $list_url ); ?>" class="button"><?php esc_html_e( '← К списку заказов', 'art-lms' ); ?></a>
-		<a href="<?php echo esc_url( $edit_url ); ?>" class="button button-primary"><?php esc_html_e( 'Изменить', 'art-lms' ); ?></a>
-		<a
-			href="<?php echo esc_url( $delete_url ); ?>"
-			class="button button-link-delete"
-			onclick="return confirm('<?php echo esc_js( __( 'Удалить этот заказ безвозвратно?', 'art-lms' ) ); ?>');"
-		><?php esc_html_e( 'Удалить', 'art-lms' ); ?></a>
+		<?php if ( $can_manage_orders ) : ?>
+			<?php $delete_url = Art_LMS_Admin_Orders::get_delete_url( (int) $order->id ); ?>
+			<a href="<?php echo esc_url( $edit_url ); ?>" class="button button-primary"><?php esc_html_e( 'Изменить', 'art-lms' ); ?></a>
+			<a
+				href="<?php echo esc_url( $delete_url ); ?>"
+				class="button button-link-delete"
+				onclick="return confirm('<?php echo esc_js( __( 'Удалить этот заказ безвозвратно?', 'art-lms' ) ); ?>');"
+			><?php esc_html_e( 'Удалить', 'art-lms' ); ?></a>
+		<?php endif; ?>
 	</p>
 
 	<div class="art-lms-panel">
@@ -51,6 +55,7 @@ $can_send_email = Art_LMS_Orders::STATUS_PAID !== $order->status;
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Статус', 'art-lms' ); ?></th>
 					<td>
+						<?php if ( $can_manage_orders ) : ?>
 						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="art-lms-order-status-form">
 							<?php wp_nonce_field( 'art_lms_update_order_status', 'art_lms_order_status_nonce' ); ?>
 							<input type="hidden" name="action" value="art_lms_update_order_status">
@@ -81,6 +86,11 @@ $can_send_email = Art_LMS_Orders::STATUS_PAID !== $order->status;
 								</p>
 							<?php endif; ?>
 						</form>
+						<?php else : ?>
+							<span class="art-lms-order-status art-lms-order-status--<?php echo esc_attr( $order->status ); ?>">
+								<?php echo esc_html( Art_LMS_Orders::get_status_label( $order->status ) ); ?>
+							</span>
+						<?php endif; ?>
 					</td>
 				</tr>
 				<tr>
@@ -164,6 +174,7 @@ $can_send_email = Art_LMS_Orders::STATUS_PAID !== $order->status;
 	</div>
 </div>
 
+<?php if ( $can_manage_orders ) : ?>
 <script>
 (function () {
 	var select = document.getElementById('art_lms_order_view_status');
@@ -187,3 +198,4 @@ $can_send_email = Art_LMS_Orders::STATUS_PAID !== $order->status;
 	});
 })();
 </script>
+<?php endif; ?>

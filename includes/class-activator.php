@@ -19,6 +19,9 @@ class Art_LMS_Activator {
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-roles.php';
 		Art_LMS_Roles::register_role();
 
+		require_once ART_LMS_PLUGIN_DIR . 'includes/class-security.php';
+		Art_LMS_Security::ensure_caps();
+
 		self::create_tables();
 		self::set_default_options();
 		self::register_post_types_for_flush();

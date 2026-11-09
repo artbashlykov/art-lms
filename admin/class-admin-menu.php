@@ -74,7 +74,7 @@ class Art_LMS_Admin_Menu {
 
 			__( 'ART LMS', 'art-lms' ),
 
-			'manage_options',
+			Art_LMS_Security::CAP_VIEW_ORDERS,
 
 			self::MENU_SLUG,
 
@@ -96,7 +96,7 @@ class Art_LMS_Admin_Menu {
 
 			__( 'Заказы', 'art-lms' ),
 
-			'manage_options',
+			Art_LMS_Security::CAP_VIEW_ORDERS,
 
 			Art_LMS_Admin_Orders::PAGE_LIST,
 
@@ -240,7 +240,7 @@ class Art_LMS_Admin_Menu {
 
 			null,
 
-			'manage_options',
+			Art_LMS_Security::CAP_VIEW_ORDERS,
 
 			Art_LMS_Admin_Orders::PAGE_VIEW,
 
@@ -499,7 +499,7 @@ class Art_LMS_Admin_Menu {
 
 
 
-		if ( current_user_can( 'manage_options' ) ) {
+		if ( Art_LMS_Security::can_view_orders() ) {
 
 			wp_enqueue_style(
 

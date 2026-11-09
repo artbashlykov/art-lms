@@ -15,6 +15,11 @@ defined( 'ABSPATH' ) || exit;
 class Art_LMS_Security {
 
 	/**
+	 * View orders list / order details (read-only). Granted to admins and ART MAX BOT operators.
+	 */
+	const CAP_VIEW_ORDERS = 'art_lms_view_orders';
+
+	/**
 	 * Admin-post actions allowed for buyers.
 	 *
 	 * @var string[]
@@ -27,17 +32,65 @@ class Art_LMS_Security {
 	 * Register hooks.
 	 */
 	public static function init() {
+		add_action( 'init', array( __CLASS__, 'ensure_caps' ), 1 );
 		add_action( 'admin_init', array( __CLASS__, 'block_buyers_from_admin' ), 1 );
+		add_filter( 'user_has_cap', array( __CLASS__, 'filter_user_has_cap' ), 10, 4 );
 		add_filter( 'show_admin_bar', array( __CLASS__, 'hide_admin_bar_for_non_admins' ) );
 	}
 
 	/**
-	 * Check if current user can manage plugin settings.
+	 * Site admins always pass art_lms_view_orders checks (menu capability).
+	 *
+	 * @param array<string, bool> $allcaps Caps the user has.
+	 * @param array<int, string>  $caps    Required caps being checked.
+	 * @param array<int, mixed>   $args    Arguments to current_user_can.
+	 * @param WP_User             $user    User object.
+	 * @return array<string, bool>
+	 */
+	public static function filter_user_has_cap( $allcaps, $caps, $args, $user ) {
+		unset( $caps, $args, $user );
+
+		if ( ! empty( $allcaps['manage_options'] ) ) {
+			$allcaps[ self::CAP_VIEW_ORDERS ] = true;
+		}
+
+		return $allcaps;
+	}
+
+	/**
+	 * Persist view-orders cap on administrator and Max Bot operator (if present).
+	 */
+	public static function ensure_caps() {
+		$admin = get_role( 'administrator' );
+		if ( $admin && ! $admin->has_cap( self::CAP_VIEW_ORDERS ) ) {
+			$admin->add_cap( self::CAP_VIEW_ORDERS );
+		}
+
+		$operator_slug = class_exists( 'Art_Max_Bot_Capabilities', false )
+			? Art_Max_Bot_Capabilities::ROLE_OPERATOR
+			: 'art_max_bot_operator';
+		$operator      = get_role( $operator_slug );
+		if ( $operator && ! $operator->has_cap( self::CAP_VIEW_ORDERS ) ) {
+			$operator->add_cap( self::CAP_VIEW_ORDERS );
+		}
+	}
+
+	/**
+	 * Check if current user can manage plugin settings / mutate LMS data.
 	 *
 	 * @return bool
 	 */
 	public static function can_manage() {
 		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Check if current user can view the orders list and order details.
+	 *
+	 * @return bool
+	 */
+	public static function can_view_orders() {
+		return self::can_manage() || current_user_can( self::CAP_VIEW_ORDERS );
 	}
 
 	/**
@@ -137,7 +190,7 @@ class Art_LMS_Security {
 			return $show;
 		}
 
-		if ( current_user_can( 'manage_options' ) ) {
+		if ( current_user_can( 'manage_options' ) || self::can_view_orders() ) {
 			return $show;
 		}
 
