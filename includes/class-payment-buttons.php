@@ -958,21 +958,71 @@ class Art_LMS_Payment_Buttons {
 	/**
 	 * Calculate access expiration from access days setting.
 	 *
+	 * When $user_id and $product_id (material) are provided, timed access stacks
+	 * onto the furthest still-active expiry for that material (renewal in place).
+	 * First purchase / expired-only → same as before: now + N days.
+	 * Active unlimited grant → null (do not shorten to a timed end).
+	 *
+	 * Without user/material (legacy callers) → now + N days.
+	 *
 	 * @param int $access_days Access days (0 = unlimited).
-	 * @return string|null MySQL datetime UTC or null.
+	 * @param int $user_id     Optional buyer user ID for stacking.
+	 * @param int $product_id  Optional material post ID for stacking.
+	 * @return string|null MySQL datetime or null for unlimited.
 	 */
-	public static function calculate_expires_at( $access_days ) {
+	public static function calculate_expires_at( $access_days, $user_id = 0, $product_id = 0 ) {
 		$access_days = absint( $access_days );
+		$user_id     = absint( $user_id );
+		$product_id  = absint( $product_id );
 
 		if ( $access_days <= 0 ) {
 			return null;
 		}
 
-		return gmdate( 'Y-m-d H:i:s', strtotime( '+' . $access_days . ' days', current_time( 'timestamp' ) ) );
+		$base_ts = current_time( 'timestamp' );
+
+		if ( $user_id && $product_id ) {
+			$existing = Art_LMS_Access::get_active_expiry_for_stacking( $user_id, $product_id );
+
+			if ( 'unlimited' === $existing ) {
+				/**
+				 * Filter calculated access expiration (null = unlimited).
+				 *
+				 * @param string|null $expires_at Calculated expiration.
+				 * @param int         $access_days Access days from the payment button.
+				 * @param int         $user_id     Buyer user ID.
+				 * @param int         $product_id  Material post ID.
+				 */
+				return apply_filters( 'art_lms_access_expires_at', null, $access_days, $user_id, $product_id );
+			}
+
+			if ( is_string( $existing ) && '' !== $existing ) {
+				$existing_ts = strtotime( $existing );
+
+				if ( $existing_ts && $existing_ts > $base_ts ) {
+					$base_ts = $existing_ts;
+				}
+			}
+		}
+
+		$expires_at = gmdate( 'Y-m-d H:i:s', strtotime( '+' . $access_days . ' days', $base_ts ) );
+
+		/**
+		 * Filter calculated access expiration (null = unlimited).
+		 *
+		 * @param string|null $expires_at Calculated expiration.
+		 * @param int         $access_days Access days from the payment button.
+		 * @param int         $user_id     Buyer user ID (0 when not stacking).
+		 * @param int         $product_id  Material post ID (0 when not stacking).
+		 */
+		return apply_filters( 'art_lms_access_expires_at', $expires_at, $access_days, $user_id, $product_id );
 	}
 
 	/**
 	 * Grant material access after order is paid.
+	 *
+	 * Inserts a new access row per material (never updates existing rows).
+	 * Timed renewals stack onto the material's current active end date.
 	 *
 	 * @param object $order    Order row.
 	 * @param int    $order_id Order ID.
@@ -990,24 +1040,27 @@ class Art_LMS_Payment_Buttons {
 			return;
 		}
 
-		$meta       = self::get_meta( $button_id );
-		$expires_at = self::calculate_expires_at( $meta['access_days'] );
+		$meta    = self::get_meta( $button_id );
+		$user_id = (int) $order->user_id;
 
 		foreach ( $meta['material_ids'] as $material_id ) {
-			$material = get_post( $material_id );
+			$material_id = (int) $material_id;
+			$material    = get_post( $material_id );
 
 			if ( ! $material || Art_LMS_Materials::POST_TYPE !== $material->post_type ) {
 				continue;
 			}
 
-			if ( Art_LMS_Access::has_active_for_order_product( (int) $order_id, (int) $material_id ) ) {
+			if ( Art_LMS_Access::has_active_for_order_product( (int) $order_id, $material_id ) ) {
 				continue;
 			}
 
+			$expires_at = self::calculate_expires_at( $meta['access_days'], $user_id, $material_id );
+
 			Art_LMS_Access::grant(
 				array(
-					'user_id'    => (int) $order->user_id,
-					'product_id' => (int) $material_id,
+					'user_id'    => $user_id,
+					'product_id' => $material_id,
 					'order_id'   => (int) $order_id,
 					'expires_at' => $expires_at,
 				)

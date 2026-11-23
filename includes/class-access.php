@@ -114,6 +114,67 @@ class Art_LMS_Access {
 	}
 
 	/**
+	 * Resolve stacking base for a new timed access grant (per user + material).
+	 *
+	 * Does not mutate rows except marking clearly past ACTIVE rows as expired
+	 * (same cleanup as user_has_access). Never updates existing expires_at.
+	 *
+	 * @param int $user_id    WordPress user ID.
+	 * @param int $product_id Material post ID (access.product_id).
+	 * @return string|null 'unlimited' when an active unlimited grant exists,
+	 *                     MySQL datetime of the furthest future timed expiry,
+	 *                     or null when there is no usable active timed grant.
+	 */
+	public static function get_active_expiry_for_stacking( $user_id, $product_id ) {
+		global $wpdb;
+
+		$user_id    = absint( $user_id );
+		$product_id = absint( $product_id );
+
+		if ( ! $user_id || ! $product_id ) {
+			return null;
+		}
+
+		$table = self::table_name();
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, expires_at FROM `{$table}`
+				WHERE user_id = %d AND product_id = %d AND status = %s
+				ORDER BY id DESC",
+				$user_id,
+				$product_id,
+				self::STATUS_ACTIVE
+			)
+		);
+
+		if ( empty( $rows ) ) {
+			return null;
+		}
+
+		$max_expires = null;
+
+		foreach ( $rows as $row ) {
+			$expires_at = isset( $row->expires_at ) ? (string) $row->expires_at : '';
+
+			if ( '' === $expires_at || '0000-00-00 00:00:00' === $expires_at ) {
+				return 'unlimited';
+			}
+
+			if ( self::is_past_expiry( $expires_at ) ) {
+				self::expire( (int) $row->id );
+				continue;
+			}
+
+			if ( null === $max_expires || $expires_at > $max_expires ) {
+				$max_expires = $expires_at;
+			}
+		}
+
+		return $max_expires;
+	}
+
+	/**
 	 * Get access table name.
 	 *
 	 * @return string
