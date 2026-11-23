@@ -2017,6 +2017,11 @@ body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start.wp-has-curre
 	margin: 10px 0 0;
 }
 
+.post-type-art_lms_pay_button .column-art_lms_price {
+	width: 7em;
+	white-space: nowrap;
+}
+
 .post-type-art_lms_pay_button .column-art_lms_button_status {
 	width: 110px;
 }

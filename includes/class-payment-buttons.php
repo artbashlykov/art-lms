@@ -683,7 +683,7 @@ class Art_LMS_Payment_Buttons {
 	}
 
 	/**
-	 * Format price for display.
+	 * Format price for display (whole rubles, amount and ₽ on one line).
 	 *
 	 * @param string|float $price Raw price.
 	 * @return string
@@ -695,17 +695,17 @@ class Art_LMS_Payment_Buttons {
 			return '';
 		}
 
-		$normalized = str_replace( array( ' ', "\xc2\xa0" ), '', $price );
+		$nbsp       = "\xc2\xa0";
+		$normalized = str_replace( array( ' ', $nbsp ), '', $price );
 		$normalized = str_replace( ',', '.', $normalized );
 
 		if ( ! is_numeric( $normalized ) ) {
-			return $price . ' ₽';
+			return $price . $nbsp . '₽';
 		}
 
-		$amount   = (float) $normalized;
-		$decimals = abs( $amount - round( $amount ) ) < 0.00001 ? 0 : 2;
+		$amount = (float) $normalized;
 
-		return number_format( $amount, $decimals, '.', ' ' ) . ' ₽';
+		return number_format( round( $amount ), 0, '.', $nbsp ) . $nbsp . '₽';
 	}
 
 	/**
