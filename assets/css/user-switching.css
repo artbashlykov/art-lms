@@ -1,0 +1,47 @@
+.art-lms-switch-back-bar {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 100000;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	padding: 10px 16px;
+	background: #1d2327;
+	color: #f0f0f1;
+	font-size: 13px;
+	line-height: 1.4;
+	box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.art-lms-switch-back-bar__link {
+	display: inline-block;
+	padding: 6px 12px;
+	border: 0;
+	border-radius: 4px;
+	background: #2271b1;
+	color: #fff !important;
+	text-decoration: none !important;
+	font: inherit;
+	font-weight: 600;
+	line-height: 1.4;
+	cursor: pointer;
+}
+
+.art-lms-switch-back-bar__link:hover,
+.art-lms-switch-back-bar__link:focus {
+	background: #135e96;
+	color: #fff !important;
+}
+
+.art-lms-switch-back-form {
+	display: inline;
+	margin: 0;
+}
+
+body.art-lms-is-switched {
+	padding-bottom: 52px;
+}

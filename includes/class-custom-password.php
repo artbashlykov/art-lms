@@ -404,6 +404,8 @@ class Art_LMS_Custom_Password {
 	 * Process “forgot password” form.
 	 */
 	private static function handle_lostpassword_post() {
+		check_admin_referer( 'art_lms_lostpassword' );
+
 		$user_login = isset( $_POST['user_login'] ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : '';
 
 		if ( '' === $user_login ) {
@@ -461,7 +463,7 @@ class Art_LMS_Custom_Password {
 		 * @param WP_Error $errors Errors object.
 		 * @param WP_User  $user   User object.
 		 */
-		do_action( 'validate_password_reset', $errors, $user );
+		do_action( 'validate_password_reset', $errors, $user ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WP hook.
 
 		if ( $errors->has_errors() ) {
 			self::$errors = $errors;
@@ -527,10 +529,15 @@ class Art_LMS_Custom_Password {
 			return null;
 		}
 
-		list( $rp_login, $rp_key ) = explode( ':', wp_unslash( $_COOKIE[ $cookie_name ] ), 2 );
+		$cookie_raw = sanitize_text_field( wp_unslash( $_COOKIE[ $cookie_name ] ) );
+		$parts      = explode( ':', $cookie_raw, 2 );
 
-		$rp_login = sanitize_text_field( $rp_login );
-		$rp_key   = sanitize_text_field( $rp_key );
+		if ( 2 !== count( $parts ) ) {
+			return null;
+		}
+
+		$rp_login = sanitize_text_field( $parts[0] );
+		$rp_key   = sanitize_text_field( $parts[1] );
 
 		if ( '' === $rp_login || '' === $rp_key ) {
 			return null;

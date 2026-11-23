@@ -348,6 +348,8 @@ class Art_LMS_Gateway_Prodamus extends Art_LMS_Payment_Gateway {
 			return $this->webhook_response( 'Gateway mismatch', 409 );
 		}
 
+		$order = Art_LMS_Orders::maybe_restore_trashed_for_payment( $order );
+
 		if ( Art_LMS_Orders::STATUS_PAID === $order->status ) {
 			return $this->webhook_response( 'success', 200 );
 		}

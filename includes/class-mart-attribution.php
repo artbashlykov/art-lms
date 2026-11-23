@@ -52,16 +52,17 @@ class Art_LMS_Mart_Attribution {
 	 * @return string
 	 */
 	public static function resolve_from_request() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public attribution param.
-		if ( isset( $_GET[ self::PARAM ] ) ) {
+		// Public marketing attribution (like UTM) — no nonce; always passed through self::sanitize().
+		if ( isset( $_GET[ self::PARAM ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended -- Sanitized via self::sanitize().
 			$from_get = self::sanitize( wp_unslash( $_GET[ self::PARAM ] ) );
 			if ( '' !== $from_get ) {
 				return $from_get;
 			}
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checkout REST/form already verifies elsewhere.
-		if ( isset( $_POST[ self::PARAM ] ) ) {
+		if ( isset( $_POST[ self::PARAM ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Missing -- Sanitized via self::sanitize(); checkout verifies CSRF elsewhere.
 			$from_post = self::sanitize( wp_unslash( $_POST[ self::PARAM ] ) );
 			if ( '' !== $from_post ) {
 				return $from_post;
@@ -69,6 +70,7 @@ class Art_LMS_Mart_Attribution {
 		}
 
 		if ( isset( $_COOKIE[ self::COOKIE ] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via self::sanitize().
 			return self::sanitize( wp_unslash( $_COOKIE[ self::COOKIE ] ) );
 		}
 
@@ -83,11 +85,11 @@ class Art_LMS_Mart_Attribution {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public query attribution.
-		if ( ! isset( $_GET[ self::PARAM ] ) ) {
+		if ( ! isset( $_GET[ self::PARAM ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return;
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended -- Sanitized via self::sanitize().
 		$id = self::sanitize( wp_unslash( $_GET[ self::PARAM ] ) );
 		if ( '' === $id ) {
 			return;

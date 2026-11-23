@@ -88,6 +88,23 @@ if ( ! in_array( $default_gateway, $enabled_ids, true ) ) {
 
 					<span class="art-lms-payment-gateway-list__handle" aria-hidden="true" title="<?php esc_attr_e( 'Перетащите для изменения порядка', 'art-lms' ); ?>">⋮⋮</span>
 
+					<div class="art-lms-payment-gateway-list__reorder" role="group" aria-label="<?php esc_attr_e( 'Порядок шлюзов', 'art-lms' ); ?>">
+						<button
+							type="button"
+							class="art-lms-payment-gateway-list__move art-lms-payment-gateway-list__move--up"
+							aria-label="<?php esc_attr_e( 'Выше', 'art-lms' ); ?>"
+						>
+							<span class="art-lms-payment-gateway-list__chevron" aria-hidden="true"></span>
+						</button>
+						<button
+							type="button"
+							class="art-lms-payment-gateway-list__move art-lms-payment-gateway-list__move--down"
+							aria-label="<?php esc_attr_e( 'Ниже', 'art-lms' ); ?>"
+						>
+							<span class="art-lms-payment-gateway-list__chevron" aria-hidden="true"></span>
+						</button>
+					</div>
+
 					<div class="art-lms-payment-gateway-list__main">
 
 						<strong class="art-lms-payment-gateway-list__title"><?php echo esc_html( $meta['title'] ); ?></strong>

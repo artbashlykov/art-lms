@@ -223,6 +223,8 @@ class Art_LMS_Gateway_Yoomoney extends Art_LMS_Payment_Gateway {
 			return new WP_REST_Response( 'Order not found', 404 );
 		}
 
+		$order = Art_LMS_Orders::maybe_restore_trashed_for_payment( $order );
+
 		if ( Art_LMS_Orders::STATUS_PAID === $order->status ) {
 			return new WP_REST_Response( 'OK', 200 );
 		}

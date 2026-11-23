@@ -725,7 +725,21 @@ class Art_LMS_Payment_Buttons {
 	}
 
 	/**
+	 * Whether payment button is published and can expose checkout links.
+	 *
+	 * @param int $button_id Button post ID.
+	 * @return bool
+	 */
+	public static function is_published( $button_id ) {
+		$post = get_post( absint( $button_id ) );
+
+		return $post && self::POST_TYPE === $post->post_type && 'publish' === $post->post_status;
+	}
+
+	/**
 	 * Get direct checkout URL for payment button.
+	 *
+	 * Empty for unpublished buttons — payment links are only for published ones.
 	 *
 	 * @param int $button_id Button post ID.
 	 * @return string
@@ -733,11 +747,44 @@ class Art_LMS_Payment_Buttons {
 	public static function get_checkout_link( $button_id ) {
 		$button_id = absint( $button_id );
 
-		if ( ! $button_id ) {
+		if ( ! $button_id || ! self::is_published( $button_id ) ) {
 			return '';
 		}
 
 		return Art_LMS_Settings::get_checkout_url( $button_id );
+	}
+
+	/**
+	 * Whether ART MAX BOT is available on this site.
+	 *
+	 * @return bool
+	 */
+	public static function is_max_bot_available() {
+		return defined( 'ART_MAX_BOT_VERSION' ) || class_exists( 'Art_Max_Bot_Plugin', false );
+	}
+
+	/**
+	 * Checkout URL with mart_id={user_id} placeholder for MAX bot funnels.
+	 *
+	 * Placeholder must stay literal (not URL-encoded) for MAX bot substitution.
+	 *
+	 * @param int $button_id Button post ID.
+	 * @return string Empty when Max Bot is missing or checkout URL is unavailable.
+	 */
+	public static function get_max_bot_checkout_link( $button_id ) {
+		if ( ! self::is_max_bot_available() ) {
+			return '';
+		}
+
+		$url = self::get_checkout_link( $button_id );
+
+		if ( '' === $url ) {
+			return '';
+		}
+
+		$separator = false !== strpos( $url, '?' ) ? '&' : '?';
+
+		return $url . $separator . 'mart_id={user_id}';
 	}
 
 	/**
@@ -1465,9 +1512,12 @@ class Art_LMS_Payment_Buttons {
 		}
 
 		$shortcode    = self::get_shortcode( $post_id );
-		$checkout_url = self::get_checkout_link( $post_id );
+		$is_published = self::is_published( $post_id );
+		$checkout_url = $is_published ? self::get_checkout_link( $post_id ) : '';
+		$max_bot_url  = $is_published ? self::get_max_bot_checkout_link( $post_id ) : '';
 		$shortcode_id = 'art-lms-list-shortcode-' . $post_id;
 		$checkout_id  = 'art-lms-list-checkout-' . $post_id;
+		$max_bot_id   = 'art-lms-list-max-bot-' . $post_id;
 		?>
 		<div class="art-lms-list-copy-actions">
 			<div class="art-lms-list-copy-actions__item">
@@ -1490,32 +1540,60 @@ class Art_LMS_Payment_Buttons {
 					<span class="dashicons dashicons-clipboard" aria-hidden="true"></span>
 				</button>
 			</div>
-			<div class="art-lms-list-copy-actions__item">
-				<span class="art-lms-list-copy-actions__label"><?php esc_html_e( 'Ссылка', 'art-lms' ); ?></span>
-				<?php if ( $checkout_url ) : ?>
-					<a
-						class="art-lms-list-copy-actions__value art-lms-list-copy-actions__link"
-						id="<?php echo esc_attr( $checkout_id ); ?>"
-						href="<?php echo esc_url( $checkout_url ); ?>"
-						target="_blank"
-						rel="noopener noreferrer"
-						title="<?php echo esc_attr( $checkout_url ); ?>"
-					><?php echo esc_html( $checkout_url ); ?></a>
-					<button
-						type="button"
-						class="button art-lms-copy-button art-lms-list-copy-button"
-						data-copy-target="#<?php echo esc_attr( $checkout_id ); ?>"
-						data-copy-value="<?php echo esc_attr( $checkout_url ); ?>"
-						data-copy-mode="text"
-						aria-label="<?php esc_attr_e( 'Скопировать ссылку', 'art-lms' ); ?>"
-						title="<?php esc_attr_e( 'Скопировать', 'art-lms' ); ?>"
-					>
-						<span class="dashicons dashicons-clipboard" aria-hidden="true"></span>
-					</button>
-				<?php else : ?>
-					<span class="art-lms-list-copy-actions__empty"><?php esc_html_e( 'Checkout не настроен', 'art-lms' ); ?></span>
+			<?php if ( $is_published ) : ?>
+				<div class="art-lms-list-copy-actions__item">
+					<span class="art-lms-list-copy-actions__label"><?php esc_html_e( 'Ссылка', 'art-lms' ); ?></span>
+					<?php if ( $checkout_url ) : ?>
+						<a
+							class="art-lms-list-copy-actions__value art-lms-list-copy-actions__link"
+							id="<?php echo esc_attr( $checkout_id ); ?>"
+							href="<?php echo esc_url( $checkout_url ); ?>"
+							target="_blank"
+							rel="noopener noreferrer"
+							title="<?php echo esc_attr( $checkout_url ); ?>"
+						><?php echo esc_html( $checkout_url ); ?></a>
+						<button
+							type="button"
+							class="button art-lms-copy-button art-lms-list-copy-button"
+							data-copy-target="#<?php echo esc_attr( $checkout_id ); ?>"
+							data-copy-value="<?php echo esc_attr( $checkout_url ); ?>"
+							data-copy-mode="text"
+							aria-label="<?php esc_attr_e( 'Скопировать ссылку', 'art-lms' ); ?>"
+							title="<?php esc_attr_e( 'Скопировать', 'art-lms' ); ?>"
+						>
+							<span class="dashicons dashicons-clipboard" aria-hidden="true"></span>
+						</button>
+					<?php else : ?>
+						<span class="art-lms-list-copy-actions__empty"><?php esc_html_e( 'Checkout не настроен', 'art-lms' ); ?></span>
+					<?php endif; ?>
+				</div>
+				<?php if ( $max_bot_url ) : ?>
+					<div class="art-lms-list-copy-actions__item">
+						<span class="art-lms-list-copy-actions__label"><?php esc_html_e( 'Max Bot', 'art-lms' ); ?></span>
+						<code
+							class="art-lms-list-copy-actions__value art-lms-shortcode-select"
+							id="<?php echo esc_attr( $max_bot_id ); ?>"
+							title="<?php echo esc_attr( $max_bot_url ); ?>"
+							tabindex="0"
+							role="textbox"
+						><?php echo esc_html( $max_bot_url ); ?></code>
+						<button
+							type="button"
+							class="button art-lms-copy-button art-lms-list-copy-button"
+							data-copy-target="#<?php echo esc_attr( $max_bot_id ); ?>"
+							data-copy-value="<?php echo esc_attr( $max_bot_url ); ?>"
+							aria-label="<?php esc_attr_e( 'Скопировать ссылку Max Bot', 'art-lms' ); ?>"
+							title="<?php esc_attr_e( 'Скопировать', 'art-lms' ); ?>"
+						>
+							<span class="dashicons dashicons-clipboard" aria-hidden="true"></span>
+						</button>
+					</div>
 				<?php endif; ?>
-			</div>
+			<?php else : ?>
+				<div class="art-lms-list-copy-actions__item">
+					<span class="art-lms-list-copy-actions__empty"><?php esc_html_e( 'Ссылки появятся после публикации', 'art-lms' ); ?></span>
+				</div>
+			<?php endif; ?>
 		</div>
 		<?php
 	}

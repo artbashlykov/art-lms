@@ -31,16 +31,34 @@ $can_send_email    = Art_LMS_Orders::STATUS_PAID !== $order->status;
 		?>
 	</h1>
 
+	<?php
+	$order_in_trash = Art_LMS_Orders::is_trashed( $order );
+	$list_back_url  = $order_in_trash
+		? Art_LMS_Admin_Orders::get_list_url( array( 'trash' => 1 ) )
+		: $list_url;
+	?>
+	<?php if ( $order_in_trash ) : ?>
+		<div class="notice notice-warning inline"><p><?php esc_html_e( 'Этот заказ находится в корзине. Доступ отозван.', 'art-lms' ); ?></p></div>
+	<?php endif; ?>
+
 	<p class="art-lms-order-view-actions">
-		<a href="<?php echo esc_url( $list_url ); ?>" class="button"><?php esc_html_e( '← К списку заказов', 'art-lms' ); ?></a>
+		<a href="<?php echo esc_url( $list_back_url ); ?>" class="button"><?php esc_html_e( '← К списку заказов', 'art-lms' ); ?></a>
 		<?php if ( $can_manage_orders ) : ?>
-			<?php $delete_url = Art_LMS_Admin_Orders::get_delete_url( (int) $order->id ); ?>
-			<a href="<?php echo esc_url( $edit_url ); ?>" class="button button-primary"><?php esc_html_e( 'Изменить', 'art-lms' ); ?></a>
-			<a
-				href="<?php echo esc_url( $delete_url ); ?>"
-				class="button button-link-delete"
-				onclick="return confirm('<?php echo esc_js( __( 'Удалить этот заказ безвозвратно?', 'art-lms' ) ); ?>');"
-			><?php esc_html_e( 'Удалить', 'art-lms' ); ?></a>
+			<?php if ( $order_in_trash ) : ?>
+				<a href="<?php echo esc_url( Art_LMS_Admin_Orders::get_restore_url( (int) $order->id, array( 'trash' => 1 ) ) ); ?>" class="button button-primary"><?php esc_html_e( 'Восстановить', 'art-lms' ); ?></a>
+				<a
+					href="<?php echo esc_url( Art_LMS_Admin_Orders::get_delete_permanently_url( (int) $order->id, array( 'trash' => 1 ) ) ); ?>"
+					class="button button-link-delete"
+					onclick="return confirm('<?php echo esc_js( __( 'Удалить этот заказ безвозвратно?', 'art-lms' ) ); ?>');"
+				><?php esc_html_e( 'Удалить навсегда', 'art-lms' ); ?></a>
+			<?php else : ?>
+				<a href="<?php echo esc_url( $edit_url ); ?>" class="button button-primary"><?php esc_html_e( 'Изменить', 'art-lms' ); ?></a>
+				<a
+					href="<?php echo esc_url( Art_LMS_Admin_Orders::get_delete_url( (int) $order->id ) ); ?>"
+					class="button button-link-delete"
+					onclick="return confirm('<?php echo esc_js( __( 'Переместить этот заказ в корзину?', 'art-lms' ) ); ?>');"
+				><?php esc_html_e( 'В корзину', 'art-lms' ); ?></a>
+			<?php endif; ?>
 		<?php endif; ?>
 	</p>
 

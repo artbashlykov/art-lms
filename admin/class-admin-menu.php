@@ -877,10 +877,12 @@ class Art_LMS_Admin_Menu {
 				'artLmsAdminOrders',
 				array(
 					'strings'    => array(
-						'clearDate'         => __( 'Сбросить', 'art-lms' ),
-						'selectAction'      => __( 'Выберите действие.', 'art-lms' ),
-						'selectOrders'      => __( 'Выберите хотя бы один заказ.', 'art-lms' ),
-						'confirmBulkDelete' => __( 'Удалить выбранные заказы безвозвратно?', 'art-lms' ),
+						'clearDate'                   => __( 'Сбросить', 'art-lms' ),
+						'selectAction'                => __( 'Выберите действие.', 'art-lms' ),
+						'selectOrders'                => __( 'Выберите хотя бы один заказ.', 'art-lms' ),
+						'confirmBulkTrash'            => __( 'Переместить выбранные заказы в корзину?', 'art-lms' ),
+						'confirmBulkDelete'           => __( 'Переместить выбранные заказы в корзину?', 'art-lms' ),
+						'confirmBulkDeletePermanent'  => __( 'Удалить выбранные заказы безвозвратно?', 'art-lms' ),
 					),
 					'datepicker' => self::get_datepicker_i18n(),
 				)

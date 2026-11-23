@@ -278,6 +278,8 @@ class Art_LMS_Gateway_Plisio extends Art_LMS_Payment_Gateway {
 			return new WP_REST_Response( array( 'error' => 'gateway_mismatch' ), 409 );
 		}
 
+		$order = Art_LMS_Orders::maybe_restore_trashed_for_payment( $order );
+
 		if ( Art_LMS_Orders::STATUS_PAID === $order->status ) {
 			return new WP_REST_Response( array( 'status' => 'already_paid' ), 200 );
 		}
@@ -316,6 +318,8 @@ class Art_LMS_Gateway_Plisio extends Art_LMS_Payment_Gateway {
 	 * @return true|WP_Error
 	 */
 	protected function mark_order_paid_from_provider( $order, array $verified, array $raw = null ) {
+		$order = Art_LMS_Orders::maybe_restore_trashed_for_payment( $order );
+
 		if ( Art_LMS_Orders::STATUS_PAID === $order->status ) {
 			return true;
 		}

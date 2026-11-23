@@ -437,6 +437,7 @@ class Art_LMS_Materials {
 
 		$user_id = $user_id ? absint( $user_id ) : get_current_user_id();
 
+		// Site administrators only — never treat buyer/customer roles as admins here.
 		if ( $user_id && user_can( $user_id, 'manage_options' ) ) {
 			return true;
 		}
@@ -449,6 +450,7 @@ class Art_LMS_Materials {
 			return false;
 		}
 
+		// Buyers: access table only (purchases / manual grants).
 		return Art_LMS_Access::user_has_access( $user_id, $material_id );
 	}
 

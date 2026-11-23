@@ -31,7 +31,10 @@ class Art_LMS_Admin_Orders {
 		add_action( 'admin_post_art_lms_save_order', array( __CLASS__, 'handle_save_order' ) );
 		add_action( 'admin_post_art_lms_mark_order_paid', array( __CLASS__, 'handle_mark_order_paid' ) );
 		add_action( 'admin_post_art_lms_delete_order', array( __CLASS__, 'handle_delete_order' ) );
+		add_action( 'admin_post_art_lms_restore_order', array( __CLASS__, 'handle_restore_order' ) );
+		add_action( 'admin_post_art_lms_delete_order_permanently', array( __CLASS__, 'handle_delete_order_permanently' ) );
 		add_action( 'admin_post_art_lms_bulk_delete_orders', array( __CLASS__, 'handle_bulk_delete_orders' ) );
+		add_action( 'admin_post_art_lms_empty_orders_trash', array( __CLASS__, 'handle_empty_trash' ) );
 		add_action( 'admin_post_art_lms_update_order_status', array( __CLASS__, 'handle_update_order_status' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'render_notices' ) );
 	}
@@ -340,6 +343,8 @@ class Art_LMS_Admin_Orders {
 			$access_expiry = '';
 		}
 
+		$trash = isset( $_GET['trash'] ) && '1' === (string) wp_unslash( $_GET['trash'] );
+
 		return array(
 			'buyer'         => isset( $_GET['buyer'] ) ? sanitize_text_field( wp_unslash( $_GET['buyer'] ) ) : '',
 			'status'        => $status,
@@ -348,6 +353,7 @@ class Art_LMS_Admin_Orders {
 			'expires_from'  => $expires_from,
 			'expires_to'    => $expires_to,
 			'access_expiry' => $access_expiry,
+			'trash'         => $trash,
 			'orderby'       => $orderby,
 			'order'         => $order,
 			'per_page'      => self::get_list_per_page(),
@@ -382,7 +388,12 @@ class Art_LMS_Admin_Orders {
 					</label>
 					<select name="<?php echo esc_attr( 'top' === $which ? 'bulk_action' : 'bulk_action2' ); ?>" id="art-lms-bulk-action-<?php echo esc_attr( $which ); ?>">
 						<option value="-1"><?php esc_html_e( 'Действия', 'art-lms' ); ?></option>
-						<option value="delete"><?php esc_html_e( 'Удалить', 'art-lms' ); ?></option>
+						<?php if ( ! empty( $filters['trash'] ) ) : ?>
+							<option value="restore"><?php esc_html_e( 'Восстановить', 'art-lms' ); ?></option>
+							<option value="delete_permanently"><?php esc_html_e( 'Удалить навсегда', 'art-lms' ); ?></option>
+						<?php else : ?>
+							<option value="trash"><?php esc_html_e( 'В корзину', 'art-lms' ); ?></option>
+						<?php endif; ?>
 					</select>
 					<?php
 					submit_button(
@@ -459,7 +470,7 @@ class Art_LMS_Admin_Orders {
 			'page' => self::PAGE_LIST,
 		);
 
-		$allowed = array( 'buyer', 'status', 'date_from', 'date_to', 'expires_from', 'expires_to', 'access_expiry', 'orderby', 'order', 'paged' );
+		$allowed = array( 'buyer', 'status', 'date_from', 'date_to', 'expires_from', 'expires_to', 'access_expiry', 'trash', 'orderby', 'order', 'paged' );
 
 		foreach ( $allowed as $key ) {
 			if ( ! array_key_exists( $key, $args ) ) {
@@ -485,6 +496,14 @@ class Art_LMS_Admin_Orders {
 			}
 
 			if ( 'paged' === $key && (int) $value <= 1 ) {
+				continue;
+			}
+
+			if ( 'trash' === $key ) {
+				if ( empty( $value ) || '0' === (string) $value || false === $value ) {
+					continue;
+				}
+				$url_args[ $key ] = '1';
 				continue;
 			}
 
@@ -699,7 +718,7 @@ class Art_LMS_Admin_Orders {
 	}
 
 	/**
-	 * Permanently delete an order.
+	 * Move an order to trash.
 	 */
 	public static function handle_delete_order() {
 		if ( ! Art_LMS_Security::can_manage() ) {
@@ -710,7 +729,7 @@ class Art_LMS_Admin_Orders {
 
 		check_admin_referer( 'art_lms_delete_order_' . $order_id );
 
-		$result = Art_LMS_Orders::delete( $order_id );
+		$result = Art_LMS_Orders::trash( $order_id );
 
 		$redirect_to = isset( $_GET['redirect_to'] ) ? esc_url_raw( wp_unslash( $_GET['redirect_to'] ) ) : '';
 		$redirect_to = wp_validate_redirect( $redirect_to, self::get_list_url() );
@@ -719,9 +738,9 @@ class Art_LMS_Admin_Orders {
 			wp_safe_redirect(
 				add_query_arg(
 					array(
-						'page'            => self::PAGE_LIST,
-						'art_lms_notice'  => 'order_error',
-						'art_lms_error'   => rawurlencode( $result->get_error_message() ),
+						'page'           => self::PAGE_LIST,
+						'art_lms_notice' => 'order_error',
+						'art_lms_error'  => rawurlencode( $result->get_error_message() ),
 					),
 					admin_url( 'admin.php' )
 				)
@@ -732,7 +751,7 @@ class Art_LMS_Admin_Orders {
 		wp_safe_redirect(
 			add_query_arg(
 				'art_lms_notice',
-				'order_deleted',
+				'order_trashed',
 				$redirect_to
 			)
 		);
@@ -740,7 +759,122 @@ class Art_LMS_Admin_Orders {
 	}
 
 	/**
-	 * Permanently delete selected orders from the list.
+	 * Restore an order from trash.
+	 */
+	public static function handle_restore_order() {
+		if ( ! Art_LMS_Security::can_manage() ) {
+			wp_die( esc_html__( 'Недостаточно прав.', 'art-lms' ) );
+		}
+
+		$order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0;
+
+		check_admin_referer( 'art_lms_restore_order_' . $order_id );
+
+		$result = Art_LMS_Orders::restore( $order_id );
+
+		$redirect_to = isset( $_GET['redirect_to'] ) ? esc_url_raw( wp_unslash( $_GET['redirect_to'] ) ) : '';
+		$redirect_to = wp_validate_redirect( $redirect_to, self::get_list_url( array( 'trash' => 1 ) ) );
+
+		if ( is_wp_error( $result ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'           => self::PAGE_LIST,
+						'trash'          => '1',
+						'art_lms_notice' => 'order_error',
+						'art_lms_error'  => rawurlencode( $result->get_error_message() ),
+					),
+					admin_url( 'admin.php' )
+				)
+			);
+			exit;
+		}
+
+		wp_safe_redirect(
+			add_query_arg(
+				'art_lms_notice',
+				'order_restored',
+				$redirect_to
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Permanently delete an order.
+	 */
+	public static function handle_delete_order_permanently() {
+		if ( ! Art_LMS_Security::can_manage() ) {
+			wp_die( esc_html__( 'Недостаточно прав.', 'art-lms' ) );
+		}
+
+		$order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0;
+
+		check_admin_referer( 'art_lms_delete_order_permanently_' . $order_id );
+
+		$result = Art_LMS_Orders::delete_permanently( $order_id );
+
+		$redirect_to = isset( $_GET['redirect_to'] ) ? esc_url_raw( wp_unslash( $_GET['redirect_to'] ) ) : '';
+		$redirect_to = wp_validate_redirect( $redirect_to, self::get_list_url( array( 'trash' => 1 ) ) );
+
+		if ( is_wp_error( $result ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'           => self::PAGE_LIST,
+						'trash'          => '1',
+						'art_lms_notice' => 'order_error',
+						'art_lms_error'  => rawurlencode( $result->get_error_message() ),
+					),
+					admin_url( 'admin.php' )
+				)
+			);
+			exit;
+		}
+
+		wp_safe_redirect(
+			add_query_arg(
+				'art_lms_notice',
+				'order_deleted_permanently',
+				$redirect_to
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Empty the orders trash (all trashed rows).
+	 */
+	public static function handle_empty_trash() {
+		if ( ! Art_LMS_Security::can_manage() ) {
+			wp_die( esc_html__( 'Недостаточно прав.', 'art-lms' ) );
+		}
+
+		check_admin_referer( 'art_lms_empty_orders_trash' );
+
+		global $wpdb;
+
+		$table = Art_LMS_Orders::table_name();
+		$ids   = $wpdb->get_col(
+			'SELECT id FROM `' . $table . '` WHERE ' . Art_LMS_Orders::sql_only_trashed() . ' ORDER BY id ASC LIMIT 500'
+		);
+
+		$result = Art_LMS_Orders::delete_permanently_many( array_map( 'absint', $ids ? $ids : array() ) );
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'art_lms_notice'        => 'orders_trash_emptied',
+					'art_lms_deleted_count' => (int) $result['deleted'],
+				),
+				self::get_list_url( array( 'trash' => 1 ) )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Bulk trash / restore / permanent delete.
 	 */
 	public static function handle_bulk_delete_orders() {
 		if ( ! Art_LMS_Security::can_manage() ) {
@@ -755,6 +889,8 @@ class Art_LMS_Admin_Orders {
 			$bulk_action = sanitize_key( wp_unslash( $_POST['bulk_action2'] ) );
 		}
 
+		$in_trash = isset( $_POST['trash'] ) && '1' === (string) wp_unslash( $_POST['trash'] );
+
 		$redirect_args = array(
 			'buyer'         => isset( $_POST['buyer'] ) ? sanitize_text_field( wp_unslash( $_POST['buyer'] ) ) : '',
 			'status'        => isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '',
@@ -763,6 +899,7 @@ class Art_LMS_Admin_Orders {
 			'expires_from'  => isset( $_POST['expires_from'] ) ? Art_LMS_Orders::sanitize_list_date( sanitize_text_field( wp_unslash( $_POST['expires_from'] ) ) ) : '',
 			'expires_to'    => isset( $_POST['expires_to'] ) ? Art_LMS_Orders::sanitize_list_date( sanitize_text_field( wp_unslash( $_POST['expires_to'] ) ) ) : '',
 			'access_expiry' => isset( $_POST['access_expiry'] ) ? sanitize_key( wp_unslash( $_POST['access_expiry'] ) ) : '',
+			'trash'         => $in_trash,
 			'orderby'       => isset( $_POST['orderby'] ) ? sanitize_key( wp_unslash( $_POST['orderby'] ) ) : 'created_at',
 			'order'         => isset( $_POST['order'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['order'] ) ) ) : 'DESC',
 			'paged'         => isset( $_POST['paged'] ) ? max( 1, absint( $_POST['paged'] ) ) : 1,
@@ -786,7 +923,16 @@ class Art_LMS_Admin_Orders {
 
 		$redirect_to = self::get_list_url( $redirect_args );
 
-		if ( 'delete' !== $bulk_action ) {
+		$allowed_actions = $in_trash
+			? array( 'restore', 'delete_permanently' )
+			: array( 'trash', 'delete' );
+
+		// Legacy bulk value "delete" from older UI = move to trash.
+		if ( 'delete' === $bulk_action && ! $in_trash ) {
+			$bulk_action = 'trash';
+		}
+
+		if ( ! in_array( $bulk_action, $allowed_actions, true ) ) {
 			wp_safe_redirect( $redirect_to );
 			exit;
 		}
@@ -809,12 +955,40 @@ class Art_LMS_Admin_Orders {
 			exit;
 		}
 
-		$result = Art_LMS_Orders::delete_many( $ids );
+		if ( 'restore' === $bulk_action ) {
+			$result = Art_LMS_Orders::restore_many( $ids );
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'art_lms_notice'         => 'orders_bulk_restored',
+						'art_lms_restored_count' => (int) $result['restored'],
+					),
+					$redirect_to
+				)
+			);
+			exit;
+		}
+
+		if ( 'delete_permanently' === $bulk_action ) {
+			$result = Art_LMS_Orders::delete_permanently_many( $ids );
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'art_lms_notice'        => 'orders_bulk_deleted_permanently',
+						'art_lms_deleted_count' => (int) $result['deleted'],
+					),
+					$redirect_to
+				)
+			);
+			exit;
+		}
+
+		$result = Art_LMS_Orders::trash_many( $ids );
 
 		wp_safe_redirect(
 			add_query_arg(
 				array(
-					'art_lms_notice'       => 'orders_bulk_deleted',
+					'art_lms_notice'        => 'orders_bulk_trashed',
 					'art_lms_deleted_count' => (int) $result['deleted'],
 				),
 				$redirect_to
@@ -864,15 +1038,53 @@ class Art_LMS_Admin_Orders {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Статус заказа обновлён.', 'art-lms' ) . '</p></div>';
 		}
 
-		if ( 'order_deleted' === $notice ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Заказ удалён.', 'art-lms' ) . '</p></div>';
+		if ( 'order_trashed' === $notice || 'order_deleted' === $notice ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Заказ перемещён в корзину.', 'art-lms' ) . '</p></div>';
 		}
 
-		if ( 'orders_bulk_deleted' === $notice ) {
+		if ( 'order_restored' === $notice ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Заказ восстановлен из корзины.', 'art-lms' ) . '</p></div>';
+		}
+
+		if ( 'order_deleted_permanently' === $notice ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Заказ удалён навсегда.', 'art-lms' ) . '</p></div>';
+		}
+
+		if ( 'orders_bulk_trashed' === $notice || 'orders_bulk_deleted' === $notice ) {
 			$deleted_count = isset( $_GET['art_lms_deleted_count'] ) ? absint( $_GET['art_lms_deleted_count'] ) : 0;
 			$message       = sprintf(
-				/* translators: %d: number of deleted orders */
-				_n( 'Удалён %d заказ.', 'Удалено заказов: %d.', $deleted_count, 'art-lms' ),
+				/* translators: %d: number of trashed orders */
+				_n( 'В корзину перемещён %d заказ.', 'В корзину перемещено заказов: %d.', $deleted_count, 'art-lms' ),
+				$deleted_count
+			);
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
+		}
+
+		if ( 'orders_bulk_restored' === $notice ) {
+			$restored_count = isset( $_GET['art_lms_restored_count'] ) ? absint( $_GET['art_lms_restored_count'] ) : 0;
+			$message        = sprintf(
+				/* translators: %d: number of restored orders */
+				_n( 'Восстановлен %d заказ.', 'Восстановлено заказов: %d.', $restored_count, 'art-lms' ),
+				$restored_count
+			);
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
+		}
+
+		if ( 'orders_bulk_deleted_permanently' === $notice ) {
+			$deleted_count = isset( $_GET['art_lms_deleted_count'] ) ? absint( $_GET['art_lms_deleted_count'] ) : 0;
+			$message       = sprintf(
+				/* translators: %d: number of permanently deleted orders */
+				_n( 'Навсегда удалён %d заказ.', 'Навсегда удалено заказов: %d.', $deleted_count, 'art-lms' ),
+				$deleted_count
+			);
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
+		}
+
+		if ( 'orders_trash_emptied' === $notice ) {
+			$deleted_count = isset( $_GET['art_lms_deleted_count'] ) ? absint( $_GET['art_lms_deleted_count'] ) : 0;
+			$message       = sprintf(
+				/* translators: %d: number of permanently deleted orders */
+				_n( 'Корзина очищена: удалён %d заказ.', 'Корзина очищена: удалено заказов: %d.', $deleted_count, 'art-lms' ),
 				$deleted_count
 			);
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
@@ -920,10 +1132,10 @@ class Art_LMS_Admin_Orders {
 	}
 
 	/**
-	 * Get delete action URL for an order.
+	 * Get trash action URL for an order.
 	 *
-	 * @param int   $order_id     Order ID.
-	 * @param array $redirect_args Optional list filters to preserve after delete.
+	 * @param int   $order_id      Order ID.
+	 * @param array $redirect_args Optional list filters to preserve after trash.
 	 * @return string
 	 */
 	public static function get_delete_url( $order_id, $redirect_args = array() ) {
@@ -943,6 +1155,75 @@ class Art_LMS_Admin_Orders {
 		return wp_nonce_url(
 			add_query_arg( $args, admin_url( 'admin-post.php' ) ),
 			'art_lms_delete_order_' . $order_id
+		);
+	}
+
+	/**
+	 * Get restore-from-trash URL.
+	 *
+	 * @param int   $order_id      Order ID.
+	 * @param array $redirect_args Optional list filters.
+	 * @return string
+	 */
+	public static function get_restore_url( $order_id, $redirect_args = array() ) {
+		$order_id = absint( $order_id );
+
+		$args = array(
+			'action'   => 'art_lms_restore_order',
+			'order_id' => $order_id,
+		);
+
+		$redirect_to = self::get_list_url( $redirect_args );
+
+		if ( $redirect_to ) {
+			$args['redirect_to'] = $redirect_to;
+		}
+
+		return wp_nonce_url(
+			add_query_arg( $args, admin_url( 'admin-post.php' ) ),
+			'art_lms_restore_order_' . $order_id
+		);
+	}
+
+	/**
+	 * Get permanent delete URL.
+	 *
+	 * @param int   $order_id      Order ID.
+	 * @param array $redirect_args Optional list filters.
+	 * @return string
+	 */
+	public static function get_delete_permanently_url( $order_id, $redirect_args = array() ) {
+		$order_id = absint( $order_id );
+
+		$args = array(
+			'action'   => 'art_lms_delete_order_permanently',
+			'order_id' => $order_id,
+		);
+
+		$redirect_to = self::get_list_url( $redirect_args );
+
+		if ( $redirect_to ) {
+			$args['redirect_to'] = $redirect_to;
+		}
+
+		return wp_nonce_url(
+			add_query_arg( $args, admin_url( 'admin-post.php' ) ),
+			'art_lms_delete_order_permanently_' . $order_id
+		);
+	}
+
+	/**
+	 * Get empty-trash action URL.
+	 *
+	 * @return string
+	 */
+	public static function get_empty_trash_url() {
+		return wp_nonce_url(
+			add_query_arg(
+				array( 'action' => 'art_lms_empty_orders_trash' ),
+				admin_url( 'admin-post.php' )
+			),
+			'art_lms_empty_orders_trash'
 		);
 	}
 }

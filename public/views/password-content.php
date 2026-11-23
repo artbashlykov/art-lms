@@ -110,6 +110,7 @@ $user_login_val = isset( $_POST['user_login'] ) ? sanitize_text_field( wp_unslas
 			<?php if ( '' !== $redirect_to ) : ?>
 				<input type="hidden" name="redirect_to" value="<?php echo esc_attr( $redirect_to ); ?>">
 			<?php endif; ?>
+			<?php wp_nonce_field( 'art_lms_lostpassword' ); ?>
 			<p class="submit">
 				<input type="submit" name="wp-submit" id="wp-submit" class="button button-primary" value="<?php echo esc_attr( $lost['button_text'] ); ?>">
 			</p>

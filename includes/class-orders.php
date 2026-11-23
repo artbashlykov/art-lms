@@ -22,12 +22,24 @@ class Art_LMS_Orders {
 	const STATUS_EXPIRED   = 'expired';
 
 	/**
+	 * Days to keep trashed orders before permanent purge.
+	 */
+	const TRASH_RETENTION_DAYS = 30;
+
+	/**
+	 * Cron hook for emptying expired trash.
+	 */
+	const CRON_EMPTY_TRASH = 'art_lms_empty_orders_trash';
+
+	/**
 	 * Register hooks.
 	 */
 	public static function init() {
 		self::ensure_tables();
 		self::maybe_upgrade_schema();
 		self::maybe_upgrade_indexes();
+		self::schedule_trash_cron();
+		add_action( self::CRON_EMPTY_TRASH, array( __CLASS__, 'purge_expired_trash' ) );
 	}
 
 	/**
@@ -112,6 +124,7 @@ class Art_LMS_Orders {
 			'gateway_transaction_id',
 			'gateway_payment_method',
 			'payment_gateway',
+			'deleted_at',
 		);
 	}
 
@@ -135,6 +148,7 @@ class Art_LMS_Orders {
 			'gateway_transaction_id' => 'ADD COLUMN gateway_transaction_id varchar(64) NOT NULL DEFAULT \'\' AFTER payment_label',
 			'gateway_payment_method' => 'ADD COLUMN gateway_payment_method varchar(32) NOT NULL DEFAULT \'\' AFTER gateway_transaction_id',
 			'payment_gateway'        => 'ADD COLUMN payment_gateway varchar(20) NOT NULL DEFAULT \'\' AFTER gateway_payment_method',
+			'deleted_at'             => 'ADD COLUMN deleted_at datetime DEFAULT NULL AFTER raw_notification',
 		);
 
 		foreach ( $additions as $column => $sql_part ) {
@@ -147,6 +161,11 @@ class Art_LMS_Orders {
 		if ( self::column_exists( 'gateway_transaction_id' ) && empty( $wpdb->get_results( "SHOW INDEX FROM `{$table}` WHERE Key_name = 'gateway_transaction_id'" ) ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Internal schema migration; table name is plugin-controlled.
 			$wpdb->query( 'ALTER TABLE `' . $table . '` ADD KEY gateway_transaction_id (gateway_transaction_id)' );
+		}
+
+		if ( self::column_exists( 'deleted_at' ) && empty( $wpdb->get_results( "SHOW INDEX FROM `{$table}` WHERE Key_name = 'deleted_at'" ) ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Internal schema migration; table name is plugin-controlled.
+			$wpdb->query( 'ALTER TABLE `' . $table . '` ADD KEY deleted_at (deleted_at)' );
 		}
 
 		self::maybe_backfill_payment_labels();
@@ -811,7 +830,20 @@ class Art_LMS_Orders {
 
 		$order = self::get( $order_id );
 
-		if ( ! $order || self::STATUS_PAID === $order->status ) {
+		if ( ! $order ) {
+			return false;
+		}
+
+		if ( self::is_trashed( $order ) ) {
+			self::untrash( $order_id );
+			$order = self::get( $order_id );
+
+			if ( ! $order ) {
+				return false;
+			}
+		}
+
+		if ( self::STATUS_PAID === $order->status ) {
 			return false;
 		}
 
@@ -1015,6 +1047,7 @@ class Art_LMS_Orders {
 			'expires_from'   => '',
 			'expires_to'     => '',
 			'access_expiry'  => '',
+			'trash'          => false,
 			'orderby'        => 'created_at',
 			'order'          => 'DESC',
 			'per_page'       => 50,
@@ -1033,6 +1066,12 @@ class Art_LMS_Orders {
 
 		$where  = array( '1=1' );
 		$params = array();
+
+		if ( ! empty( $args['trash'] ) ) {
+			$where[] = self::sql_only_trashed( 'o' );
+		} else {
+			$where[] = self::sql_exclude_trashed( 'o' );
+		}
 
 		$buyer = trim( (string) $args['buyer'] );
 
@@ -1793,12 +1832,268 @@ class Art_LMS_Orders {
 	}
 
 	/**
-	 * Permanently delete an order and revoke related access.
+	 * SQL fragment: orders that are not in trash.
+	 *
+	 * @param string $alias Table alias (e.g. "o") or empty for bare column.
+	 * @return string
+	 */
+	public static function sql_exclude_trashed( $alias = '' ) {
+		$col = '' !== $alias ? $alias . '.deleted_at' : 'deleted_at';
+
+		return "( {$col} IS NULL OR {$col} = '0000-00-00 00:00:00' )";
+	}
+
+	/**
+	 * SQL fragment: orders that are in trash.
+	 *
+	 * @param string $alias Table alias (e.g. "o") or empty for bare column.
+	 * @return string
+	 */
+	public static function sql_only_trashed( $alias = '' ) {
+		$col = '' !== $alias ? $alias . '.deleted_at' : 'deleted_at';
+
+		return "( {$col} IS NOT NULL AND {$col} <> '0000-00-00 00:00:00' )";
+	}
+
+	/**
+	 * Whether an order row is in the trash.
+	 *
+	 * @param object|null $order Order row.
+	 * @return bool
+	 */
+	public static function is_trashed( $order ) {
+		if ( ! $order || ! isset( $order->deleted_at ) ) {
+			return false;
+		}
+
+		$deleted_at = (string) $order->deleted_at;
+
+		return '' !== $deleted_at && '0000-00-00 00:00:00' !== $deleted_at;
+	}
+
+	/**
+	 * Count orders currently in trash.
+	 *
+	 * @return int
+	 */
+	public static function count_trashed() {
+		global $wpdb;
+
+		if ( ! self::column_exists( 'deleted_at' ) ) {
+			return 0;
+		}
+
+		$table = self::table_name();
+
+		return (int) $wpdb->get_var(
+			"SELECT COUNT(*) FROM `{$table}` WHERE " . self::sql_only_trashed()
+		);
+	}
+
+	/**
+	 * Move an order to trash and revoke access immediately.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return true|WP_Error
+	 */
+	public static function trash( $order_id ) {
+		global $wpdb;
+
+		$order_id = absint( $order_id );
+
+		if ( ! $order_id ) {
+			return new WP_Error( 'invalid_order', __( 'Заказ не найден.', 'art-lms' ) );
+		}
+
+		$order = self::get( $order_id );
+
+		if ( ! $order ) {
+			return new WP_Error( 'invalid_order', __( 'Заказ не найден.', 'art-lms' ) );
+		}
+
+		if ( self::is_trashed( $order ) ) {
+			return true;
+		}
+
+		Art_LMS_Access::revoke_by_order_id( $order_id );
+
+		$updated = $wpdb->update(
+			self::table_name(),
+			array( 'deleted_at' => current_time( 'mysql' ) ),
+			array( 'id' => $order_id ),
+			array( '%s' ),
+			array( '%d' )
+		);
+
+		if ( false === $updated ) {
+			return new WP_Error( 'trash_failed', __( 'Не удалось переместить заказ в корзину.', 'art-lms' ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Move multiple orders to trash.
+	 *
+	 * @param int[] $order_ids Order IDs.
+	 * @return array{deleted: int, failed: int}
+	 */
+	public static function trash_many( array $order_ids ) {
+		$deleted = 0;
+		$failed  = 0;
+
+		foreach ( $order_ids as $order_id ) {
+			$result = self::trash( absint( $order_id ) );
+
+			if ( is_wp_error( $result ) ) {
+				++$failed;
+				continue;
+			}
+
+			++$deleted;
+		}
+
+		return array(
+			'deleted' => $deleted,
+			'failed'  => $failed,
+		);
+	}
+
+	/**
+	 * Clear deleted_at without re-granting access.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	public static function untrash( $order_id ) {
+		global $wpdb;
+
+		$order_id = absint( $order_id );
+
+		if ( ! $order_id ) {
+			return false;
+		}
+
+		$table = self::table_name();
+
+		$result = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE `{$table}` SET deleted_at = NULL WHERE id = %d",
+				$order_id
+			)
+		);
+
+		return false !== $result;
+	}
+
+	/**
+	 * Restore an order from trash. Re-grants access when order is paid.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return true|WP_Error
+	 */
+	public static function restore( $order_id ) {
+		$order_id = absint( $order_id );
+		$order    = $order_id ? self::get( $order_id ) : null;
+
+		if ( ! $order ) {
+			return new WP_Error( 'invalid_order', __( 'Заказ не найден.', 'art-lms' ) );
+		}
+
+		if ( ! self::is_trashed( $order ) ) {
+			return true;
+		}
+
+		if ( ! self::untrash( $order_id ) ) {
+			return new WP_Error( 'restore_failed', __( 'Не удалось восстановить заказ.', 'art-lms' ) );
+		}
+
+		$order = self::get( $order_id );
+
+		if ( $order && self::STATUS_PAID === $order->status ) {
+			$order = self::ensure_order_user( $order );
+
+			if ( ! is_wp_error( $order ) ) {
+				Art_LMS_Payment_Buttons::grant_access_for_order( $order, $order_id );
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Restore multiple orders from trash.
+	 *
+	 * @param int[] $order_ids Order IDs.
+	 * @return array{restored: int, failed: int}
+	 */
+	public static function restore_many( array $order_ids ) {
+		$restored = 0;
+		$failed   = 0;
+
+		foreach ( $order_ids as $order_id ) {
+			$result = self::restore( absint( $order_id ) );
+
+			if ( is_wp_error( $result ) ) {
+				++$failed;
+				continue;
+			}
+
+			++$restored;
+		}
+
+		return array(
+			'restored' => $restored,
+			'failed'   => $failed,
+		);
+	}
+
+	/**
+	 * If the order is trashed, restore it (re-grant access when already paid).
+	 * Used by payment gateways before acknowledging an already-paid order.
+	 *
+	 * @param object|null $order Order row.
+	 * @return object|null Fresh order row.
+	 */
+	public static function maybe_restore_trashed_for_payment( $order ) {
+		if ( ! $order || empty( $order->id ) || ! self::is_trashed( $order ) ) {
+			return $order;
+		}
+
+		self::restore( (int) $order->id );
+
+		$fresh = self::get( (int) $order->id );
+
+		return $fresh ? $fresh : $order;
+	}
+
+	/**
+	 * Move order to trash (soft delete). Prefer trash(); kept for older callers.
 	 *
 	 * @param int $order_id Order ID.
 	 * @return true|WP_Error
 	 */
 	public static function delete( $order_id ) {
+		return self::trash( $order_id );
+	}
+
+	/**
+	 * Move multiple orders to trash.
+	 *
+	 * @param int[] $order_ids Order IDs.
+	 * @return array{deleted: int, failed: int}
+	 */
+	public static function delete_many( array $order_ids ) {
+		return self::trash_many( $order_ids );
+	}
+
+	/**
+	 * Permanently delete an order and related access rows.
+	 *
+	 * @param int $order_id Order ID.
+	 * @return true|WP_Error
+	 */
+	public static function delete_permanently( $order_id ) {
 		global $wpdb;
 
 		$order_id = absint( $order_id );
@@ -1835,12 +2130,12 @@ class Art_LMS_Orders {
 	 * @param int[] $order_ids Order IDs.
 	 * @return array{deleted: int, failed: int}
 	 */
-	public static function delete_many( array $order_ids ) {
+	public static function delete_permanently_many( array $order_ids ) {
 		$deleted = 0;
 		$failed  = 0;
 
 		foreach ( $order_ids as $order_id ) {
-			$result = self::delete( absint( $order_id ) );
+			$result = self::delete_permanently( absint( $order_id ) );
 
 			if ( is_wp_error( $result ) ) {
 				++$failed;
@@ -1854,6 +2149,80 @@ class Art_LMS_Orders {
 			'deleted' => $deleted,
 			'failed'  => $failed,
 		);
+	}
+
+	/**
+	 * Trash retention in days (filterable).
+	 *
+	 * @return int
+	 */
+	public static function get_trash_retention_days() {
+		$days = (int) apply_filters( 'art_lms_orders_trash_retention_days', self::TRASH_RETENTION_DAYS );
+
+		return max( 1, $days );
+	}
+
+	/**
+	 * Schedule daily trash purge cron.
+	 */
+	public static function schedule_trash_cron() {
+		if ( wp_next_scheduled( self::CRON_EMPTY_TRASH ) ) {
+			return;
+		}
+
+		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::CRON_EMPTY_TRASH );
+	}
+
+	/**
+	 * Unschedule trash purge cron.
+	 */
+	public static function unschedule_trash_cron() {
+		$timestamp = wp_next_scheduled( self::CRON_EMPTY_TRASH );
+
+		while ( $timestamp ) {
+			wp_unschedule_event( $timestamp, self::CRON_EMPTY_TRASH );
+			$timestamp = wp_next_scheduled( self::CRON_EMPTY_TRASH );
+		}
+	}
+
+	/**
+	 * Permanently delete trashed orders older than retention period.
+	 *
+	 * @return int Number of purged orders.
+	 */
+	public static function purge_expired_trash() {
+		global $wpdb;
+
+		if ( ! self::column_exists( 'deleted_at' ) ) {
+			return 0;
+		}
+
+		$table        = self::table_name();
+		$days         = self::get_trash_retention_days();
+		$before_local = gmdate(
+			'Y-m-d H:i:s',
+			current_time( 'timestamp' ) - ( $days * DAY_IN_SECONDS )
+		);
+
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT id FROM `{$table}`
+				WHERE deleted_at IS NOT NULL
+					AND deleted_at <> '0000-00-00 00:00:00'
+					AND deleted_at < %s
+				ORDER BY deleted_at ASC
+				LIMIT 200",
+				$before_local
+			)
+		);
+
+		if ( empty( $ids ) ) {
+			return 0;
+		}
+
+		$result = self::delete_permanently_many( array_map( 'absint', $ids ) );
+
+		return (int) $result['deleted'];
 	}
 
 	// phpcs:enable

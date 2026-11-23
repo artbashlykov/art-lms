@@ -1095,15 +1095,41 @@
 	function initPaymentGatewayList() {
 		var $list = $('#art-lms-payment-gateway-list');
 
-		if (!$list.length || !$.fn.sortable) {
+		if (!$list.length) {
 			return;
 		}
 
-		$list.sortable({
-			handle: '.art-lms-payment-gateway-list__handle',
-			axis: 'y',
-			containment: 'parent',
-			tolerance: 'pointer',
+		if ($.fn.sortable) {
+			$list.sortable({
+				handle: '.art-lms-payment-gateway-list__handle',
+				axis: 'y',
+				containment: 'parent',
+				tolerance: 'pointer',
+				cancel: 'input,textarea,button,select,option,a',
+			});
+		}
+
+		// Touch devices: jQuery UI drag is unreliable — use explicit up/down controls.
+		$list.on('click', '.art-lms-payment-gateway-list__move--up', function (event) {
+			event.preventDefault();
+
+			var $item = $(this).closest('.art-lms-payment-gateway-list__item');
+			var $prev = $item.prev('.art-lms-payment-gateway-list__item');
+
+			if ($prev.length) {
+				$item.insertBefore($prev);
+			}
+		});
+
+		$list.on('click', '.art-lms-payment-gateway-list__move--down', function (event) {
+			event.preventDefault();
+
+			var $item = $(this).closest('.art-lms-payment-gateway-list__item');
+			var $next = $item.next('.art-lms-payment-gateway-list__item');
+
+			if ($next.length) {
+				$item.insertAfter($next);
+			}
 		});
 	}
 

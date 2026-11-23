@@ -371,7 +371,8 @@ class Art_LMS_Access {
 		$table        = self::table_name();
 		$placeholders = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
 
-		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Placeholders built dynamically.
+		// Dynamic IN (%d,%d,…) — placeholders are intentional; PHPCS cannot see them in {$placeholders}.
+		// phpcs:disable WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$sql = $wpdb->prepare(
 			"SELECT order_id, MAX(expires_at) AS expires_at
 			FROM `{$table}`
@@ -379,6 +380,7 @@ class Art_LMS_Access {
 			GROUP BY order_id",
 			...$order_ids
 		);
+		// phpcs:enable WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		$rows = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared above.
 		$map  = array();

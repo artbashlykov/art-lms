@@ -87,6 +87,7 @@ class Art_LMS_Activator {
 			paid_at datetime DEFAULT NULL,
 			expires_at datetime DEFAULT NULL,
 			raw_notification longtext,
+			deleted_at datetime DEFAULT NULL,
 			PRIMARY KEY  (id),
 			UNIQUE KEY order_key (order_key),
 			UNIQUE KEY payment_label (payment_label),
@@ -94,6 +95,7 @@ class Art_LMS_Activator {
 			KEY product_id (product_id),
 			KEY status (status),
 			KEY gateway_transaction_id (gateway_transaction_id),
+			KEY deleted_at (deleted_at),
 			KEY status_created_at (status, created_at),
 			KEY status_paid_at (status, paid_at)
 		) {$charset_collate};";

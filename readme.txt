@@ -2,9 +2,9 @@
 Contributors: artbashlykov
 Tags: lms, elearning, payments, digital products, checkout
 Requires at least: 6.0
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.17.61
+Stable tag: 2.18.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -89,6 +89,99 @@ When a customer completes checkout with a live payment gateway enabled, the plug
 By default, no. If you enable **Delete all plugin data when uninstalling ART LMS** in the general plugin settings and then delete the plugin from the Plugins screen, the plugin removes its custom database tables, settings, materials, payment buttons, order/access records, plugin-specific user meta, and the `art_lms_customer` role. WordPress pages you selected in the settings are not deleted.
 
 == Changelog ==
+
+= 2.18.11 =
+* Payment buttons: hide checkout/Max Bot links until the button is published.
+
+= 2.18.10 =
+* Admin: right-align mobile gateway reorder controls with the Edit button column.
+
+= 2.18.9 =
+* Admin: equal-width cells for mobile gateway reorder up/down buttons.
+
+= 2.18.8 =
+* Admin: rewrite mobile gateway reorder controls with CSS chevrons (no dashicons/WP button clash).
+
+= 2.18.7 =
+* Admin: center arrow icons inside mobile payment gateway reorder buttons.
+
+= 2.18.6 =
+* Payment buttons: copyable Max Bot checkout URL with mart_id={user_id} when ART MAX BOT is active.
+
+= 2.18.5 =
+* Admin: mobile gateway reorder controls — horizontal ↑↓ group next to title.
+
+= 2.18.4 =
+* Admin: mobile payment gateways — up/down buttons to reorder (touch-friendly).
+
+= 2.18.3 =
+* Admin: mobile payment gateways list — title, full-width description, status left / Edit right.
+
+= 2.18.2 =
+* Admin: cleaner mobile order view — no nested table border, padded field stack.
+
+= 2.18.1 =
+* Admin: mobile layout for order view/edit, statistics filters/tables, settings forms, payment button meta boxes.
+
+= 2.18.0 =
+* Orders trash: soft-delete with 30-day auto-purge, restore, payment webhook restores from trash; stats exclude trashed.
+
+= 2.17.80 =
+* Admin: mobile Orders — in-page select lists (native popup no longer overflows viewport).
+
+= 2.17.79 =
+* Admin: mobile order cards — center checkbox in header rail (override WP check-column).
+
+= 2.17.78 =
+* Admin: mobile Orders — fix clipped filter fields (WP 1px input margins + overflow).
+
+= 2.17.77 =
+* Admin: mobile Orders filters/selects capped to viewport width (no horizontal scroll).
+
+= 2.17.76 =
+* Admin: mobile Orders header — «Добавить» aligned to the right.
+
+= 2.17.75 =
+* Admin: mobile order cards — aligned checkbox rail, stacked buyer links (profile + Max chat).
+
+= 2.17.74 =
+* Admin: denser mobile order cards (header with date/status/amount, compact meta).
+
+= 2.17.73 =
+* Admin: mobile-friendly Orders list (stacked filters, card rows, bulk/pagination).
+
+= 2.17.72 =
+* Plugin Check: Tested up to 7.1; PHPCS cleanup (SQL IN prepare, password/mart nonce+sanitize ignores).
+
+= 2.17.71 =
+* User switching: warn if account already switched into; session audit meta; admin notice; Switch Back on wp_die.
+
+= 2.17.70 =
+* Security: destroy switched-to WP session on switch-back (align with User Switching plugin).
+
+= 2.17.69 =
+* Security: harden user switching — manage_options only, session+signed cookie+HMAC option, no cross-session escalate.
+
+= 2.17.68 =
+* Security: bind switch-back to the admin's WP session token so the real user cannot escalate.
+
+= 2.17.67 =
+* Fix: switch-back bar uses server-side option state (no longer depends on fragile cookie/transient).
+
+= 2.17.66 =
+* Fix: user switch-back/to handler registered on plugins_loaded so it actually runs (was a no-op on init).
+
+= 2.17.65 =
+* Security: harden user switching (server token, bind cookie to target user, POST switch-back, no remember-me).
+
+= 2.17.64 =
+* Fix: switch-back works for buyers (was blocked by wp-admin redirect); handle via frontend URL.
+
+= 2.17.63 =
+* Admin: switch to any editable user (Users list + profile) and switch back; signed cookie, edit_users capability.
+
+= 2.17.62 =
+* Account: administrators (manage_options) see all published materials on the frontend without purchase grants; buyers unchanged.
 
 = 2.17.61 =
 * Admin: capability `art_lms_view_orders` — Max Bot operators can open ART LMS → Orders read-only (no add/edit/delete/status change); admins unchanged.

@@ -194,7 +194,12 @@ class Art_LMS_Statistics {
 
 		$table  = Art_LMS_Orders::table_name();
 		$params = array( Art_LMS_Orders::STATUS_PAID );
-		$where  = array( 'status = %s', 'paid_at IS NOT NULL', "paid_at <> '0000-00-00 00:00:00'" );
+		$where  = array(
+			'status = %s',
+			'paid_at IS NOT NULL',
+			"paid_at <> '0000-00-00 00:00:00'",
+			Art_LMS_Orders::sql_exclude_trashed(),
+		);
 		$where  = array_merge( $where, self::build_paid_at_where( $period_args, $params ) );
 
 		$where_sql = implode( ' AND ', $where );
@@ -238,6 +243,7 @@ class Art_LMS_Statistics {
 					WHERE status = %s
 						AND paid_at IS NOT NULL
 						AND paid_at <> '0000-00-00 00:00:00'
+						AND " . Art_LMS_Orders::sql_exclude_trashed() . "
 						AND ( user_id > 0 OR email <> '' )
 					GROUP BY {$buyer_expr}
 					HAVING {$having_sql}
@@ -259,7 +265,12 @@ class Art_LMS_Statistics {
 
 		$table  = Art_LMS_Orders::table_name();
 		$params = array( Art_LMS_Orders::STATUS_PAID );
-		$where  = array( 'status = %s', 'paid_at IS NOT NULL', "paid_at <> '0000-00-00 00:00:00'" );
+		$where  = array(
+			'status = %s',
+			'paid_at IS NOT NULL',
+			"paid_at <> '0000-00-00 00:00:00'",
+			Art_LMS_Orders::sql_exclude_trashed(),
+		);
 		$where  = array_merge( $where, self::build_paid_at_where( $period_args, $params ) );
 
 		$where_sql = implode( ' AND ', $where );
@@ -301,7 +312,13 @@ class Art_LMS_Statistics {
 
 		$table  = Art_LMS_Orders::table_name();
 		$params = array( Art_LMS_Orders::STATUS_PAID );
-		$where  = array( 'status = %s', 'product_id > 0', 'paid_at IS NOT NULL', "paid_at <> '0000-00-00 00:00:00'" );
+		$where  = array(
+			'status = %s',
+			'product_id > 0',
+			'paid_at IS NOT NULL',
+			"paid_at <> '0000-00-00 00:00:00'",
+			Art_LMS_Orders::sql_exclude_trashed(),
+		);
 		$where  = array_merge( $where, self::build_paid_at_where( $period_args, $params ) );
 
 		$where_sql = implode( ' AND ', $where );
@@ -370,7 +387,10 @@ class Art_LMS_Statistics {
 
 		$table  = Art_LMS_Orders::table_name();
 		$params = array();
-		$where  = array_merge( array( '1=1' ), self::build_created_at_where( $period_args, $params ) );
+		$where  = array_merge(
+			array( '1=1', Art_LMS_Orders::sql_exclude_trashed() ),
+			self::build_created_at_where( $period_args, $params )
+		);
 		$where_sql = implode( ' AND ', $where );
 
 		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Internal orders table; WHERE uses prepare placeholders only.
@@ -471,9 +491,12 @@ class Art_LMS_Statistics {
 
 		$table        = Art_LMS_Orders::table_name();
 		$params       = array();
-		$where        = array_merge( array( '1=1' ), self::build_created_at_where( $period_args, $params ) );
+		$where        = array_merge(
+			array( '1=1', Art_LMS_Orders::sql_exclude_trashed() ),
+			self::build_created_at_where( $period_args, $params )
+		);
 		$query_params = array_merge( array( Art_LMS_Orders::STATUS_PAID, Art_LMS_Orders::STATUS_PAID ), $params );
-		$where_sql = implode( ' AND ', $where );
+		$where_sql    = implode( ' AND ', $where );
 
 		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Internal orders table; WHERE uses prepare placeholders only.
 		$rows = $wpdb->get_results(

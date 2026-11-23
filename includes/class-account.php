@@ -32,6 +32,9 @@ class Art_LMS_Account {
 	/**
 	 * Get materials available to the user for account listing.
 	 *
+	 * Regular buyers: only purchased/granted access rows.
+	 * Administrators (manage_options): all published materials, without writing access rows.
+	 *
 	 * @param int $user_id User ID.
 	 * @return array<int, array<string, mixed>>
 	 */
@@ -40,6 +43,11 @@ class Art_LMS_Account {
 
 		if ( ! $user_id ) {
 			return array();
+		}
+
+		// Admins: virtual list of every published material (no Access::grant side effects).
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return self::get_published_materials_for_admin( $user_id );
 		}
 
 		$access_rows = Art_LMS_Access::get_user_access_list( $user_id );
@@ -73,6 +81,57 @@ class Art_LMS_Account {
 				return strcasecmp( (string) $a['title'], (string) $b['title'] );
 			}
 		);
+
+		/**
+		 * Filter materials shown in customer account.
+		 *
+		 * @param array $materials Material items.
+		 * @param int   $user_id   User ID.
+		 */
+		return (array) apply_filters( 'art_lms_account_materials', $materials, $user_id );
+	}
+
+	/**
+	 * List all published materials for an administrator account card.
+	 *
+	 * Hard-gated by manage_options so buyers never receive this list.
+	 *
+	 * @param int $user_id User ID being listed for.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function get_published_materials_for_admin( $user_id ) {
+		$user_id = absint( $user_id );
+
+		if ( ! $user_id || ! user_can( $user_id, 'manage_options' ) ) {
+			return array();
+		}
+
+		$posts = get_posts(
+			array(
+				'post_type'              => Art_LMS_Materials::POST_TYPE,
+				'post_status'            => 'publish',
+				'posts_per_page'         => -1,
+				'orderby'                => 'title',
+				'order'                  => 'ASC',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			)
+		);
+
+		$materials = array();
+
+		foreach ( $posts as $post ) {
+			if ( ! $post instanceof WP_Post ) {
+				continue;
+			}
+
+			$item = self::build_material_item( (int) $post->ID, null, true );
+
+			if ( $item ) {
+				$materials[] = $item;
+			}
+		}
 
 		/**
 		 * Filter materials shown in customer account.
@@ -481,11 +540,12 @@ class Art_LMS_Account {
 	/**
 	 * Build one material card payload.
 	 *
-	 * @param int    $material_id Material ID.
-	 * @param object $access_row  Access row.
+	 * @param int         $material_id      Material ID.
+	 * @param object|null $access_row       Access row (null for admin virtual access).
+	 * @param bool        $is_admin_preview Whether this is an admin-only virtual listing.
 	 * @return array<string, mixed>|null
 	 */
-	private static function build_material_item( $material_id, $access_row ) {
+	private static function build_material_item( $material_id, $access_row, $is_admin_preview = false ) {
 		$post = get_post( $material_id );
 
 		if ( ! $post || Art_LMS_Materials::POST_TYPE !== $post->post_type || 'publish' !== $post->post_status ) {
@@ -498,7 +558,18 @@ class Art_LMS_Account {
 			return null;
 		}
 
-		$expires_at    = $access_row->expires_at ?? null;
+		if ( $is_admin_preview ) {
+			return array(
+				'material_id'   => $material_id,
+				'title'         => get_the_title( $material_id ),
+				'url'           => $url,
+				'expires_at'    => null,
+				'access_label'  => __( 'Доступ: админ', 'art-lms' ),
+				'expiring_soon' => false,
+			);
+		}
+
+		$expires_at    = ( $access_row && isset( $access_row->expires_at ) ) ? $access_row->expires_at : null;
 		$access_label  = self::format_access_expires_label( $expires_at );
 		$expiring_soon = self::is_expiring_soon( $expires_at );
 

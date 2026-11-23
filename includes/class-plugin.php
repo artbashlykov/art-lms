@@ -78,6 +78,7 @@ class Art_LMS_Plugin {
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-payment-status.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-notifications.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-user-registration.php';
+		require_once ART_LMS_PLUGIN_DIR . 'includes/class-user-switching.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-email.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-shortcodes.php';
 		require_once ART_LMS_PLUGIN_DIR . 'includes/class-blocks.php';
@@ -101,6 +102,8 @@ class Art_LMS_Plugin {
 	public function run() {
 		add_action( 'plugins_loaded', array( 'Art_LMS_Custom_Password', 'boot' ), 4 );
 		add_action( 'plugins_loaded', array( 'Art_LMS_Custom_Login', 'boot' ), 5 );
+		// Register before init fires — otherwise switch handler never runs in the same request.
+		add_action( 'plugins_loaded', array( 'Art_LMS_User_Switching', 'boot' ), 20 );
 		add_action( 'init', array( 'Art_LMS_Materials', 'register_post_type' ), 0 );
 		add_action( 'init', array( 'Art_LMS_Payment_Buttons', 'register_post_type' ), 0 );
 		add_action( 'init', array( 'Art_LMS_Payment_Buttons', 'register_meta' ), 0 );
@@ -131,6 +134,7 @@ class Art_LMS_Plugin {
 		Art_LMS_Account::init();
 		Art_LMS_Notifications::init();
 		Art_LMS_User_Registration::init();
+		Art_LMS_User_Switching::init();
 		Art_LMS_Email::init();
 		Art_LMS_Roles::init();
 		Art_LMS_Security::init();

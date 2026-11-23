@@ -204,6 +204,11 @@
 	margin: 10px 0;
 }
 
+.art-lms-orders-page .art-lms-orders-views {
+	margin: 0 0 12px;
+	float: none;
+}
+
 .art-lms-orders-filters {
 	margin: 0 0 16px;
 }
@@ -238,6 +243,554 @@
 
 .art-lms-date-input {
 	width: 130px;
+}
+
+/* Orders list — mobile (WP admin breakpoint). */
+@media screen and (max-width: 782px) {
+	.art-lms-orders-page .wp-heading-inline {
+		display: inline-block;
+		margin: 0;
+		padding-right: 8px;
+		max-width: calc(100% - 7rem);
+		vertical-align: middle;
+	}
+
+	.art-lms-orders-page .page-title-action {
+		float: right;
+		margin: 0.15em 0 0;
+	}
+
+	.art-lms-orders-page.wrap {
+		box-sizing: border-box;
+		width: auto;
+		max-width: 100%;
+		margin-right: 10px;
+		overflow-x: visible;
+	}
+
+	.art-lms-orders-filters {
+		display: block;
+		width: 100%;
+		max-width: 100%;
+		box-sizing: border-box;
+	}
+
+	.art-lms-orders-filters-row {
+		flex-direction: column;
+		align-items: stretch;
+		width: 100%;
+		max-width: 100%;
+		min-width: 0;
+		box-sizing: border-box;
+	}
+
+	.art-lms-orders-filters-row > * {
+		max-width: 100%;
+		min-width: 0;
+		box-sizing: border-box;
+	}
+
+	/* WP core uses margin: 0 1px on inputs/selects — with width:100% that overflows and clips. */
+	.art-lms-orders-filters-row input[type="search"],
+	.art-lms-orders-filters-row input[type="text"],
+	.art-lms-orders-filters-row input.regular-text,
+	.art-lms-orders-filters-row select,
+	.art-lms-orders-filters-row .button {
+		display: block;
+		width: 100% !important;
+		min-width: 0 !important;
+		max-width: 100% !important;
+		margin-left: 0 !important;
+		margin-right: 0 !important;
+		box-sizing: border-box !important;
+	}
+
+	.art-lms-orders-filters-row select {
+		/* Keep closed control within the row; long options must not force page width. */
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	/* Custom mobile select — native popup overflows the viewport. */
+	.art-lms-select-wrap {
+		position: relative;
+		width: 100%;
+		max-width: 100%;
+		min-width: 0;
+		box-sizing: border-box;
+	}
+
+	.art-lms-select-wrap > select {
+		position: absolute !important;
+		width: 1px !important;
+		height: 1px !important;
+		min-width: 0 !important;
+		max-width: 1px !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		opacity: 0 !important;
+		pointer-events: none !important;
+		overflow: hidden !important;
+	}
+
+	.art-lms-select-trigger {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		width: 100%;
+		max-width: 100%;
+		min-height: 40px;
+		margin: 0;
+		padding: 0 36px 0 12px;
+		box-sizing: border-box;
+		border: 1px solid #949494;
+		border-radius: 2px;
+		background-color: #fff;
+		background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%206l5%205%205-5%202%201-7%207-7-7%202-1z%22%20fill%3D%22%231e1e1e%22%2F%3E%3C%2Fsvg%3E");
+		background-repeat: no-repeat;
+		background-position: right 8px top 55%;
+		background-size: 16px 16px;
+		color: #1e1e1e;
+		font-size: 16px;
+		line-height: 1.4;
+		text-align: left;
+		cursor: pointer;
+		appearance: none;
+		-webkit-appearance: none;
+	}
+
+	.art-lms-select-trigger:focus {
+		border-color: var(--wp-admin-theme-color, #2271b1);
+		box-shadow: 0 0 0 var(--wp-admin-border-width-focus, 1.5px) var(--wp-admin-theme-color, #2271b1);
+		outline: 0;
+	}
+
+	.art-lms-select-wrap.is-open .art-lms-select-trigger {
+		border-color: var(--wp-admin-theme-color, #2271b1);
+	}
+
+	.art-lms-select-list {
+		position: absolute;
+		top: calc(100% + 4px);
+		left: 0;
+		right: 0;
+		z-index: 100000;
+		width: 100%;
+		max-width: 100%;
+		max-height: min(50vh, 16rem);
+		margin: 0;
+		padding: 4px 0;
+		overflow-x: hidden;
+		overflow-y: auto;
+		list-style: none;
+		border: 1px solid #c3c4c7;
+		border-radius: 4px;
+		background: #fff;
+		box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+		box-sizing: border-box;
+	}
+
+	.art-lms-select-list [role="option"] {
+		display: block;
+		width: 100%;
+		max-width: 100%;
+		padding: 10px 12px;
+		box-sizing: border-box;
+		color: #1d2327;
+		font-size: 15px;
+		line-height: 1.35;
+		white-space: normal;
+		word-break: break-word;
+		cursor: pointer;
+	}
+
+	.art-lms-select-list [role="option"]:hover,
+	.art-lms-select-list [role="option"]:focus {
+		background: #f0f6fc;
+		outline: 0;
+	}
+
+	.art-lms-select-list [role="option"].is-selected {
+		background: var(--wp-admin-theme-color, #2271b1);
+		color: #fff;
+	}
+
+	.art-lms-orders-page .tablenav .bulkactions .art-lms-select-wrap {
+		flex: 1 1 12rem;
+		width: auto;
+	}
+
+	.art-lms-orders-date-filter {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+		align-items: center;
+		gap: 6px;
+		width: 100%;
+		max-width: 100%;
+		min-width: 0;
+		box-sizing: border-box;
+	}
+
+	.art-lms-orders-date-filter label {
+		grid-column: 1 / -1;
+	}
+
+	.art-lms-orders-date-filter .art-lms-date-input {
+		display: block;
+		width: 100% !important;
+		min-width: 0 !important;
+		max-width: 100% !important;
+		margin-left: 0 !important;
+		margin-right: 0 !important;
+		box-sizing: border-box !important;
+	}
+
+	.art-lms-orders-table {
+		width: 100% !important;
+		max-width: 100% !important;
+		box-sizing: border-box;
+	}
+
+	.art-lms-orders-page .tablenav {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 10px;
+		height: auto;
+		padding: 8px 0;
+		max-width: 100%;
+		min-width: 0;
+	}
+
+	.art-lms-orders-page .tablenav .alignleft.actions,
+	.art-lms-orders-page .tablenav .tablenav-pages {
+		float: none;
+		width: 100%;
+		max-width: 100%;
+		margin: 0;
+		text-align: left;
+		box-sizing: border-box;
+	}
+
+	.art-lms-orders-page .tablenav .bulkactions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: stretch;
+		gap: 8px;
+		width: 100%;
+		max-width: 100%;
+		box-sizing: border-box;
+	}
+
+	.art-lms-orders-page .tablenav .bulkactions select {
+		flex: 1 1 12rem;
+		width: 100%;
+		min-width: 0 !important;
+		max-width: 100% !important;
+		box-sizing: border-box;
+	}
+
+	.art-lms-orders-page .tablenav .bulkactions .button {
+		flex: 0 0 auto;
+	}
+
+	.art-lms-orders-page .tablenav .pagination-links {
+		display: inline-flex;
+		flex-wrap: wrap;
+		gap: 4px;
+		align-items: center;
+	}
+
+	.art-lms-orders-page .tablenav br.clear {
+		display: none;
+	}
+
+	.art-lms-orders-table,
+	.art-lms-orders-table thead,
+	.art-lms-orders-table tbody,
+	.art-lms-orders-table tfoot {
+		display: block;
+		width: 100%;
+	}
+
+	.art-lms-orders-table thead,
+	.art-lms-orders-table tfoot {
+		display: none;
+	}
+
+	.art-lms-orders-table tbody tr.art-lms-order-row {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-areas:
+			"amount status"
+			"date date"
+			"product product"
+			"buyer buyer"
+			"access access"
+			"gateway gateway"
+			"payment payment"
+			"actions actions";
+		gap: 0;
+		margin: 0 0 10px;
+		padding: 0;
+		border: 1px solid #dcdcde;
+		border-radius: 8px;
+		background: #fff;
+		overflow: hidden;
+		box-shadow: none;
+		box-sizing: border-box;
+	}
+
+	.art-lms-orders-table--bulk tbody tr.art-lms-order-row {
+		grid-template-columns: 48px minmax(0, 1fr) auto;
+		grid-template-areas:
+			"cb amount status"
+			"cb date date"
+			"product product product"
+			"buyer buyer buyer"
+			"access access access"
+			"gateway gateway gateway"
+			"payment payment payment"
+			"actions actions actions";
+	}
+
+	.art-lms-orders-table.striped > tbody > tr.art-lms-order-row:nth-child(odd),
+	.art-lms-orders-table.striped > tbody > tr.art-lms-order-row:nth-child(even) {
+		background-color: #fff;
+	}
+
+	.art-lms-orders-table tbody th.check-column,
+	.art-lms-orders-table tbody td {
+		display: block;
+		width: auto !important;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		box-sizing: border-box;
+	}
+
+	.art-lms-orders-table tbody th.check-column::before,
+	.art-lms-orders-table tbody td::before {
+		display: none !important;
+		content: none !important;
+	}
+
+	.art-lms-orders-table tbody th.check-column {
+		grid-area: cb;
+		display: flex !important;
+		align-items: center;
+		justify-content: center;
+		align-self: stretch;
+		position: relative;
+		width: 48px !important;
+		min-width: 48px !important;
+		padding: 0 !important;
+		margin: 0 !important;
+		background: #f6f7f7;
+		border-right: 1px solid #f0f0f1;
+	}
+
+	/* WP list-tables make .check-column label cover the whole cell — break that here. */
+	.art-lms-orders-table tbody th.check-column > label {
+		position: absolute !important;
+		width: 1px !important;
+		height: 1px !important;
+		padding: 0 !important;
+		margin: -1px !important;
+		overflow: hidden !important;
+		clip: rect(0, 0, 0, 0) !important;
+		border: 0 !important;
+		background: transparent !important;
+	}
+
+	.art-lms-orders-table tbody th.check-column input[type="checkbox"],
+	.art-lms-orders-table tbody th.check-column input.art-lms-order-cb {
+		position: static !important;
+		float: none !important;
+		z-index: auto;
+		display: block !important;
+		width: 1.25rem !important;
+		height: 1.25rem !important;
+		min-width: 1.25rem !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		vertical-align: middle;
+		flex-shrink: 0;
+	}
+
+	.art-lms-orders-table tbody th.check-column input[type="checkbox"]:checked::before {
+		width: 1.25rem !important;
+		height: 1.25rem !important;
+		margin: 0 !important;
+	}
+
+	.art-lms-orders-table tbody td.column-amount {
+		grid-area: amount;
+		padding: 12px 10px 0 12px;
+		font-size: 16px;
+		font-weight: 600;
+		line-height: 1.25;
+		color: #1d2327;
+	}
+
+	.art-lms-orders-table tbody td.column-status {
+		grid-area: status;
+		align-self: start;
+		padding: 12px 12px 0 0;
+	}
+
+	.art-lms-orders-table tbody td.column-status .art-lms-order-status {
+		display: inline-block;
+		max-width: 9.5rem;
+		padding: 3px 8px;
+		font-size: 11px;
+		line-height: 1.25;
+		border-radius: 999px;
+		text-align: center;
+		white-space: normal;
+	}
+
+	.art-lms-orders-table tbody td.column-created_at {
+		grid-area: date;
+		padding: 2px 12px 10px;
+		font-size: 12px;
+		line-height: 1.3;
+		color: #646970;
+		border-bottom: 1px solid #f0f0f1;
+	}
+
+	.art-lms-orders-table tbody td.column-product {
+		grid-area: product;
+		padding: 10px 12px 0;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 1.35;
+		color: #1d2327;
+	}
+
+	.art-lms-orders-table tbody td.column-buyer {
+		grid-area: buyer;
+		padding: 8px 12px 0;
+	}
+
+	.art-lms-orders-table tbody td.column-access_expiry {
+		grid-area: access;
+	}
+
+	.art-lms-orders-table tbody td.column-access_expiry.is-empty-meta {
+		display: none;
+	}
+
+	.art-lms-orders-table tbody td.column-access_expiry:not(.is-empty-meta) {
+		padding: 6px 12px 0;
+		font-size: 12px;
+		line-height: 1.35;
+		color: #646970;
+	}
+
+	.art-lms-orders-table tbody td.column-access_expiry:not(.is-empty-meta)::before {
+		display: inline;
+		content: attr(data-label) ": ";
+		color: #8c8f94;
+	}
+
+	.art-lms-orders-table tbody td.column-gateway {
+		grid-area: gateway;
+		padding: 6px 12px 0;
+		font-size: 12px;
+		line-height: 1.35;
+		color: #646970;
+	}
+
+	.art-lms-orders-table tbody td.column-payment_label {
+		grid-area: payment;
+		padding: 4px 12px 10px;
+	}
+
+	.art-lms-orders-table tbody td.column-payment_label code {
+		display: inline-block;
+		max-width: 100%;
+		font-size: 11px;
+		line-height: 1.35;
+		padding: 2px 6px;
+		word-break: break-all;
+		background: #f6f7f7;
+		border-radius: 3px;
+	}
+
+	.art-lms-orders-table tbody td.art-lms-actions {
+		grid-area: actions;
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		gap: 6px;
+		padding: 8px 10px;
+		background: #f6f7f7;
+		border-top: 1px solid #f0f0f1;
+	}
+
+	.art-lms-orders-table .art-lms-actions .art-lms-action-icon {
+		width: 40px;
+		height: 40px;
+		margin: 0;
+		background: #fff;
+		border: 1px solid #dcdcde;
+		border-radius: 6px;
+	}
+}
+
+/* Buyer cell: name / email / action links (profile + Max chat). */
+.art-lms-order-buyer {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 2px;
+	min-width: 0;
+}
+
+.art-lms-order-buyer__name {
+	font-weight: 500;
+	line-height: 1.3;
+	color: #1d2327;
+}
+
+.art-lms-order-buyer__email {
+	font-size: 12px;
+	line-height: 1.35;
+	color: #646970;
+	word-break: break-word;
+}
+
+.art-lms-order-buyer__links {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 12px;
+	margin-top: 2px;
+	font-size: 12px;
+	line-height: 1.35;
+}
+
+.art-lms-order-buyer__links br {
+	display: none;
+}
+
+.art-lms-order-buyer__links small {
+	display: contents;
+	font-size: inherit;
+}
+
+/* Desktop keeps native <select>; mobile chrome is built in JS. */
+@media screen and (min-width: 783px) {
+	.art-lms-select-wrap {
+		display: contents;
+	}
+
+	.art-lms-select-trigger,
+	.art-lms-select-list {
+		display: none !important;
+	}
 }
 
 .art-lms-orders-table .check-column {
@@ -709,6 +1262,62 @@
 	line-height: 1;
 	cursor: grab;
 	user-select: none;
+}
+
+.art-lms-payment-gateway-list__reorder {
+	display: none;
+}
+
+.art-lms-payment-gateway-list__move {
+	appearance: none;
+	-webkit-appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 36px;
+	min-width: 36px;
+	max-width: 36px;
+	height: 36px;
+	min-height: 36px;
+	margin: 0;
+	padding: 0;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	background: #fff;
+	color: #2271b1;
+	cursor: pointer;
+	line-height: 1;
+	font-size: 0;
+}
+
+.art-lms-payment-gateway-list__move:hover,
+.art-lms-payment-gateway-list__move:focus {
+	border-color: #2271b1;
+	background: #f0f6fc;
+	color: #135e96;
+	outline: none;
+}
+
+.art-lms-payment-gateway-list__move:focus-visible {
+	box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2271b1;
+}
+
+.art-lms-payment-gateway-list__chevron {
+	display: block;
+	box-sizing: border-box;
+	width: 8px;
+	height: 8px;
+	border-right: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+}
+
+.art-lms-payment-gateway-list__move--up .art-lms-payment-gateway-list__chevron {
+	transform: translateY(2px) rotate(-135deg);
+}
+
+.art-lms-payment-gateway-list__move--down .art-lms-payment-gateway-list__chevron {
+	transform: translateY(-2px) rotate(45deg);
 }
 
 .art-lms-payment-gateway-list__main {
@@ -2250,4 +2859,457 @@ body.admin-color-light #adminmenu li.art-lms-admin-menu-stats-start.wp-has-curre
 
 .art-lms-checkout-messages-table .description {
 	margin: 4px 0 0;
+}
+
+/* -------------------------------------------------------------------------
+   Shared mobile admin polish (order view/edit, stats, settings, pay buttons).
+   ------------------------------------------------------------------------- */
+@media screen and (max-width: 782px) {
+	.art-lms-admin {
+		max-width: 100%;
+		overflow-x: clip;
+	}
+
+	.art-lms-admin .art-lms-panel {
+		padding: 12px 14px;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	/* --- Order view --- */
+	.art-lms-order-view-page h1 {
+		font-size: 1.4rem;
+		line-height: 1.3;
+		word-break: break-word;
+	}
+
+	.art-lms-order-view-page .art-lms-panel {
+		padding: 14px 16px;
+		overflow: visible;
+	}
+
+	.art-lms-order-view-page .art-lms-panel > h2 {
+		margin: 0 0 14px;
+		padding: 0 0 10px;
+	}
+
+	.art-lms-order-view-actions {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 8px;
+	}
+
+	.art-lms-order-view-actions .button {
+		width: 100%;
+		justify-content: center;
+		text-align: center;
+		box-sizing: border-box;
+	}
+
+	.art-lms-order-view-page .art-lms-order-view-table.widefat {
+		border: 0 !important;
+		background: transparent;
+		box-shadow: none;
+	}
+
+	.art-lms-order-view-table,
+	.art-lms-order-view-table thead,
+	.art-lms-order-view-table tbody,
+	.art-lms-order-view-table tr,
+	.art-lms-order-view-table th,
+	.art-lms-order-view-table td {
+		display: block;
+		width: 100% !important;
+		box-sizing: border-box;
+	}
+
+	.art-lms-order-view-table thead {
+		display: none;
+	}
+
+	.art-lms-order-view-table tbody {
+		border: 0;
+	}
+
+	.art-lms-order-view-table tr {
+		margin: 0;
+		padding: 12px 0;
+		border: 0;
+		border-bottom: 1px solid #f0f0f1;
+		background: transparent !important;
+	}
+
+	.art-lms-order-view-table tr:first-child {
+		padding-top: 0;
+	}
+
+	.art-lms-order-view-table tr:last-child {
+		padding-bottom: 0;
+		border-bottom: 0;
+	}
+
+	.art-lms-order-view-table th[scope="row"] {
+		padding: 0 0 6px;
+		border: 0;
+		color: #646970;
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 1.35;
+	}
+
+	.art-lms-order-view-table td {
+		padding: 0;
+		border: 0;
+		line-height: 1.45;
+		word-break: break-word;
+	}
+
+	.art-lms-order-view-table code {
+		display: inline-block;
+		max-width: 100%;
+		padding: 4px 8px;
+		word-break: break-all;
+		box-sizing: border-box;
+	}
+
+	.art-lms-order-status-form__controls {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 10px;
+	}
+
+	/* Select already shows the status — hide duplicate badge on mobile. */
+	.art-lms-order-view-page .art-lms-order-status-preview {
+		display: none;
+	}
+
+	.art-lms-order-view-page .art-lms-order-status-select,
+	.art-lms-order-view-page .art-lms-order-view-amount,
+	.art-lms-order-status-form__controls .button {
+		width: 100% !important;
+		max-width: 100% !important;
+		min-width: 0 !important;
+		margin-left: 0 !important;
+		margin-right: 0 !important;
+		box-sizing: border-box !important;
+	}
+
+	.art-lms-order-view-amount {
+		min-height: 40px;
+		padding: 0 12px;
+		line-height: 40px;
+	}
+
+	.art-lms-order-status-form__hint {
+		margin-top: 10px;
+	}
+
+	/* --- Order edit --- */
+	.art-lms-order-edit-page .art-lms-panel {
+		max-width: 100%;
+	}
+
+	.art-lms-order-edit-page .form-table,
+	.art-lms-order-edit-page .form-table tbody,
+	.art-lms-order-edit-page .form-table tr,
+	.art-lms-order-edit-page .form-table th,
+	.art-lms-order-edit-page .form-table td,
+	.art-lms-order-meta-readonly,
+	.art-lms-order-meta-readonly tbody,
+	.art-lms-order-meta-readonly tr,
+	.art-lms-order-meta-readonly th,
+	.art-lms-order-meta-readonly td {
+		display: block;
+		width: 100% !important;
+		box-sizing: border-box;
+	}
+
+	.art-lms-order-edit-page .form-table th,
+	.art-lms-order-meta-readonly th {
+		padding: 12px 0 4px;
+		border: 0;
+	}
+
+	.art-lms-order-edit-page .form-table td,
+	.art-lms-order-meta-readonly td {
+		padding: 0 0 8px;
+		border: 0;
+	}
+
+	.art-lms-order-form .regular-text,
+	.art-lms-order-form select.regular-text,
+	.art-lms-order-form input[type="text"],
+	.art-lms-order-form input[type="number"],
+	.art-lms-order-form select {
+		width: 100% !important;
+		max-width: 100% !important;
+		min-width: 0 !important;
+		box-sizing: border-box !important;
+	}
+
+	.art-lms-buyer-lookup {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.art-lms-buyer-lookup .button {
+		width: 100%;
+	}
+
+	.art-lms-order-edit-page .submit .button {
+		width: 100%;
+		margin: 0 0 8px;
+		box-sizing: border-box;
+	}
+
+	/* --- Statistics --- */
+	.art-lms-statistics-page h1 {
+		font-size: 1.35rem;
+		line-height: 1.3;
+	}
+
+	.art-lms-statistics-filters {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.art-lms-statistics-filters__presets {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 6px;
+		width: 100%;
+	}
+
+	.art-lms-statistics-filters__presets .button {
+		width: 100%;
+		justify-content: center;
+		text-align: center;
+		box-sizing: border-box;
+	}
+
+	.art-lms-statistics-filters__custom {
+		flex-direction: column;
+		align-items: stretch;
+		width: 100%;
+	}
+
+	.art-lms-statistics-filters__custom .art-lms-date-input,
+	.art-lms-statistics-filters__custom .button {
+		width: 100%;
+		max-width: 100%;
+		min-width: 0;
+		box-sizing: border-box;
+	}
+
+	.art-lms-statistics-gateways-panel,
+	.art-lms-statistics-products-panel {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.art-lms-statistics-gateways-table,
+	.art-lms-statistics-products-table {
+		width: 100%;
+		min-width: 28rem;
+	}
+
+	/* --- Settings / payments / tech --- */
+	.art-lms-admin .form-table th,
+	.art-lms-admin .form-table td {
+		display: block;
+		width: 100% !important;
+		padding-left: 0;
+		padding-right: 0;
+		box-sizing: border-box;
+	}
+
+	.art-lms-admin .form-table th {
+		padding-bottom: 4px;
+	}
+
+	.art-lms-admin .form-table td {
+		padding-top: 0;
+		padding-bottom: 14px;
+	}
+
+	.art-lms-admin .form-table input.regular-text,
+	.art-lms-admin .form-table input[type="text"],
+	.art-lms-admin .form-table input[type="url"],
+	.art-lms-admin .form-table input[type="email"],
+	.art-lms-admin .form-table input[type="password"],
+	.art-lms-admin .form-table input[type="number"],
+	.art-lms-admin .form-table select,
+	.art-lms-admin .form-table textarea,
+	.art-lms-admin .form-table .regular-text {
+		width: 100% !important;
+		max-width: 100% !important;
+		min-width: 0 !important;
+		box-sizing: border-box !important;
+	}
+
+	.art-lms-page-picker {
+		flex-direction: column;
+		align-items: stretch;
+		max-width: 100%;
+	}
+
+	.art-lms-page-picker__select {
+		width: 100%;
+		min-width: 0;
+	}
+
+	.art-lms-admin .nav-tab-wrapper {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+		padding: 0;
+		border-bottom: 0;
+	}
+
+	.art-lms-admin .nav-tab {
+		margin: 0;
+		float: none;
+	}
+
+	.art-lms-checkout-consents,
+	.art-lms-checkout-messages-table,
+	.art-lms-settings-table {
+		display: block;
+		width: 100%;
+		max-width: 100%;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.art-lms-checkout-consents-table {
+		min-width: 36rem;
+	}
+
+	/* --- Payments: gateway list cards --- */
+	.art-lms-payment-gateway-list__item {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-areas:
+			"title reorder"
+			"desc desc"
+			"partner partner"
+			"status actions";
+		gap: 10px 8px;
+		align-items: center;
+		padding: 14px;
+	}
+
+	.art-lms-payment-gateway-list__handle {
+		display: none;
+	}
+
+	.art-lms-payment-gateway-list__reorder {
+		grid-area: reorder;
+		justify-self: end;
+		display: inline-grid;
+		grid-template-columns: 36px 36px;
+		width: 72px;
+		height: 36px;
+		padding: 0;
+		border: 1px solid #c3c4c7;
+		border-radius: 6px;
+		background: #fff;
+		overflow: hidden;
+		box-sizing: border-box;
+	}
+
+	.art-lms-payment-gateway-list__move {
+		box-sizing: border-box;
+		width: 36px;
+		min-width: 36px;
+		max-width: 36px;
+		height: 36px;
+		min-height: 36px;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
+		flex: none;
+	}
+
+	.art-lms-payment-gateway-list__move--up {
+		box-shadow: 1px 0 0 #c3c4c7;
+	}
+
+	.art-lms-payment-gateway-list__move:hover,
+	.art-lms-payment-gateway-list__move:focus {
+		border: 0;
+		background: #f0f6fc;
+		color: #135e96;
+		box-shadow: none;
+	}
+
+	.art-lms-payment-gateway-list__move--up:hover,
+	.art-lms-payment-gateway-list__move--up:focus {
+		box-shadow: 1px 0 0 #c3c4c7;
+	}
+
+	.art-lms-payment-gateway-list__main {
+		display: contents;
+	}
+
+	.art-lms-payment-gateway-list__title {
+		grid-area: title;
+		margin: 0;
+		align-self: center;
+		font-size: 15px;
+		line-height: 1.35;
+	}
+
+	.art-lms-payment-gateway-list__description {
+		grid-area: desc;
+		margin: 0;
+		font-size: 13px;
+		line-height: 1.45;
+	}
+
+	.art-lms-payment-gateway-list__item .art-lms-gateway-partner-signup--list {
+		grid-area: partner;
+		margin: 0;
+	}
+
+	.art-lms-payment-gateway-list__status {
+		grid-area: status;
+		padding-top: 0;
+		align-self: center;
+		justify-self: start;
+	}
+
+	.art-lms-payment-gateway-list__item > .button {
+		grid-area: actions;
+		margin: 0;
+		align-self: center;
+		justify-self: end;
+	}
+
+	/* --- Payment button editor --- */
+	.post-type-art_lms_pay_button .art-lms-payment-button-meta-box .form-table th,
+	.post-type-art_lms_pay_button .art-lms-payment-button-meta-box .form-table td {
+		display: block;
+		width: 100% !important;
+		padding-left: 0;
+		padding-right: 0;
+	}
+
+	.post-type-art_lms_pay_button .art-lms-material-picker__select,
+	.post-type-art_lms_pay_button .art-lms-list-copy-actions__value,
+	.post-type-art_lms_pay_button .art-lms-shortcode-select {
+		width: 100% !important;
+		max-width: 100% !important;
+		min-width: 0 !important;
+		box-sizing: border-box !important;
+	}
+
+	.post-type-art_lms_pay_button .art-lms-payment-button-toolbar {
+		flex-wrap: wrap;
+		gap: 8px;
+	}
 }
