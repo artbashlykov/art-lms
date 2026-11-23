@@ -316,7 +316,7 @@ $access_expires_map = isset( $access_expires_map ) && is_array( $access_expires_
 								<?php endif; ?>
 							</td>
 							<td class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'amount' ) ); ?>" data-label="<?php esc_attr_e( 'Сумма', 'art-lms' ); ?>">
-								<?php echo esc_html( number_format( (float) $order->amount, 2, '.', ' ' ) ); ?> ₽
+								<?php echo esc_html( Art_LMS_Orders::format_amount( $order->amount, $order->currency ?? 'RUB' ) ); ?>
 							</td>
 							<td class="<?php echo esc_attr( Art_LMS_Admin_Orders::get_list_column_class( 'status' ) ); ?>" data-label="<?php esc_attr_e( 'Статус', 'art-lms' ); ?>">
 								<span class="art-lms-order-status art-lms-order-status--<?php echo esc_attr( $order->status ); ?>">

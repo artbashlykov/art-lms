@@ -1013,21 +1013,22 @@ class Art_LMS_Orders {
 	}
 
 	/**
-	 * Format order amount for display.
+	 * Format order amount for display (whole rubles, amount and ₽ on one line).
 	 *
 	 * @param float|int|string $amount   Amount.
 	 * @param string           $currency Currency code.
 	 * @return string
 	 */
 	public static function format_amount( $amount, $currency = 'RUB' ) {
-		$formatted = number_format( (float) $amount, 2, ',', ' ' );
+		$nbsp      = "\xc2\xa0";
+		$formatted = number_format( round( (float) $amount ), 0, '.', $nbsp );
 		$currency  = strtoupper( trim( (string) $currency ) );
 
 		if ( 'RUB' === $currency || '' === $currency ) {
-			return $formatted . ' ₽';
+			return $formatted . $nbsp . '₽';
 		}
 
-		return $formatted . ' ' . $currency;
+		return $formatted . $nbsp . $currency;
 	}
 
 	/**

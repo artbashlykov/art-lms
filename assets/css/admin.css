@@ -627,11 +627,15 @@
 
 	.art-lms-orders-table tbody td.column-amount {
 		grid-area: amount;
+		min-width: 0;
+		width: auto;
 		padding: 12px 10px 0 12px;
 		font-size: 16px;
 		font-weight: 600;
 		line-height: 1.25;
 		color: #1d2327;
+		text-align: right;
+		white-space: nowrap;
 	}
 
 	.art-lms-orders-table tbody td.column-status {
@@ -980,6 +984,13 @@
 .art-lms-orders-list-title {
 	margin: 0 0 10px;
 	font-size: 1.1em;
+}
+
+.art-lms-orders-table .column-amount {
+	width: 7.5rem;
+	min-width: 7.5rem;
+	white-space: nowrap;
+	text-align: right;
 }
 
 .art-lms-orders-table .art-lms-actions {

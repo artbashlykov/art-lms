@@ -115,7 +115,7 @@ $can_send_email    = Art_LMS_Orders::STATUS_PAID !== $order->status;
 					<th scope="row"><?php esc_html_e( 'Сумма', 'art-lms' ); ?></th>
 					<td>
 						<span class="regular-text art-lms-order-view-amount">
-							<?php echo esc_html( number_format( (float) $order->amount, 2, '.', ' ' ) ); ?> ₽
+							<?php echo esc_html( Art_LMS_Orders::format_amount( $order->amount, $order->currency ?? 'RUB' ) ); ?>
 						</span>
 					</td>
 				</tr>
